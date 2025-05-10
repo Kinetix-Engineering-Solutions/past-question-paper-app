@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:past_question_paper_stem/models/question.dart';
+import 'dart:math';
 
 class QuestionDetailScreen extends StatefulWidget {
   final Question question;
@@ -16,11 +17,18 @@ class _QuestionDetailScreenState extends State<QuestionDetailScreen> {
   bool _isCorrect = false;
   bool _hasSubmitted = false;
   String? _errorMessage;
+  List<String?> _answerSlots = [];
+  List<String> _optionBank = [];
 
   @override
   void initState() {
     super.initState();
     _validateAndInitializeQuestion();
+    if (_isDragAndDropQuestion() && widget.question.options.isNotEmpty) {
+      _optionBank = List<String>.from(widget.question.options);
+      _optionBank.shuffle(Random());
+      _answerSlots = List<String?>.filled(widget.question.options.length, null);
+    }
   }
 
   void _validateAndInitializeQuestion() {
@@ -50,8 +58,9 @@ class _QuestionDetailScreenState extends State<QuestionDetailScreen> {
       _errorMessage = 'This question has invalid correct order indices.';
       print('Error: Question has invalid correctOrder indices');
     } else {
-      // Create a copy of the options list to avoid modifying the original
+      // Create a shuffled copy of the options list to avoid modifying the original
       _userOrder = List<String>.from(widget.question.options);
+      _userOrder.shuffle(Random());
     }
   }
 
@@ -64,45 +73,16 @@ class _QuestionDetailScreenState extends State<QuestionDetailScreen> {
       });
       return;
     }
-
     bool correct = true;
-
-    // For drag-and-drop questions, check if the user order matches the correct order
     if (_isDragAndDropQuestion()) {
-      try {
-        // Check if correctOrder and options are not empty
-        if (widget.question.correctOrder.isNotEmpty &&
-            widget.question.options.isNotEmpty &&
-            _userOrder.isNotEmpty) {
-          for (int i = 0; i < widget.question.correctOrder.length; i++) {
-            // Make sure the index is valid
-            if (i < _userOrder.length &&
-                widget.question.correctOrder[i] <
-                    widget.question.options.length) {
-              if (_userOrder[i] !=
-                  widget.question.options[widget.question.correctOrder[i]]) {
-                correct = false;
-                break;
-              }
-            } else {
-              // Invalid index, mark as incorrect
-              correct = false;
-              print('Error: Invalid index in correctOrder check: $i');
-              break;
-            }
-          }
-        } else {
-          // If arrays are empty, mark as incorrect
+      for (int i = 0; i < widget.question.correctOrder.length; i++) {
+        final correctOption = widget.question.options[widget.question.correctOrder[i]];
+        if (_answerSlots[i] != correctOption) {
           correct = false;
-          print('Error: correctOrder or options array is empty during check');
+          break;
         }
-      } catch (e) {
-        // Catch any unexpected errors
-        correct = false;
-        print('Error during answer check: $e');
       }
     }
-
     setState(() {
       _isCorrect = correct;
       _hasSubmitted = true;
@@ -120,6 +100,11 @@ class _QuestionDetailScreenState extends State<QuestionDetailScreen> {
       _userOrder = List<String>.from(widget.question.options);
       _hasSubmitted = false;
       _showAnswer = false;
+      if (_isDragAndDropQuestion() && widget.question.options.isNotEmpty) {
+        _optionBank = List<String>.from(widget.question.options);
+        _optionBank.shuffle(Random());
+        _answerSlots = List<String?>.filled(widget.question.options.length, null);
+      }
     });
   }
 
@@ -431,225 +416,145 @@ class _QuestionDetailScreenState extends State<QuestionDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text(
-          'Arrange the steps in the correct order:',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          'Drag the correct options to solve the question:',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
+        // Answer slots (vertical, reorderable)
         ReorderableListView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           onReorder: (oldIndex, newIndex) {
-            if (_hasSubmitted) return; // Prevent reordering after submission
-
             setState(() {
-              if (newIndex > oldIndex) {
-                newIndex -= 1;
-              }
-              final item = _userOrder.removeAt(oldIndex);
-              _userOrder.insert(newIndex, item);
+              if (_answerSlots[oldIndex] == null) return;
+              if (newIndex > oldIndex) newIndex -= 1;
+              final item = _answerSlots.removeAt(oldIndex);
+              _answerSlots.insert(newIndex, item);
             });
           },
-          children:
-              _userOrder.asMap().entries.map((entry) {
-                final index = entry.key;
-                final item = entry.value;
-
-                // Create card content
-                Widget content;
-
-                if (widget.question.hasImageOptions &&
-                    index < (widget.question.optionImageUrls?.length ?? 0)) {
-                  // For image-based options
-                  content = Card(
-                    key: ValueKey('image-$index'),
-                    elevation: _hasSubmitted ? 0 : 1,
-                    color:
-                        _hasSubmitted
-                            ? _getItemColor(index)
-                            : Theme.of(context).colorScheme.surfaceVariant,
-                    margin: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header with drag handle and status indicators
-                        Row(
+          children: List.generate(_answerSlots.length, (slotIndex) {
+            return DragTarget<String>(
+              key: ValueKey('slot-$slotIndex-${_answerSlots[slotIndex]}'),
+              builder: (context, candidateData, rejectedData) {
+                return Container(
+                  width: 130,
+                  height: 50, // Match reduced height
+                  margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
+                  decoration: BoxDecoration(
+                    color: _answerSlots[slotIndex] == null ? Colors.grey[200] : Colors.blue[100],
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.blueAccent, width: 1),
+                  ),
+                  child: _answerSlots[slotIndex] == null
+                      ? const Center(child: Text(""))
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Drag handle
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              child: const Icon(Icons.drag_indicator, size: 20),
-                            ),
-
-                            // Option number
-                            Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color:
-                                    Theme.of(
-                                      context,
-                                    ).colorScheme.primaryContainer,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '${index + 1}',
-                                  style: TextStyle(
-                                    color:
-                                        Theme.of(
-                                          context,
-                                        ).colorScheme.onPrimaryContainer,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
+                            Padding(
+                              padding: const EdgeInsets.all(6), // Add slight padding
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  widget.question.optionImageUrls![widget.question.options.indexOf(_answerSlots[slotIndex]!)],
+                                  width: 118,
+                                  height: 38,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, color: Colors.white),
                                 ),
                               ),
                             ),
-
-                            const Spacer(),
-
-                            // Status indicator (for submitted state)
-                            if (_hasSubmitted)
-                              Padding(
-                                padding: const EdgeInsets.only(right: 8),
-                                child:
-                                    _isCorrectItem(index)
-                                        ? const Icon(
-                                          Icons.check_circle,
-                                          color: Colors.green,
-                                          size: 16,
-                                        )
-                                        : const Icon(
-                                          Icons.cancel,
-                                          color: Colors.red,
-                                          size: 16,
-                                        ),
-                              ),
                           ],
                         ),
-
-                        // Option image - full width
-                        ClipRRect(
-                          borderRadius: const BorderRadius.only(
-                            bottomLeft: Radius.circular(12),
-                            bottomRight: Radius.circular(12),
-                          ),
-                          child: Image.network(
-                            widget.question.optionImageUrls![index],
-                            height: 100, // Fixed height
-                            fit:
-                                BoxFit
-                                    .contain, // Show entire image without stretching
-                            errorBuilder: (context, error, stackTrace) {
-                              print(
-                                'Error loading option image in drag-drop: $error',
-                              );
-                              return Container(
-                                height: 100,
-                                color: Colors.grey[200],
-                                child: const Center(
-                                  child: Icon(Icons.error, color: Colors.red),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                } else {
-                  // For text-based options
-                  return Container(
-                    key: ValueKey('text-$index'),
-                    decoration: BoxDecoration(
-                      color:
-                          _hasSubmitted
-                              ? _getItemColor(index)
-                              : Theme.of(context).colorScheme.surfaceVariant,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow:
-                          _hasSubmitted
-                              ? null
-                              : [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 2,
-                                  offset: const Offset(0, 1),
-                                ),
-                              ],
-                    ),
-                    child: Row(
-                      children: [
-                        // Drag handle with number
-                        Container(
-                          width: 32,
-                          height: 32,
-                          margin: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color:
-                                Theme.of(context).colorScheme.primaryContainer,
-                          ),
-                          child: Center(
-                            child: Icon(
-                              Icons.drag_indicator,
-                              color:
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme.onPrimaryContainer,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-
-                        // Option text
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 6,
-                              horizontal: 8,
-                            ),
-                            child: Text(
-                              item,
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                          ),
-                        ),
-
-                        // Status indicator (for submitted state)
-                        if (_hasSubmitted)
-                          Padding(
-                            padding: const EdgeInsets.only(right: 12),
-                            child:
-                                _isCorrectItem(index)
-                                    ? const Icon(
-                                      Icons.check_circle,
-                                      color: Colors.green,
-                                      size: 16,
-                                    )
-                                    : const Icon(
-                                      Icons.cancel,
-                                      color: Colors.red,
-                                      size: 16,
-                                    ),
-                          ),
-                      ],
-                    ),
-                  );
-                }
-
-                return Padding(
-                  key: ValueKey('item-$index'),
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: content,
                 );
-              }).toList(),
+              },
+              onWillAccept: (data) => _answerSlots[slotIndex] == null,
+              onAccept: (data) {
+                setState(() {
+                  _answerSlots[slotIndex] = data;
+                  _optionBank.remove(data);
+                });
+              },
+            );
+          }),
+        ),
+        const SizedBox(height: 24),
+        // Option bank
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
+          children: _optionBank.map((option) {
+            return Draggable<String>(
+              data: option,
+              feedback: Material(
+                color: Colors.transparent,
+                child: _buildOptionChip(option, isDragging: true),
+              ),
+              childWhenDragging: Opacity(
+                opacity: 0.3,
+                child: _buildOptionChip(option),
+              ),
+              child: _buildOptionChip(option),
+            );
+          }).toList(),
         ),
       ],
     );
+  }
+
+  Widget _buildOptionChip(String option, {bool isDragging = false}) {
+    int optionIndex = widget.question.options.indexOf(option);
+    String? imageUrl = (widget.question.optionImageUrls != null && optionIndex < widget.question.optionImageUrls!.length)
+        ? widget.question.optionImageUrls![optionIndex]
+        : null;
+    return Container(
+      constraints: const BoxConstraints(
+        minWidth: 0,
+        minHeight: 0,
+        maxWidth: 130,
+        maxHeight: 50, // Reduced height to better fit the image aspect ratio
+      ),
+      padding: const EdgeInsets.all(6), // Add slight padding around the image
+      decoration: BoxDecoration(
+        color: isDragging ? Colors.blue[200] : Colors.blue,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: isDragging
+            ? [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))]
+            : [],
+      ),
+      alignment: Alignment.center,
+      child: imageUrl != null
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                imageUrl,
+                width: 118, // 130 - 2*6 padding
+                height: 38, // 50 - 2*6 padding
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, color: Colors.white),
+              ),
+            )
+          : const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildSlotImage(String option) {
+    int optionIndex = widget.question.options.indexOf(option);
+    String? imageUrl = (widget.question.optionImageUrls != null && optionIndex < widget.question.optionImageUrls!.length)
+        ? widget.question.optionImageUrls![optionIndex]
+        : null;
+    return imageUrl != null
+        ? ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              imageUrl,
+              width: 130, // Increased from 110
+              height: 95, // Increased from 80
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, color: Colors.white),
+            ),
+          )
+        : const SizedBox.shrink();
   }
 
   Widget _buildAnswerSection() {
