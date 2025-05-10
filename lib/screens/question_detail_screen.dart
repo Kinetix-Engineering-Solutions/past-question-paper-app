@@ -411,7 +411,10 @@ class _QuestionDetailScreenState extends State<QuestionDetailScreen> {
     }
   }
 
+  // --- Drag-and-drop UI with improved slot/bank logic, feedback, and error handling ---
   Widget _buildDragAndDropQuestion() {
+    // Track which slot is being dragged
+    int? _draggedSlotIndex;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -420,86 +423,142 @@ class _QuestionDetailScreenState extends State<QuestionDetailScreen> {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue),
         ),
         const SizedBox(height: 12),
-        // Answer slots (vertical, reorderable)
-        ReorderableListView(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          onReorder: (oldIndex, newIndex) {
-            setState(() {
-              if (_answerSlots[oldIndex] == null) return;
-              if (newIndex > oldIndex) newIndex -= 1;
-              final item = _answerSlots.removeAt(oldIndex);
-              _answerSlots.insert(newIndex, item);
-            });
-          },
+        // Answer slots (horizontal, manual reordering)
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
           children: List.generate(_answerSlots.length, (slotIndex) {
-            return DragTarget<String>(
-              key: ValueKey('slot-$slotIndex-${_answerSlots[slotIndex]}'),
-              builder: (context, candidateData, rejectedData) {
-                return Container(
-                  width: 130,
-                  height: 50, // Match reduced height
-                  margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
-                  decoration: BoxDecoration(
-                    color: _answerSlots[slotIndex] == null ? Colors.grey[200] : Colors.blue[100],
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.blueAccent, width: 1),
-                  ),
-                  child: _answerSlots[slotIndex] == null
-                      ? const Center(child: Text(""))
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(6), // Add slight padding
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  widget.question.optionImageUrls![widget.question.options.indexOf(_answerSlots[slotIndex]!)],
-                                  width: 118,
-                                  height: 38,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                );
+            final slotData = _answerSlots[slotIndex];
+            return DragTarget<Map<String, dynamic>>(
+              onWillAccept: (data) {
+                // Accept if dragging from bank or another slot (not same slot)
+                if (data == null) return false;
+                if (data['from'] == 'bank') {
+                  return slotData == null;
+                } else if (data['from'] == 'slot') {
+                  return data['slotIndex'] != slotIndex && slotData == null;
+                }
+                return false;
               },
-              onWillAccept: (data) => _answerSlots[slotIndex] == null,
               onAccept: (data) {
                 setState(() {
-                  _answerSlots[slotIndex] = data;
-                  _optionBank.remove(data);
+                  if (data['from'] == 'bank') {
+                    // Place from bank to slot
+                    _answerSlots[slotIndex] = data['option'];
+                    _optionBank.remove(data['option']);
+                  } else if (data['from'] == 'slot') {
+                    // Move from another slot (reorder)
+                    final fromIndex = data['slotIndex'];
+                    final movingOption = _answerSlots[fromIndex];
+                    _answerSlots[fromIndex] = null;
+                    _answerSlots[slotIndex] = movingOption;
+                  }
                 });
+              },
+              builder: (context, candidateData, rejectedData) {
+                final isHighlighted = candidateData.isNotEmpty;
+                return Container(
+                  width: 130,
+                  height: 50,
+                  margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isHighlighted
+                        ? Colors.lightGreenAccent.withOpacity(0.5)
+                        : (slotData == null ? Colors.grey[200] : Colors.blue[100]),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isHighlighted ? Colors.green : Colors.blueAccent,
+                      width: 2,
+                    ),
+                  ),
+                  child: slotData == null
+                      ? const Center(child: Text(""))
+                      : Draggable<Map<String, dynamic>>(
+                          data: {'option': slotData, 'from': 'slot', 'slotIndex': slotIndex},
+                          feedback: Material(
+                            color: Colors.transparent,
+                            child: _buildOptionChip(slotData, isDragging: true),
+                          ),
+                          childWhenDragging: Opacity(
+                            opacity: 0.3,
+                            child: _buildOptionChip(slotData),
+                          ),
+                          child: _buildOptionChip(slotData),
+                        ),
+                );
               },
             );
           }),
         ),
         const SizedBox(height: 24),
-        // Option bank
-        Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 8,
-          runSpacing: 8,
-          children: _optionBank.map((option) {
-            return Draggable<String>(
-              data: option,
-              feedback: Material(
-                color: Colors.transparent,
-                child: _buildOptionChip(option, isDragging: true),
+        // Option bank as a DragTarget
+        DragTarget<Map<String, dynamic>>(
+          onWillAccept: (data) {
+            // Only accept if dragging from a slot
+            return data != null && data['from'] == 'slot';
+          },
+          onAccept: (data) {
+            setState(() {
+              final fromIndex = data['slotIndex'];
+              final movingOption = _answerSlots[fromIndex];
+              if (movingOption != null && !_optionBank.contains(movingOption)) {
+                _optionBank.add(movingOption);
+                _answerSlots[fromIndex] = null;
+              }
+            });
+          },
+          builder: (context, candidateData, rejectedData) {
+            final isHighlighted = candidateData.isNotEmpty;
+            return Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: isHighlighted ? Colors.lightBlueAccent.withOpacity(0.2) : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isHighlighted ? Colors.blue : Colors.transparent,
+                  width: isHighlighted ? 2 : 0,
+                ),
               ),
-              childWhenDragging: Opacity(
-                opacity: 0.3,
-                child: _buildOptionChip(option),
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 8,
+                children: _optionBank.map((option) {
+                  return Draggable<Map<String, dynamic>>(
+                    data: {'option': option, 'from': 'bank'},
+                    feedback: Material(
+                      color: Colors.transparent,
+                      child: _buildOptionChip(option, isDragging: true),
+                    ),
+                    childWhenDragging: Opacity(
+                      opacity: 0.3,
+                      child: _buildOptionChip(option),
+                    ),
+                    child: _buildOptionChip(option),
+                  );
+                }).toList(),
               ),
-              child: _buildOptionChip(option),
             );
-          }).toList(),
+          },
         ),
+        // Error message for duplicate options in slots
+        if (_hasDuplicateInSlots())
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'Error: The same option cannot be placed in multiple slots.',
+              style: TextStyle(color: Colors.red[700], fontWeight: FontWeight.bold),
+            ),
+          ),
       ],
     );
+  }
+
+  // Helper to check for duplicate options in slots
+  bool _hasDuplicateInSlots() {
+    final filled = _answerSlots.where((e) => e != null).toList();
+    return filled.length != filled.toSet().length;
   }
 
   Widget _buildOptionChip(String option, {bool isDragging = false}) {
@@ -512,9 +571,9 @@ class _QuestionDetailScreenState extends State<QuestionDetailScreen> {
         minWidth: 0,
         minHeight: 0,
         maxWidth: 130,
-        maxHeight: 50, // Reduced height to better fit the image aspect ratio
+        maxHeight: 50,
       ),
-      padding: const EdgeInsets.all(6), // Add slight padding around the image
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: isDragging ? Colors.blue[200] : Colors.blue,
         borderRadius: BorderRadius.circular(12),
@@ -528,10 +587,13 @@ class _QuestionDetailScreenState extends State<QuestionDetailScreen> {
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
                 imageUrl,
-                width: 118, // 130 - 2*6 padding
-                height: 38, // 50 - 2*6 padding
+                width: 118,
+                height: 38,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, color: Colors.white),
+                // Use image caching for better performance
+                cacheWidth: 236, // 2x for high-res
+                cacheHeight: 76,
               ),
             )
           : const SizedBox.shrink(),
