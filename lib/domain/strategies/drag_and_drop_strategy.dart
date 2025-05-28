@@ -8,13 +8,25 @@ import 'package:past_question_paper_stem/presentation/widgets/drag_and_drop_ques
 class DragAndDropStrategy implements QuestionStrategy {
   @override
   bool validate(Question question) {
-    if (question.options.isEmpty || question.correctOrder.isEmpty) {
+    // Ensure we have either text options or image options
+    if (!question.hasImageOptions && question.options.isEmpty) {
       return false;
     }
 
+    // Validate we have a correct order
+    if (question.correctOrder.isEmpty) {
+      return false;
+    }
+
+    // Get the actual option count based on question type
+    final optionCount =
+        question.hasImageOptions
+            ? question.optionImages!.length
+            : question.options.length;
+
     // Validate correctOrder indices
     return question.correctOrder.every(
-      (index) => index >= 0 && index < question.options.length,
+      (index) => index >= 0 && index < optionCount,
     );
   }
 
@@ -32,9 +44,13 @@ class DragAndDropStrategy implements QuestionStrategy {
     // Check if all slots are filled
     if (answerSlots.any((item) => item == null)) return false;
 
+    // Get the actual options based on question type
+    final options =
+        question.hasImageOptions ? question.optionImages! : question.options;
+
     // Check if the order matches the correctOrder
     for (int i = 0; i < question.correctOrder.length; i++) {
-      final correctOption = question.options[question.correctOrder[i]];
+      final correctOption = options[question.correctOrder[i]];
       if (answerSlots[i] != correctOption) {
         return false;
       }
@@ -44,11 +60,20 @@ class DragAndDropStrategy implements QuestionStrategy {
 
   @override
   String getCorrectAnswerText(Question question) {
+    // Get the actual options based on question type
+    final options =
+        question.hasImageOptions ? question.optionImages! : question.options;
+
     final orderedOptions =
         question.correctOrder
-            .where((index) => index < question.options.length)
-            .map((index) => question.options[index])
+            .where((index) => index < options.length)
+            .map((index) => options[index])
             .toList();
+
+    // For image options, show text description if available
+    if (question.hasImageOptions && question.correctAnswer.isNotEmpty) {
+      return question.correctAnswer.join(" → ");
+    }
 
     return orderedOptions.join(" → ");
   }
@@ -60,7 +85,11 @@ class DragAndDropStrategy implements QuestionStrategy {
 
   /// Creates a shuffled option bank for the question
   List<String> createShuffledOptionBank(Question question) {
-    final bank = List<String>.from(question.options);
+    // Get the actual options based on question type
+    final options =
+        question.hasImageOptions ? question.optionImages! : question.options;
+
+    final bank = List<String>.from(options);
     bank.shuffle(Random());
     return bank;
   }

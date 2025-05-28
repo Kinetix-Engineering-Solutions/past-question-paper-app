@@ -26,8 +26,9 @@ class DragAndDropQuestionWidget extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildInstructions(),
-        const SizedBox(height: 12),
+        // Updated: Combined question content section
+        _buildQuestionContent(),
+        const SizedBox(height: 16),
         _buildAnswerSlots(dragDropState, ref),
         const SizedBox(height: 24),
         _buildOptionBank(dragDropState, ref),
@@ -38,19 +39,52 @@ class DragAndDropQuestionWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildInstructions() {
-    return const Text(
-      _instructionText,
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: Colors.blue,
-      ),
+  // NEW: Combined question content section
+  Widget _buildQuestionContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Display question image if available
+        if (question.hasQuestionImage)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: Center(
+              child: Image.network(
+                question.questionImage!,
+                height: 150,
+                fit: BoxFit.contain,
+                errorBuilder:
+                    (context, error, stackTrace) =>
+                        const Icon(Icons.broken_image),
+              ),
+            ),
+          ),
+
+        // Display question text
+        /*  if (question.questionText.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Text(
+              question.questionText,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ), */
+
+        // Instructions text
+        const Text(
+          _instructionText,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildAnswerSlots(dynamic dragDropState, WidgetRef ref) {
-    final answerSlots = dragDropState.answerSlots as List<String?>;
+  Widget _buildAnswerSlots(DragAndDropState dragDropState, WidgetRef ref) {
+    final answerSlots = dragDropState.answerSlots;
 
     return Wrap(
       alignment: WrapAlignment.center,
@@ -69,7 +103,7 @@ class DragAndDropQuestionWidget extends ConsumerWidget {
   }
 
   Widget _buildAnswerSlot(
-    dynamic dragDropState,
+    DragAndDropState dragDropState,
     WidgetRef ref,
     int slotIndex,
     String? slotData,
@@ -100,13 +134,13 @@ class DragAndDropQuestionWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildOptionBank(dynamic dragDropState, WidgetRef ref) {
-    final optionBank = dragDropState.optionBank as List<String>;
+  Widget _buildOptionBank(DragAndDropState dragDropState, WidgetRef ref) {
+    final optionBank = dragDropState.optionBank;
 
     return DragTarget<Map<String, dynamic>>(
-      onWillAccept: (data) => data != null && data['from'] == 'slot',
-      onAccept: (data) {
-        final fromIndex = data['slotIndex'] as int;
+      onWillAcceptWithDetails: (details) => details.data['from'] == 'slot',
+      onAcceptWithDetails: (details) {
+        final fromIndex = details.data['slotIndex'] as int;
         ref
             .read(dragAndDropProvider(question).notifier)
             .moveFromSlotToBank(fromIndex);
@@ -153,7 +187,7 @@ class DragAndDropQuestionWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildErrorMessage(dynamic dragDropState) {
+  Widget _buildErrorMessage(DragAndDropState dragDropState) {
     if (!dragDropState.hasDuplicatesInSlots()) return const SizedBox.shrink();
 
     return Padding(
@@ -165,7 +199,7 @@ class DragAndDropQuestionWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildSubmitButton(dynamic dragDropState, WidgetRef ref) {
+  Widget _buildSubmitButton(DragAndDropState dragDropState, WidgetRef ref) {
     if (dragDropState.hasSubmitted) return const SizedBox.shrink();
 
     return Padding(
@@ -179,7 +213,7 @@ class DragAndDropQuestionWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildResults(dynamic dragDropState, WidgetRef ref) {
+  Widget _buildResults(DragAndDropState dragDropState, WidgetRef ref) {
     if (!dragDropState.hasSubmitted) return const SizedBox.shrink();
 
     return Padding(
@@ -243,7 +277,7 @@ class DragAndDropQuestionWidget extends ConsumerWidget {
     return BoxDecoration(
       color:
           isHighlighted
-              ? Colors.lightGreenAccent.withOpacity(0.5)
+              ? Colors.lightGreenAccent.withValues(alpha: 0.5)
               : (slotData == null ? Colors.grey[200] : Colors.blue[100]),
       borderRadius: BorderRadius.circular(_borderRadius),
       border: Border.all(
@@ -257,11 +291,14 @@ class DragAndDropQuestionWidget extends ConsumerWidget {
     return BoxDecoration(
       color:
           isHighlighted
-              ? Colors.lightBlueAccent.withOpacity(0.2)
+              ? const Color.fromARGB(255, 255, 255, 255).withValues(alpha: 0.2)
               : Colors.transparent,
       borderRadius: BorderRadius.circular(12),
       border: Border.all(
-        color: isHighlighted ? Colors.blue : Colors.transparent,
+        color:
+            isHighlighted
+                ? const Color.fromARGB(255, 255, 255, 255)
+                : Colors.transparent,
         width: isHighlighted ? 2 : 0,
       ),
     );
@@ -269,13 +306,14 @@ class DragAndDropQuestionWidget extends ConsumerWidget {
 
   BoxDecoration _getResultDecoration(bool isCorrect) {
     return BoxDecoration(
-      color: (isCorrect ? Colors.green : Colors.red).withOpacity(0.1),
+      color: (isCorrect ? Colors.green : Colors.red).withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(8),
       border: Border.all(color: isCorrect ? Colors.green : Colors.red),
     );
   }
 
   Widget _buildOptionChip(String option, {bool isDragging = false}) {
+    // NEW: Check if options are images or text
     final hasImage = question.hasImageOptions;
 
     return Container(
@@ -288,6 +326,7 @@ class DragAndDropQuestionWidget extends ConsumerWidget {
       padding: const EdgeInsets.all(6),
       decoration: _getChipDecoration(isDragging),
       alignment: Alignment.center,
+      // NEW: Conditionally build image or text option
       child: hasImage ? _buildImageOption(option) : _buildTextOption(option),
     );
   }
@@ -312,14 +351,17 @@ class DragAndDropQuestionWidget extends ConsumerWidget {
   Widget _buildTextOption(String option) {
     return Text(
       option,
-      style: const TextStyle(color: Colors.white),
+      style: const TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
       textAlign: TextAlign.center,
     );
   }
 
   BoxDecoration _getChipDecoration(bool isDragging) {
     return BoxDecoration(
-      color: isDragging ? Colors.blue[200] : Colors.blue,
+      color:
+          isDragging
+              ? Colors.blue[200]
+              : const Color.fromARGB(255, 255, 255, 255),
       borderRadius: BorderRadius.circular(12),
       boxShadow:
           isDragging

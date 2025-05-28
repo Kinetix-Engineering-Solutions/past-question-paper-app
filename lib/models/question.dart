@@ -6,37 +6,41 @@ class Question {
   final String questionType;
   final String questionText;
   final String? questionImage; // New field for question image
-  final List<String> options;
+  final List<String> options; // Text options (used when no option images)
   final List<String>? optionImages; // New field for option images
   final List<int> correctOrder; // For drag-and-drop questions
   final List<String> correctAnswer;
   final String explanation;
-
   Question({
     required this.id,
     required this.questionType,
     required this.questionText,
     this.questionImage, // Optional image URL for the question
-    required this.options,
+    this.options =
+        const <String>[], // Default to empty list when using image options
     this.optionImages, // Optional image URLs for options
     required this.correctOrder,
     required this.correctAnswer,
     required this.explanation,
   });
-
   factory Question.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
-    final hasImageBasedOptions = data['optionImages'] != null;
+    final hasImageBasedOptions =
+        data['optionImages'] != null &&
+        (data['optionImages'] as List).isNotEmpty;
 
     return Question(
       id: doc.id,
       questionType: data['questionType'] ?? '',
       questionText: data['questionText'] ?? '',
       questionImage: data['questionImage'],
-      //Load text options if present
-      options: List<String>.from(data['options'] ?? []),
-      //Load image options if present
+      // Load text options only if there are no option images
+      options:
+          hasImageBasedOptions
+              ? <String>[] // Empty list when using image options
+              : List<String>.from(data['options'] ?? []),
+      // Load image options if present
       optionImages:
           hasImageBasedOptions ? List<String>.from(data['optionImages']) : null,
       correctOrder: List<int>.from(data['correctOrder'] ?? []),
@@ -44,12 +48,10 @@ class Question {
       explanation: data['explanation'] ?? '',
     );
   }
-
   Map<String, dynamic> toMap() {
     Map<String, dynamic> map = {
       'questionType': questionType,
       'questionText': questionText,
-      'options': options,
       'correctOrder': correctOrder,
       'correctAnswer': correctAnswer,
       'explanation': explanation,
@@ -59,8 +61,12 @@ class Question {
     if (questionImage != null) {
       map['questionImage'] = questionImage;
     }
-    if (optionImages != null) {
+
+    // Save option images if they exist, otherwise save text options
+    if (optionImages != null && optionImages!.isNotEmpty) {
       map['optionImages'] = optionImages;
+    } else {
+      map['options'] = options;
     }
 
     return map;
@@ -73,14 +79,31 @@ class Question {
   bool get hasQuestionImage =>
       questionImage != null && questionImage!.isNotEmpty;
 
+  // Check if should use text options (when no image options are available)
+  bool get useTextOptions => !hasImageOptions && options.isNotEmpty;
+
+  // Check if should display question image instead of text
+  bool get useQuestionImage => hasQuestionImage;
+
+  // Get the appropriate options to display
+  List<String> get displayOptions {
+    if (hasImageOptions) {
+      return optionImages!;
+    }
+    return options;
+  }
+
   // Validate drag-and-drop question
   bool get isValidDragAndDrop {
     if (questionType != 'drag-and-drop') return false;
-    if (!hasImageOptions) return false;
+
+    // For drag-and-drop, we need either image options or text options
+    if (!hasImageOptions && options.isEmpty) return false;
 
     // Validate that correctOrder indices are valid
+    final maxIndex = hasImageOptions ? optionImages!.length : options.length;
     for (int index in correctOrder) {
-      if (index < 0 || index >= (optionImages?.length ?? 0)) {
+      if (index < 0 || index >= maxIndex) {
         return false;
       }
     }
@@ -91,7 +114,15 @@ class Question {
   // Validate options length matches correctOrder length for drag-and-drop
   bool get hasValidOptionCount {
     if (questionType != 'drag-and-drop') return true;
-    return optionImages?.length == correctOrder.length;
+
+    // Use option images count if they exist, otherwise use text options count
+    final optionCount = hasImageOptions ? optionImages!.length : options.length;
+    return optionCount == correctOrder.length;
+  }
+
+  // Get the count of available options (either image or text)
+  int get optionCount {
+    return hasImageOptions ? optionImages!.length : options.length;
   }
 
   // Get HTTP download URLs for all images (converting gs:// URLs if needed)
@@ -113,15 +144,13 @@ class Question {
           final httpUrl = await storageService.getDownloadUrl(url);
           httpOptionImages.add(httpUrl);
         }
-      }
-
-      // Return a new Question instance with HTTP URLs
+      } // Return a new Question instance with HTTP URLs
       return Question(
         id: id,
         questionType: questionType,
         questionText: questionText,
         questionImage: httpQuestionImage,
-        options: options,
+        options: options, // Keep original text options
         optionImages: httpOptionImages,
         correctOrder: correctOrder,
         correctAnswer: correctAnswer,
