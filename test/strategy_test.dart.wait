@@ -1,0 +1,141 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:past_question_paper_stem/domain/factories/question_strategy_factory.dart';
+import 'package:past_question_paper_stem/domain/strategies/drag_and_drop_strategy.dart';
+import 'package:past_question_paper_stem/domain/strategies/multiple_choice_strategy.dart';
+import 'package:past_question_paper_stem/domain/strategies/true_false_strategy.dart';
+import 'package:past_question_paper_stem/models/question.dart';
+
+void main() {
+  group('QuestionStrategyFactory', () {
+    test('should return MultipleChoiceStrategy for MCQ questions', () {
+      final question = Question(
+        id: '1',
+        questionType: 'Multiple Choice',
+        questionText: 'What is 2+2?',
+        options: ['3', '4', '5', '6'],
+        correctOrder: [],
+        correctAnswer: ['4'],
+        explanation: 'Basic addition',
+      );
+
+      final strategy = QuestionStrategyFactory.getStrategy(question);
+
+      expect(strategy, isA<MultipleChoiceStrategy>());
+    });
+
+    test('should return DragAndDropStrategy for drag-and-drop questions', () {
+      final question = Question(
+        id: '2',
+        questionType: 'Drag-and-Drop',
+        questionText: 'Order the planets from closest to furthest from the Sun',
+        options: ['Earth', 'Mercury', 'Venus', 'Mars'],
+        correctOrder: [1, 2, 0, 3], // Mercury, Venus, Earth, Mars
+        correctAnswer: [],
+        explanation: 'The order of planets in the solar system',
+      );
+
+      final strategy = QuestionStrategyFactory.getStrategy(question);
+
+      expect(strategy, isA<DragAndDropStrategy>());
+    });
+
+    test('should return TrueFalseStrategy for true/false questions', () {
+      final question = Question(
+        id: '3',
+        questionType: 'True/False',
+        questionText: 'The Earth is flat',
+        options: ['True', 'False'],
+        correctOrder: [],
+        correctAnswer: ['False'],
+        explanation: 'The Earth is approximately spherical',
+      );
+
+      final strategy = QuestionStrategyFactory.getStrategy(question);
+
+      expect(strategy, isA<TrueFalseStrategy>());
+    });
+
+    test('should be case-insensitive when determining strategy', () {
+      final mcqQuestion = Question(
+        id: '4',
+        questionType: 'mcq',
+        questionText: 'What is the capital of France?',
+        options: ['London', 'Paris', 'Berlin', 'Rome'],
+        correctOrder: [],
+        correctAnswer: ['Paris'],
+        explanation: 'Paris is the capital of France',
+      );
+
+      final strategy = QuestionStrategyFactory.getStrategy(mcqQuestion);
+
+      expect(strategy, isA<MultipleChoiceStrategy>());
+    });
+  });
+
+  group('Strategy Validation', () {
+    test('MultipleChoiceStrategy correctly validates questions', () {
+      final strategy = MultipleChoiceStrategy();
+
+      final validQuestion = Question(
+        id: '5',
+        questionType: 'MCQ',
+        questionText: 'What is the largest planet?',
+        options: ['Earth', 'Jupiter', 'Mars', 'Venus'],
+        correctOrder: [],
+        correctAnswer: ['Jupiter'],
+        explanation: 'Jupiter is the largest planet in our solar system',
+      );
+
+      final invalidQuestion = Question(
+        id: '6',
+        questionType: 'MCQ',
+        questionText: 'What is the largest planet?',
+        options: [], // No options
+        correctOrder: [],
+        correctAnswer: ['Jupiter'],
+        explanation: 'Jupiter is the largest planet in our solar system',
+      );
+
+      expect(strategy.validate(validQuestion), isTrue);
+      expect(strategy.validate(invalidQuestion), isFalse);
+    });
+
+    test('DragAndDropStrategy correctly validates questions', () {
+      final strategy = DragAndDropStrategy();
+
+      final validQuestion = Question(
+        id: '7',
+        questionType: 'Drag-and-Drop',
+        questionText: 'Order from smallest to largest',
+        options: ['House', 'City', 'Country', 'Continent'],
+        correctOrder: [0, 1, 2, 3],
+        correctAnswer: [],
+        explanation: 'Size order from smallest to largest',
+      );
+
+      final invalidQuestion1 = Question(
+        id: '8',
+        questionType: 'Drag-and-Drop',
+        questionText: 'Order from smallest to largest',
+        options: ['House', 'City', 'Country', 'Continent'],
+        correctOrder: [], // No correct order
+        correctAnswer: [],
+        explanation: 'Size order from smallest to largest',
+      );
+
+      final invalidQuestion2 = Question(
+        id: '9',
+        questionType: 'Drag-and-Drop',
+        questionText: 'Order from smallest to largest',
+        options: ['House', 'City', 'Country', 'Continent'],
+        correctOrder: [0, 1, 2, 10], // Out of bounds index
+        correctAnswer: [],
+        explanation: 'Size order from smallest to largest',
+      );
+
+      expect(strategy.validate(validQuestion), isTrue);
+      expect(strategy.validate(invalidQuestion1), isFalse);
+      expect(strategy.validate(invalidQuestion2), isFalse);
+    });
+  });
+}

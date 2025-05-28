@@ -5,9 +5,9 @@ class Question {
   final String id;
   final String questionType;
   final String questionText;
-  final String? questionImageUrl; // New field for question image
+  final String? questionImage; // New field for question image
   final List<String> options;
-  final List<String>? optionImageUrls; // New field for option images
+  final List<String>? optionImages; // New field for option images
   final List<int> correctOrder; // For drag-and-drop questions
   final List<String> correctAnswer;
   final String explanation;
@@ -16,9 +16,9 @@ class Question {
     required this.id,
     required this.questionType,
     required this.questionText,
-    this.questionImageUrl, // Optional image URL for the question
+    this.questionImage, // Optional image URL for the question
     required this.options,
-    this.optionImageUrls, // Optional image URLs for options
+    this.optionImages, // Optional image URLs for options
     required this.correctOrder,
     required this.correctAnswer,
     required this.explanation,
@@ -27,16 +27,18 @@ class Question {
   factory Question.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
+    final hasImageBasedOptions = data['optionImages'] != null;
+
     return Question(
       id: doc.id,
       questionType: data['questionType'] ?? '',
       questionText: data['questionText'] ?? '',
-      questionImageUrl: data['questionImageUrl'],
+      questionImage: data['questionImage'],
+      //Load text options if present
       options: List<String>.from(data['options'] ?? []),
-      optionImageUrls:
-          data['optionImageUrls'] != null
-              ? List<String>.from(data['optionImageUrls'])
-              : null,
+      //Load image options if present
+      optionImages:
+          hasImageBasedOptions ? List<String>.from(data['optionImages']) : null,
       correctOrder: List<int>.from(data['correctOrder'] ?? []),
       correctAnswer: List<String>.from(data['correctAnswer'] ?? []),
       explanation: data['explanation'] ?? '',
@@ -54,44 +56,62 @@ class Question {
     };
 
     // Add optional fields only if they exist
-    if (questionImageUrl != null) {
-      map['questionImageUrl'] = questionImageUrl;
+    if (questionImage != null) {
+      map['questionImage'] = questionImage;
     }
-    if (optionImageUrls != null) {
-      map['optionImageUrls'] = optionImageUrls;
+    if (optionImages != null) {
+      map['optionImages'] = optionImages;
     }
 
     return map;
   }
 
   // Check if this question has image-based options
-  bool get hasImageOptions =>
-      optionImageUrls != null && optionImageUrls!.isNotEmpty;
+  bool get hasImageOptions => optionImages != null && optionImages!.isNotEmpty;
 
   // Check if this question has an image
   bool get hasQuestionImage =>
-      questionImageUrl != null && questionImageUrl!.isNotEmpty;
+      questionImage != null && questionImage!.isNotEmpty;
+
+  // Validate drag-and-drop question
+  bool get isValidDragAndDrop {
+    if (questionType != 'drag-and-drop') return false;
+    if (!hasImageOptions) return false;
+
+    // Validate that correctOrder indices are valid
+    for (int index in correctOrder) {
+      if (index < 0 || index >= (optionImages?.length ?? 0)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  // Validate options length matches correctOrder length for drag-and-drop
+  bool get hasValidOptionCount {
+    if (questionType != 'drag-and-drop') return true;
+    return optionImages?.length == correctOrder.length;
+  }
 
   // Get HTTP download URLs for all images (converting gs:// URLs if needed)
   Future<Question> withHttpUrls() async {
     final storageService = StorageService();
-    String? httpQuestionImageUrl;
-    List<String>? httpOptionImageUrls;
+    String? httpQuestionImage;
+    List<String>? httpOptionImages;
 
     try {
       // Convert question image URL if it exists
       if (hasQuestionImage) {
-        httpQuestionImageUrl = await storageService.getDownloadUrl(
-          questionImageUrl!,
-        );
+        httpQuestionImage = await storageService.getDownloadUrl(questionImage!);
       }
 
       // Convert option image URLs if they exist
       if (hasImageOptions) {
-        httpOptionImageUrls = [];
-        for (String url in optionImageUrls!) {
+        httpOptionImages = [];
+        for (String url in optionImages!) {
           final httpUrl = await storageService.getDownloadUrl(url);
-          httpOptionImageUrls.add(httpUrl);
+          httpOptionImages.add(httpUrl);
         }
       }
 
@@ -100,9 +120,9 @@ class Question {
         id: id,
         questionType: questionType,
         questionText: questionText,
-        questionImageUrl: httpQuestionImageUrl,
+        questionImage: httpQuestionImage,
         options: options,
-        optionImageUrls: httpOptionImageUrls,
+        optionImages: httpOptionImages,
         correctOrder: correctOrder,
         correctAnswer: correctAnswer,
         explanation: explanation,

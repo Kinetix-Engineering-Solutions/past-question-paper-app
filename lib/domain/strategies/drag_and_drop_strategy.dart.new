@@ -1,0 +1,350 @@
+// filepath: c:\Users\irvin\Desktop\flutter projects\past_question_paper_stem\lib\domain\strategies\drag_and_drop_strategy.dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:past_question_paper_stem/domain/providers/drag_and_drop_provider.dart';
+import 'package:past_question_paper_stem/domain/strategies/question_strategy.dart';
+import 'package:past_question_paper_stem/models/question.dart';
+import 'dart:math';
+
+/// Strategy for handling drag-and-drop questions
+class DragAndDropStrategy implements QuestionStrategy {
+ 
+  @override
+  bool validate(Question question) {
+    // Check if the question has options and a valid correctOrder
+    if (question.options.isEmpty) return false;
+    if (question.correctOrder.isEmpty) return false;
+
+    // Make sure correctOrder doesn't have out-of-bounds indices
+    return !question.correctOrder.any(
+      (index) => index >= question.options.length,
+    );
+  }
+
+  @override
+  Widget buildQuestionContent(Question question, BuildContext context) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final dragDropState = ref.watch(dragAndDropProvider(question));
+        
+        List<String?> answerSlots = dragDropState.answerSlots;
+        List<String> optionBank = dragDropState.optionBank;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Drag the correct options to solve the question:',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Answer slots (horizontal, manual reordering)
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: List.generate(answerSlots.length, (slotIndex) {
+                final slotData = answerSlots[slotIndex];
+                return DragTarget<Map<String, dynamic>>(
+                  onWillAccept: (data) {
+                    // Accept if dragging from bank or another slot (not same slot)
+                    if (data == null) return false;
+                    if (data['from'] == 'bank') {
+                      return slotData == null;
+                    } else if (data['from'] == 'slot') {
+                      return data['slotIndex'] != slotIndex && slotData == null;
+                    }
+                    return false;
+                  },
+                  onAccept: (data) {
+                    if (data['from'] == 'bank') {
+                      // Place from bank to slot using the provider
+                      final option = data['option'] as String;
+                      ref.read(dragAndDropProvider(question).notifier)
+                          .moveFromBankToSlot(option, slotIndex);
+                    } else if (data['from'] == 'slot') {
+                      // Move from another slot (reorder) using the provider
+                      final fromIndex = data['slotIndex'] as int;
+                      ref.read(dragAndDropProvider(question).notifier)
+                          .moveFromSlotToSlot(fromIndex, slotIndex);
+                    }
+                  },
+                  builder: (context, candidateData, rejectedData) {
+                    final isHighlighted = candidateData.isNotEmpty;
+                    return Container(
+                      width: 130,
+                      height: 50,
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color:
+                            isHighlighted
+                                ? Colors.lightGreenAccent.withOpacity(0.5)
+                                : (slotData == null
+                                    ? Colors.grey[200]
+                                    : Colors.blue[100]),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color:
+                              isHighlighted ? Colors.green : Colors.blueAccent,
+                          width: 2,
+                        ),
+                      ),
+                      child:
+                          slotData == null
+                              ? const Center(child: Text(""))
+                              : Draggable<Map<String, dynamic>>(
+                                data: {
+                                  'option': slotData,
+                                  'from': 'slot',
+                                  'slotIndex': slotIndex,
+                                },
+                                feedback: Material(
+                                  color: Colors.transparent,
+                                  child: _buildOptionChip(
+                                    question,
+                                    slotData,
+                                    isDragging: true,
+                                  ),
+                                ),
+                                childWhenDragging: Opacity(
+                                  opacity: 0.3,
+                                  child: _buildOptionChip(question, slotData),
+                                ),
+                                child: _buildOptionChip(question, slotData),
+                              ),
+                    );
+                  },
+                );
+              }),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Option bank as a DragTarget
+            DragTarget<Map<String, dynamic>>(
+              onWillAccept: (data) {
+                // Only accept if dragging from a slot
+                return data != null && data['from'] == 'slot';
+              },
+              onAccept: (data) {
+                final fromIndex = data['slotIndex'] as int;
+                ref.read(dragAndDropProvider(question).notifier)
+                    .moveFromSlotToBank(fromIndex);
+              },
+              builder: (context, candidateData, rejectedData) {
+                final isHighlighted = candidateData.isNotEmpty;
+                return Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color:
+                        isHighlighted
+                            ? Colors.lightBlueAccent.withOpacity(0.2)
+                            : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isHighlighted ? Colors.blue : Colors.transparent,
+                      width: isHighlighted ? 2 : 0,
+                    ),
+                  ),
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children:
+                        optionBank.map((option) {
+                          return Draggable<Map<String, dynamic>>(
+                            data: {'option': option, 'from': 'bank'},
+                            feedback: Material(
+                              color: Colors.transparent,
+                              child: _buildOptionChip(
+                                question,
+                                option,
+                                isDragging: true,
+                              ),
+                            ),
+                            childWhenDragging: Opacity(
+                              opacity: 0.3,
+                              child: _buildOptionChip(question, option),
+                            ),
+                            child: _buildOptionChip(question, option),
+                          );
+                        }).toList(),
+                  ),
+                );
+              },
+            ),
+
+            // Error message for duplicate options in slots
+            if (dragDropState.hasDuplicatesInSlots())
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Error: The same option cannot be placed in multiple slots.',
+                  style: TextStyle(
+                    color: Colors.red[700],
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
+            // Submit button
+            if (!dragDropState.hasSubmitted)
+              Padding(
+                padding: const EdgeInsets.only(top: 16.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    ref.read(dragAndDropProvider(question).notifier).checkAnswer();
+                  },
+                  child: const Text('Check Answer'),
+                ),
+              ),
+
+            // Results
+            if (dragDropState.hasSubmitted)
+              Padding(
+                padding: const EdgeInsets.only(top: 16.0),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: dragDropState.isCorrect 
+                        ? Colors.green.withOpacity(0.1) 
+                        : Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: dragDropState.isCorrect ? Colors.green : Colors.red,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        dragDropState.isCorrect
+                            ? 'Correct! Well done!'
+                            : 'Not quite right. Keep trying!',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: dragDropState.isCorrect ? Colors.green : Colors.red,
+                        ),
+                      ),
+                      if (!dragDropState.isCorrect)
+                        TextButton(
+                          onPressed: () {
+                            ref.read(dragAndDropProvider(question).notifier).reset();
+                          },
+                          child: const Text('Try Again'),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Helper method to build option chips that can include images
+  Widget _buildOptionChip(
+    Question question,
+    String option, {
+    bool isDragging = false,
+  }) {
+    int optionIndex = question.options.indexOf(option);
+    String? imageUrl;
+    if (question.hasImageOptions &&
+        optionIndex < (question.optionImages?.length ?? 0)) {
+      imageUrl = question.optionImages![optionIndex];
+    }
+
+    return Container(
+      constraints: const BoxConstraints(
+        minWidth: 0,
+        minHeight: 0,
+        maxWidth: 130,
+        maxHeight: 50,
+      ),
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: isDragging ? Colors.blue[200] : Colors.blue,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow:
+            isDragging
+                ? [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+                : [],
+      ),
+      alignment: Alignment.center,
+      child:
+          imageUrl != null
+              ? ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  imageUrl,
+                  width: 118,
+                  height: 38,
+                  fit: BoxFit.contain,
+                  errorBuilder:
+                      (context, error, stackTrace) =>
+                          const Icon(Icons.broken_image, color: Colors.white),
+                  cacheWidth: 236, // 2x for high-res
+                  cacheHeight: 76,
+                ),
+              )
+              : Text(
+                option,
+                style: const TextStyle(color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
+    );
+  }
+
+  @override
+  bool checkAnswer(Question question, userAnswer) {
+    if (userAnswer is Map<String, dynamic>) {
+      final answerSlots = userAnswer['answerSlots'] as List<String?>;
+      
+      // Check if all slots are filled
+      if (answerSlots.any((item) => item == null)) return false;
+
+      // Check if the order matches the correctOrder
+      for (int i = 0; i < question.correctOrder.length; i++) {
+        final correctOption = question.options[question.correctOrder[i]];
+        if (answerSlots[i] != correctOption) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  @override
+  String getCorrectAnswerText(Question question) {
+    List<String> orderedOptions = [];
+    for (int index in question.correctOrder) {
+      if (index < question.options.length) {
+        orderedOptions.add(question.options[index]);
+      }
+    }
+    return orderedOptions.join(" → ");
+  }
+
+  @override
+  dynamic createInitialState(Question question) {
+    // No need to create an initial state here, as we're using the provider
+    // The provider already has its own initialization logic
+    return null;
+  }
+}
