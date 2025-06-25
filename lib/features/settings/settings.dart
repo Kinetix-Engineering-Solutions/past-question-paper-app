@@ -88,7 +88,6 @@ class SettingsPage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-
           // Support
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
@@ -108,7 +107,9 @@ class SettingsPage extends ConsumerWidget {
                   leading: const Icon(Icons.help),
                   title: const Text('Help & Support'),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () {},
+                  onTap: () {
+                    context.go('/helperAndsupport');
+                  },
                 ),
                 const Divider(height: 1),
                 ListTile(
@@ -156,9 +157,9 @@ class SettingsPage extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () {
-              // Handle sign out logic here
+              // Handle sign out logic here - add the firebase sign out and dispose of all user information
               Navigator.pop(context);
-              context.go('/subjects'); // Redirect to initial page
+              context.go('/login'); // Redirect to initial page
             },
             child: const Text(
               'Sign Out',

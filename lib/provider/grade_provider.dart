@@ -1,6 +1,6 @@
 // providers/grade_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/grade.dart';
+import '../core/models/grade.dart';
 
 final gradesProvider = Provider<List<Grade>>((ref) {
   return [

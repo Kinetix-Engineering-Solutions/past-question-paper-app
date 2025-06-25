@@ -1,9 +1,7 @@
 // widgets/grade_selector.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../provider/grade_provider.dart';
-
+import '../../provider/grade_provider.dart';
 
 class GradeSelector extends ConsumerWidget {
   const GradeSelector({super.key});

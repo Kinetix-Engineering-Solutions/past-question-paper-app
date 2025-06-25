@@ -1,7 +1,7 @@
 // subject_provider.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/subject.dart';
+import '../core/models/subject.dart';
 
 final subjectsProvider = Provider<List<Subject>>((ref) {
   return [

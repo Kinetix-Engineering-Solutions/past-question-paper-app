@@ -1,12 +1,12 @@
-// pages/subject_selection_page.dart
+//subject_selection_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/provider/grade_provider.dart';
-import '../../core/provider/subject_provider.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/grade_selector.dart';
 import '../../core/widgets/subject_card.dart';
+import '../../provider/grade_provider.dart';
+import '../../provider/subject_provider.dart';
 
 
 class SubjectSelectionPage extends ConsumerWidget {
