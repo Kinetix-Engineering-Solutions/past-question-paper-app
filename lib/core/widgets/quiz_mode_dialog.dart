@@ -1,6 +1,6 @@
 // features/dashboard/widgets/quiz_mode_dialog.dart
 import 'package:flutter/material.dart';
-import '../models/subject.dart';
+import '../../core/models/subject.dart';
 
 class QuizModeDialog extends StatelessWidget {
   final Subject subject;

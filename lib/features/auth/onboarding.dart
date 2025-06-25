@@ -92,7 +92,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   child: ElevatedButton(
                     onPressed: () {
                       // Navigate to login page
-                      context.go('/subjects');
+                      context.go('/login');
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 15),

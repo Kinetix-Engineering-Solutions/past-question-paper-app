@@ -2,13 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/models/subject.dart';
-import '../../core/provider/subject_provider.dart';
 import '../../core/widgets/dashboard_app_bar.dart';
 import '../../core/widgets/progress_tab.dart';
 import '../../core/widgets/quiz_mode_dialog.dart';
 import '../../core/widgets/recent_favorites_tab.dart';
 import '../../core/widgets/subject_list.dart';
-
+import '../../provider/subject_provider.dart';
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
