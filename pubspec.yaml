@@ -35,6 +35,8 @@ dependencies:
   go_router: ^15.2.3
   riverpod_test: ^0.1.9
   sliver_tools: ^0.2.12
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_lints: ^5.0.0

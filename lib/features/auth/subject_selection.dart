@@ -201,7 +201,7 @@ class SubjectSelectionPage extends ConsumerWidget {
               child: CustomButton(
                 text: 'Continue',
                 onPressed: (selectedCount > 0 && selectedGrade != null)
-                    ? () => context.go('/dashboard')
+                    ? () => context.go('/quiz/session')
                     : null,
                 icon: Icons.arrow_forward,
               ),

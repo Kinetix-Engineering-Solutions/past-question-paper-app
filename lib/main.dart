@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/router.dart';
 
+
 void main() {
   runApp(const ProviderScope(child: QuizApp()));
 }
@@ -13,6 +14,7 @@ class QuizApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
+       routerConfig: AppRouter.router,
       title: 'Quiz Master',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -20,7 +22,7 @@ class QuizApp extends StatelessWidget {
         fontFamily: 'Inter',
         scaffoldBackgroundColor: const Color(0xFFF8F9FA),
       ),
-      routerConfig: AppRouter.router,
+     
     );
   }
 }
