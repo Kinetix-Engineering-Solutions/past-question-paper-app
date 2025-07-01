@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'quiz_flow_screen.dart'; // import enum QuizType
 
 class QuizTypeSelector extends StatelessWidget {
-  final void Function(String type) onSelect;
+  final void Function(QuizType type) onSelect;
 
   const QuizTypeSelector({super.key, required this.onSelect});
 
@@ -9,12 +10,12 @@ class QuizTypeSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final types = [
       {
-        'icon': Icons.check_box,
+        'icon': Icons.check_circle_outline,
         'title': 'True or False',
-        'desc': 'Answer with true or false',
-        'type': 'true false',
+        'desc': 'Choose true or false for each question',
+        'type': QuizType.trueFalse, // ✅ enum value
       },
-      {
+        {
         'icon': Icons.check_circle_outline,
         'title': 'Multiple Choice',
         'desc': 'Answer one from 4 options',
@@ -45,13 +46,16 @@ class QuizTypeSelector extends StatelessWidget {
         'type': 'long',
       },
     ];
-
+  
     return ListView.builder(
       itemCount: types.length,
       itemBuilder: (context, index) {
         final item = types[index];
         return GestureDetector(
-          onTap: () => onSelect(item['type'] as String),
+          onTap: () {
+            final type = item['type'] as QuizType;
+            onSelect(type);
+          },
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 10),
             padding: const EdgeInsets.all(20),
@@ -68,7 +72,7 @@ class QuizTypeSelector extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(item['icon'] as IconData, size: 32, color: Colors.blueAccent),
+                Icon(item['icon'] as IconData, size: 32, color: Colors.grey[700]),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
