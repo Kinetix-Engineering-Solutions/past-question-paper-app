@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -119,7 +120,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     return Column(
       children: [
         Image.asset(
-          'assets/images/welcome.png', // Replace with your image asset
+          'assets/images/welcome.png', 
           height: MediaQuery.of(context).size.height * 0.3,
         ),
         const SizedBox(height: 20),
@@ -149,11 +150,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         'icon': Icons.flash_on_outlined,
         'title': 'Rapid Session',
         'description': 'Quick practice with timed quizzes for fast recall',
+        'route': '/quiz/session',
       },
       {
         'icon': Icons.school_outlined,
         'title': 'Exam Session',
         'description': 'Full-length exams to simulate the real experience',
+         // Navigate to quiz type screen
       },
       {
         'icon': Icons.analytics_outlined,
@@ -184,8 +187,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           ),
         ),
       );
-
-      return SlideTransition(
+      //Navigate to type of question
+        return GestureDetector(
+       onTap: () {
+        final route = feature['route'] as String?;
+        if (route != null) {
+          context.go(route); 
+        }
+},
+      child:  SlideTransition(
         position: animation,
         child: Padding(
           padding: const EdgeInsets.only(bottom: 20),
@@ -228,6 +238,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             ],
           ),
         ),
+      )
       );
     }).toList();
   }
