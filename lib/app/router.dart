@@ -1,5 +1,6 @@
 // lib/routes/app_router.dart
 import 'package:go_router/go_router.dart';
+import 'package:past_question_paper_v1/core/models/quiz_type.dart';
 import '../features/auth/forgot_password_screen.dart';
 import '../features/auth/login_screen.dart';
 
@@ -59,16 +60,27 @@ class AppRouter {
         name: 'settings',
         builder: (context, state) => const SettingsPage(),
       ),
-      GoRoute(
-      path: '/quiz/session',
-       name: 'quiz_flow_screen',
-       builder: (context, state) => const QuizFlowScreen(),
-),
+    
       GoRoute(
         path: '/helperAndsupport',
-        name: 'helperAndsupport',
+       name: 'helperAndsupport',
         builder: (context, state) => const HelpSupportScreen(),
       ),
+      GoRoute(
+  path: '/quiz/session',
+  builder: (context, state) {
+    final subjectId = state.uri.queryParameters['subjectId'] ?? '';
+    final typeStr = state.uri.queryParameters['type'] ?? '';
+    final type = QuizType.values.firstWhere(
+      (e) => e.name == typeStr,
+      orElse: () => QuizType.none,
+    );
+
+    return QuizFlowScreen(
+      subjectId: subjectId,
+       type: type);
+  },
+),
     ],
   );
 }

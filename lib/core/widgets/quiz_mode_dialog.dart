@@ -1,5 +1,8 @@
-// features/dashboard/widgets/quiz_mode_dialog.dart
 import 'package:flutter/material.dart';
+import 'package:past_question_paper_v1/core/models/quiz_type.dart';
+
+import 'package:past_question_paper_v1/quiz/quiz_flow_screen.dart';
+import 'package:past_question_paper_v1/quiz/quiz_type_selector.dart';
 import '../../core/models/subject.dart';
 
 class QuizModeDialog extends StatelessWidget {
@@ -41,21 +44,48 @@ class QuizModeDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
+
+            // ✅ Rapid Session opens a nested selector
             _buildQuizModeOption(
               context,
               title: 'Rapid Session',
               description:
                   'Quick fire questions for active recall practice. Perfect for daily reviews and reinforcing knowledge on the go.',
-              onTap: () => onModeSelected('rapid'),
+              onTap: () {
+                Navigator.pop(context);
+                showDialog(
+                  context: context,
+                  builder: (_) => Dialog(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                    child: SizedBox(
+                      height: 400,
+                      child:QuizTypeSelector(
+  onSelect: (quizType) {
+    Navigator.pop(context); // close selector
+    onModeSelected('/quiz/session?type=${quizType.name}&subjectId=${subject.id}');
+  },
+)
+                    ),
+                  ),
+                );
+              },
             ),
+
             const SizedBox(height: 16),
+
+            // ✅ Exam Session uses fixed route
             _buildQuizModeOption(
               context,
               title: 'Exam Session',
               description:
                   'Comprehensive testing environment to simulate real exam conditions and track your progress.',
-              onTap: () => onModeSelected('exam'),
+              onTap: () {
+                Navigator.pop(context);
+                onModeSelected('/exam?subjectId=${subject.id}');
+              },
             ),
+
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,

@@ -150,7 +150,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         'icon': Icons.flash_on_outlined,
         'title': 'Rapid Session',
         'description': 'Quick practice with timed quizzes for fast recall',
-        'route': '/quiz/session',
+        
       },
       {
         'icon': Icons.school_outlined,
