@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/models/question.dart';
+import 'package:past_question_paper_stem/model/question.dart';
 import 'package:past_question_paper_stem/services/firestore_service.dart';
 
 // Provider to get the FirestoreService instance
