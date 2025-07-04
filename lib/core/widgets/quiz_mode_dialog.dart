@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:past_question_paper_v1/core/models/quiz_type.dart';
 
-import 'package:past_question_paper_v1/quiz/quiz_flow_screen.dart';
-import 'package:past_question_paper_v1/quiz/quiz_type_selector.dart';
+import 'package:past_question_paper_v1/features/quiz/quiz_flow_screen.dart';
+import 'package:past_question_paper_v1/features/quiz/quiz_type_selector.dart';
 import '../../core/models/subject.dart';
 
 class QuizModeDialog extends StatelessWidget {
@@ -61,11 +62,25 @@ class QuizModeDialog extends StatelessWidget {
                     child: SizedBox(
                       height: 400,
                       child:QuizTypeSelector(
-  onSelect: (quizType) {
-    Navigator.pop(context); // close selector
-    onModeSelected('/quiz/session?type=${quizType.name}&subjectId=${subject.id}');
-  },
+  subjectId: subject.id,
+  onSelect: (quizType, subjectId) {
+  Navigator.of(context).pop(); // First close the dialog
+
+  final selectedGrade = 'Grade 10'; // You should determine this from actual selection
+
+  Future.microtask(() {
+    context.goNamed(
+      'QuizFlowScreen', // make sure this matches your route name
+      queryParameters: {
+        'subjectId': subjectId,
+        'type': quizType.name,
+        'grade': selectedGrade,
+      },
+    );
+  });
+},
 )
+
                     ),
                   ),
                 );
@@ -74,7 +89,7 @@ class QuizModeDialog extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // ✅ Exam Session uses fixed route
+            // Exam Session uses fixed route
             _buildQuizModeOption(
               context,
               title: 'Exam Session',

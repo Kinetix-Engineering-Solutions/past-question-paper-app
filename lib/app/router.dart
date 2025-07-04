@@ -1,19 +1,20 @@
 // lib/routes/app_router.dart
 import 'package:go_router/go_router.dart';
+import 'package:past_question_paper_v1/core/models/grade.dart';
 import 'package:past_question_paper_v1/core/models/quiz_type.dart';
+import 'package:past_question_paper_v1/features/quiz/quiz_home_screen.dart';
+import 'package:past_question_paper_v1/provider/grade_provider.dart';
 import '../features/auth/forgot_password_screen.dart';
 import '../features/auth/login_screen.dart';
 
 import 'package:past_question_paper_v1/features/settings/settings.dart';
-import 'package:past_question_paper_v1/quiz/quiz_flow_screen.dart';
+import 'package:past_question_paper_v1/features/quiz/quiz_flow_screen.dart';
 import '../features/auth/onboarding.dart';
 import '../features/auth/register_screen.dart';
 import '../features/auth/subject_selection.dart';
 import '../features/home/dashboard.dart';
 import '../features/profile/user_profile.dart';
 
-
-import '../features/settings/settings.dart';
 import '../features/settings/help_and_support.dart';
 
 class AppRouter {
@@ -60,27 +61,34 @@ class AppRouter {
         name: 'settings',
         builder: (context, state) => const SettingsPage(),
       ),
-    
+
       GoRoute(
         path: '/helperAndsupport',
-       name: 'helperAndsupport',
+        name: 'helperAndsupport',
         builder: (context, state) => const HelpSupportScreen(),
       ),
-      GoRoute(
-  path: '/quiz/session',
-  builder: (context, state) {
-    final subjectId = state.uri.queryParameters['subjectId'] ?? '';
-    final typeStr = state.uri.queryParameters['type'] ?? '';
-    final type = QuizType.values.firstWhere(
-      (e) => e.name == typeStr,
-      orElse: () => QuizType.none,
-    );
+   
+    GoRoute(
+      path: '/',
+        name: 'home',
+        builder: (context, state) => const HomeScreen(),
 
-    return QuizFlowScreen(
-      subjectId: subjectId,
-       type: type);
-  },
-),
+    ),
+      GoRoute(
+        path: '/quiz/session',
+        name: 'quizSession',
+        builder: (context, state) {
+          final subjectId = state.uri.queryParameters['subjectId'] ?? '';
+          final typeStr = state.uri.queryParameters['type'] ?? '';
+
+          final type = QuizType.values.firstWhere(
+            (e) => e.name == typeStr,
+            orElse: () => QuizType.trueFalse,
+          );
+
+          return QuizFlowScreen(subjectId: subjectId, type: type);
+        },
+      ),
     ],
   );
 }
