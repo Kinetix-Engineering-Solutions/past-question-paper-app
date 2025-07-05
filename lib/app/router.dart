@@ -1,12 +1,8 @@
-// lib/routes/app_router.dart
 import 'package:go_router/go_router.dart';
-import 'package:past_question_paper_v1/core/models/grade.dart';
 import 'package:past_question_paper_v1/core/models/quiz_type.dart';
 import 'package:past_question_paper_v1/features/quiz/quiz_home_screen.dart';
-import 'package:past_question_paper_v1/provider/grade_provider.dart';
 import '../features/auth/forgot_password_screen.dart';
 import '../features/auth/login_screen.dart';
-
 import 'package:past_question_paper_v1/features/settings/settings.dart';
 import 'package:past_question_paper_v1/features/quiz/quiz_flow_screen.dart';
 import '../features/auth/onboarding.dart';
@@ -14,7 +10,6 @@ import '../features/auth/register_screen.dart';
 import '../features/auth/subject_selection.dart';
 import '../features/home/dashboard.dart';
 import '../features/profile/user_profile.dart';
-
 import '../features/settings/help_and_support.dart';
 
 class AppRouter {
@@ -61,32 +56,63 @@ class AppRouter {
         name: 'settings',
         builder: (context, state) => const SettingsPage(),
       ),
-
       GoRoute(
         path: '/helperAndsupport',
         name: 'helperAndsupport',
         builder: (context, state) => const HelpSupportScreen(),
       ),
-   
-    GoRoute(
-      path: '/',
-        name: 'home',
-        builder: (context, state) => const HomeScreen(),
-
-    ),
       GoRoute(
-        path: '/quiz/session',
+        path: '/',
+        name: 'home',
+        builder: (context, state) => const DashboardPage(),
+      ),
+
+      // ✅ Only one quizSession route should exist
+      GoRoute(
+        path: '/quizsession',
         name: 'quizSession',
         builder: (context, state) {
           final subjectId = state.uri.queryParameters['subjectId'] ?? '';
-          final typeStr = state.uri.queryParameters['type'] ?? '';
+          final subjectName = state.uri.queryParameters['subjectName'] ?? '';
+          final gradeId = state.uri.queryParameters['gradeId'] ?? '';
+          final gradeName = state.uri.queryParameters['gradeName'] ?? '';
 
-          final type = QuizType.values.firstWhere(
-            (e) => e.name == typeStr,
-            orElse: () => QuizType.trueFalse,
+          return QuizHomeScreen(
+            subjectId: subjectId,
+            subjectName: subjectName,
+            gradeId: gradeId,
+            gradeName: gradeName,
           );
+        },
+      ),
 
-          return QuizFlowScreen(subjectId: subjectId, type: type);
+      // ✅ Fixed Quiz flow route
+      GoRoute(
+        path: '/quiz-flow',
+        name: 'quizFlow',
+        builder: (context, state) {
+          final subjectId = state.uri.queryParameters['subjectId'] ?? '';
+          final subjectName = state.uri.queryParameters['subjectName'] ?? '';
+          final gradeId = state.uri.queryParameters['gradeId'] ?? '';
+          final gradeName = state.uri.queryParameters['gradeName'] ?? '';
+          final quizTypeStr = state.uri.queryParameters['quizType'] ?? '';
+
+          QuizType quizType;
+          try {
+            quizType = QuizType.values.firstWhere(
+              (e) => e.toString().split('.').last == quizTypeStr,
+            );
+          } catch (e) {
+            quizType = QuizType.multipleChoice; // fallback
+          }
+
+          return QuizFlowScreen(
+            subjectId: subjectId,
+            subjectName: subjectName,
+            gradeId: gradeId,
+            gradeName: gradeName,
+            quizType: quizType,
+          );
         },
       ),
     ],

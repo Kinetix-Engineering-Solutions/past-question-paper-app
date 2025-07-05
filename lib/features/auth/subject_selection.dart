@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/grade_selector.dart';
-import '../../core/widgets/subject_card.dart';
+import '../../core/widgets/dashboard/subject_card.dart';
 import '../../provider/grade_provider.dart';
 import '../../provider/subject_provider.dart';
 

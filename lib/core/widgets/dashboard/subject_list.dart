@@ -1,6 +1,6 @@
 // features/dashboard/widgets/subject_list.dart
 import 'package:flutter/material.dart';
-import '../../core/models/subject.dart';
+import '../../models/subject.dart';
 
 class SubjectList extends StatelessWidget {
   final List<Subject> subjects;

@@ -1,64 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:past_question_paper_v1/core/models/quiz_type.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../quiz/quiz_type_selector.dart';
+import 'package:past_question_paper_v1/core/models/quiz_type.dart';
+import 'quiz_type_selector.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class QuizHomeScreen extends ConsumerWidget {
+  final String subjectId;
+  final String subjectName;
+  final String gradeId;
+  final String gradeName;
 
-  final List<String> subjects = const [
-    'Biology',
-    'Mathematics',
-    'Physics',
-    'Chemistry',
-    'History',
-    'Geography',
-    'English',
-    'Computer Science',
-  ];
+  const QuizHomeScreen({
+    super.key,
+    required this.subjectId,
+    required this.subjectName,
+    required this.gradeId,
+    required this.gradeName,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Choose Subject')),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: subjects.length,
-        itemBuilder: (context, index) {
-          final subject = subjects[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 16),
-            child: ListTile(
-              title: Text(subject),
-              trailing: const Icon(Icons.arrow_forward_ios),
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
-                  isScrollControlled: true,
-                  builder: (_) => SizedBox(
-                    height: 450,
-                    child: QuizTypeSelector(
-                      subjectId: subject,
-                      onSelect: (type, subjectId) {
-                        Navigator.pop(context);
-                        Future.microtask(() {
-                          context.goNamed(
-                            'quizSession',
-                            queryParameters: {
-                              'subjectId': subjectId,
-                              'type': type.name,
-                            },
-                          );
-                        });
-                      },
-                    ),
-                  ),
-                );
-              },
-            ),
+      appBar: AppBar(
+        title: Text('$subjectName Quiz - $gradeName'),
+        backgroundColor: const Color(0xFF6C5CE7),
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      backgroundColor: const Color(0xFFF8F9FA),
+      body: QuizTypeSelector(
+        subjectId: subjectId,
+        onSelect: (quizType, selectedSubjectId) {
+          // Navigate to quiz flow using GoRouter
+          context.pushNamed(
+            'quizFlow',
+            queryParameters: {
+              'subjectId': selectedSubjectId,
+              'subjectName': subjectName,
+              'gradeId': gradeId,
+              'gradeName': gradeName,
+              'quizType': quizType.toString().split('.').last,
+            },
           );
         },
       ),

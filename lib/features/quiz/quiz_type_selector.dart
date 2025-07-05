@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:past_question_paper_v1/core/models/quiz_type.dart';
 
-class QuizTypeSelector extends StatelessWidget {
+class QuizTypeSelector extends ConsumerWidget {
   final String subjectId;
   final void Function(QuizType type, String subjectId) onSelect;
 
@@ -12,7 +14,7 @@ class QuizTypeSelector extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final types = [
       {
         'icon': Icons.check_circle_outline,

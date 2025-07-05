@@ -1,27 +1,24 @@
+// Updated QuizModeDialog to properly navigate
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:past_question_paper_v1/core/models/quiz_type.dart';
-
-import 'package:past_question_paper_v1/features/quiz/quiz_flow_screen.dart';
-import 'package:past_question_paper_v1/features/quiz/quiz_type_selector.dart';
-import '../../core/models/subject.dart';
+import '../../models/subject.dart';
 
 class QuizModeDialog extends StatelessWidget {
   final Subject subject;
-  final Function(String) onModeSelected;
+  final String gradeId;
+  final String gradeName;
 
   const QuizModeDialog({
     super.key,
     required this.subject,
-    required this.onModeSelected,
+    required this.gradeId,
+    required this.gradeName,
   });
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -39,14 +36,11 @@ class QuizModeDialog extends StatelessWidget {
             const SizedBox(height: 8),
             const Text(
               'Select the perfect study experience for you!',
-              style: TextStyle(
-                fontSize: 14,
-                color: Color(0xFF636E72),
-              ),
+              style: TextStyle(fontSize: 14, color: Color(0xFF636E72)),
             ),
             const SizedBox(height: 24),
 
-            // ✅ Rapid Session opens a nested selector
+            // Rapid Session - Navigate to quiz home screen for type selection
             _buildQuizModeOption(
               context,
               title: 'Rapid Session',
@@ -54,42 +48,23 @@ class QuizModeDialog extends StatelessWidget {
                   'Quick fire questions for active recall practice. Perfect for daily reviews and reinforcing knowledge on the go.',
               onTap: () {
                 Navigator.pop(context);
-                showDialog(
-                  context: context,
-                  builder: (_) => Dialog(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                    child: SizedBox(
-                      height: 400,
-                      child:QuizTypeSelector(
-  subjectId: subject.id,
-  onSelect: (quizType, subjectId) {
-  Navigator.of(context).pop(); // First close the dialog
-
-  final selectedGrade = 'Grade 10'; // You should determine this from actual selection
-
-  Future.microtask(() {
-    context.goNamed(
-      'QuizFlowScreen', // make sure this matches your route name
-      queryParameters: {
-        'subjectId': subjectId,
-        'type': quizType.name,
-        'grade': selectedGrade,
-      },
-    );
-  });
-},
-)
-
-                    ),
-                  ),
+                // Navigate to quiz home screen with parameters
+                context.pushNamed(
+                  'quizSession',
+                  queryParameters: {
+                    'subjectId': subject.id,
+                    'subjectName': subject.name,
+                    'gradeId': gradeId,
+                    'gradeName': gradeName,
+                    'mode': 'rapid',
+                  },
                 );
               },
             ),
 
             const SizedBox(height: 16),
 
-            // Exam Session uses fixed route
+            // Exam Session - Navigate to quiz home screen for type selection
             _buildQuizModeOption(
               context,
               title: 'Exam Session',
@@ -97,7 +72,17 @@ class QuizModeDialog extends StatelessWidget {
                   'Comprehensive testing environment to simulate real exam conditions and track your progress.',
               onTap: () {
                 Navigator.pop(context);
-                onModeSelected('/exam?subjectId=${subject.id}');
+                // Navigate to quiz home screen with parameters
+                context.pushNamed(
+                  'quizSession',
+                  queryParameters: {
+                    'subjectId': subject.id,
+                    'subjectName': subject.name,
+                    'gradeId': gradeId,
+                    'gradeName': gradeName,
+                    'mode': 'exam',
+                  },
+                );
               },
             ),
 
@@ -152,10 +137,7 @@ class QuizModeDialog extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               description,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF636E72),
-              ),
+              style: const TextStyle(fontSize: 14, color: Color(0xFF636E72)),
             ),
           ],
         ),
