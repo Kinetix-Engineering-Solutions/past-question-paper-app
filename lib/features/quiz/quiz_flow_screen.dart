@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:past_question_paper_v1/core/models/result.dart';
 import '../../core/models/quiz_type.dart';
 import '../../core/widgets/quiz/no_question_placeholder.dart';
 import '../../core/widgets/quiz/multiple_choice_options.dart';
@@ -280,12 +281,30 @@ class _QuizFlowScreenState extends ConsumerState<QuizFlowScreen> {
       ),
     );
   }
-// Submit Button
+
+  String _getMonthAbbr(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month - 1];
+  }
+
+  // Submit Button
   void _submitQuiz() {
     final selectedAnswers = ref.read(selectedAnswersProvider);
     final questionsList = _getQuestions();
 
-    // Calculate score
     int correctAnswers = 0;
     for (int i = 0; i < questionsList.length; i++) {
       final question = questionsList[i];
@@ -297,17 +316,32 @@ class _QuizFlowScreenState extends ConsumerState<QuizFlowScreen> {
       }
     }
 
-    // Navigate back to dashboard and show result
-    context.pop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Quiz Submitted! Score: $correctAnswers/${questionsList.length}',
-          style: const TextStyle(fontSize: 16),
-        ),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    final scorePercentage = ((correctAnswers / questionsList.length) * 100)
+        .round();
+
+    // Time taken logic (you can improve this based on real timer logic)
+    final totalTime =
+        30 * questionsList.length - ref.read(timerProvider); // simple estimate
+    final minutes = (totalTime ~/ 60).toString().padLeft(2, '0');
+    final seconds = (totalTime % 60).toString().padLeft(2, '0');
+    final timeTaken = '${minutes}m ${seconds}s';
+
+    final now = DateTime.now();
+    final date = '${_getMonthAbbr(now.month)} ${now.day}';
+
+    // Add to results
+    ref
+        .read(resultViewModelProvider.notifier)
+        .addResult(
+          QuizResult(
+            subject: widget.subjectName,
+            score: scorePercentage,
+            date: date,
+            timeTaken: timeTaken,
+          ),
+        );
+
+    // Navigate to the ResultPage (which will use the latest result)
+    context.go('/result');
   }
 }

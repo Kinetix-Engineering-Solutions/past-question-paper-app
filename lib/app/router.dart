@@ -1,6 +1,9 @@
 import 'package:go_router/go_router.dart';
 import 'package:past_question_paper_v1/core/models/quiz_type.dart';
 import 'package:past_question_paper_v1/features/quiz/quiz_home_screen.dart';
+import 'package:past_question_paper_v1/features/results/history.dart';
+import 'package:past_question_paper_v1/features/results/quiz_results.dart';
+import 'package:past_question_paper_v1/features/results/review_answers.dart';
 import '../features/auth/forgot_password_screen.dart';
 import '../features/auth/login_screen.dart';
 import 'package:past_question_paper_v1/features/settings/settings.dart';
@@ -84,6 +87,18 @@ class AppRouter {
             gradeName: gradeName,
           );
         },
+      ),
+      GoRoute(path: '/result', builder: (context, state) => const ResultPage()),
+
+      GoRoute(
+        path: '/answers',
+        name: 'answers',
+        builder: (context, state) => const ReviewAnswersPage(),
+      ),
+      GoRoute(
+        path: '/history',
+        name: 'history',
+        builder: (context, state) => const QuizHistoryPage(),
       ),
 
       // ✅ Fixed Quiz flow route
