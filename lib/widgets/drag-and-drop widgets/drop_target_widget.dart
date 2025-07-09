@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:past_question_paper_stem/model/drag_and_drop%20models/drag_Item.dart';
 import 'package:past_question_paper_stem/model/drag_and_drop%20models/drop_target.dart';
-import 'package:past_question_paper_stem/presentation/widgets/firebase_image.dart';
+import 'package:past_question_paper_stem/widgets/firebase_image.dart';
 
 class DropTargetWidget extends StatelessWidget {
   final DropTarget target;

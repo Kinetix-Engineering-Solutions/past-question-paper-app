@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:past_question_paper_stem/model/drag_and_drop%20models/drag_Item.dart';
 import 'package:past_question_paper_stem/model/drag_and_drop%20models/drop_target.dart';
-import 'package:past_question_paper_stem/presentation/widgets/firebase_image.dart';
+import 'package:past_question_paper_stem/widgets/firebase_image.dart';
 
 class DropTargetWidget extends StatelessWidget {
   final DropTarget target;
@@ -25,16 +25,11 @@ class DropTargetWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(
-          color: _getBorderColor(),
-          width: 2,
-        ),
+        border: Border.all(color: _getBorderColor(), width: 2),
         borderRadius: BorderRadius.circular(8),
         color: _getBackgroundColor(),
       ),
-      child: placedItem != null
-          ? _buildPlacedContent()
-          : _buildEmptyContent(),
+      child: placedItem != null ? _buildPlacedContent() : _buildEmptyContent(),
     );
   }
 
@@ -76,18 +71,11 @@ class DropTargetWidget extends StatelessWidget {
       content = Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.place_outlined,
-            color: Colors.grey.shade500,
-            size: 24,
-          ),
+          Icon(Icons.place_outlined, color: Colors.grey.shade500, size: 24),
           SizedBox(height: 4),
           Text(
             'Drop Here',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade500,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
           ),
         ],
       );
@@ -95,10 +83,7 @@ class DropTargetWidget extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.all(16),
-      constraints: BoxConstraints(
-        minWidth: 120,
-        minHeight: 80,
-      ),
+      constraints: BoxConstraints(minWidth: 120, minHeight: 80),
       child: Center(child: content),
     );
   }
@@ -112,9 +97,10 @@ class DropTargetWidget extends StatelessWidget {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          color: isCorrect
-              ? Colors.green.shade800
-              : isIncorrect
+          color:
+              isCorrect
+                  ? Colors.green.shade800
+                  : isIncorrect
                   ? Colors.red.shade800
                   : Colors.blue.shade800,
         ),
@@ -125,9 +111,10 @@ class DropTargetWidget extends StatelessWidget {
         imageUrl: placedItem!.image!,
         width: 50,
         height: 50,
-        iconColor: isCorrect
-            ? Colors.green.shade800
-            : isIncorrect
+        iconColor:
+            isCorrect
+                ? Colors.green.shade800
+                : isIncorrect
                 ? Colors.red.shade800
                 : Colors.blue.shade800,
       );
@@ -136,11 +123,12 @@ class DropTargetWidget extends StatelessWidget {
         isCorrect
             ? Icons.check_circle
             : isIncorrect
-                ? Icons.cancel
-                : Icons.check_circle_outline,
-        color: isCorrect
-            ? Colors.green.shade800
-            : isIncorrect
+            ? Icons.cancel
+            : Icons.check_circle_outline,
+        color:
+            isCorrect
+                ? Colors.green.shade800
+                : isIncorrect
                 ? Colors.red.shade800
                 : Colors.blue.shade800,
         size: 32,
@@ -149,10 +137,7 @@ class DropTargetWidget extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.all(16),
-      constraints: BoxConstraints(
-        minWidth: 120,
-        minHeight: 80,
-      ),
+      constraints: BoxConstraints(minWidth: 120, minHeight: 80),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

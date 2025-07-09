@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:past_question_paper_stem/model/drag_and_drop%20models/drag_and_drop_question.dart';
-import 'package:past_question_paper_stem/presentation/widgets/drag_n_drop_widget.dart';
+import 'package:past_question_paper_stem/widgets/drag_n_drop_widget.dart';
 
 class QuestionScreenTest extends StatefulWidget {
   final String questionId;
