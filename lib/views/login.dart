@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:past_question_paper_stem/utils/loading_state.dart';
 import 'package:past_question_paper_stem/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_stem/views/signup_screen.dart';
+import 'package:past_question_paper_stem/widgets/email_link_sign_in.dart';
+import 'package:past_question_paper_stem/widgets/custom_snackbar.dart';
+import 'package:past_question_paper_stem/utils/form_validators.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -14,7 +18,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -23,73 +26,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await ref
-          .read(authViewModelProvider.notifier)
-          .signIn(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-          );
-
-      if (mounted) {
-        // Navigate to home screen after successful login
-        Navigator.of(context).pushReplacementNamed('/home');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+  void _handleLogin() {
+    ref
+        .read(authViewModelProvider.notifier)
+        .signInUserInUI(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          context: context,
+          formKey: _formKey,
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
   }
 
-  Future<void> _handleForgotPassword() async {
-    if (_emailController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your email address'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    try {
-      await ref
-          .read(authViewModelProvider.notifier)
-          .sendPasswordResetEmail(_emailController.text.trim());
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Password reset email sent. Please check your inbox.',
-            ),
-            backgroundColor: Colors.green,
-          ),
+  void _handleForgotPassword() {
+    ref
+        .read(authViewModelProvider.notifier)
+        .sendPasswordResetEmailInUI(
+          email: _emailController.text.trim(),
+          context: context,
+          formKey: _formKey,
         );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-        );
-      }
-    }
   }
 
   @override
@@ -99,11 +54,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       current.whenOrNull(
         error: (error, stackTrace) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(error.toString()),
-                backgroundColor: Colors.red,
-              ),
+            CustomSnackBar.show(
+              context: context,
+              message: error.toString(),
+              isError: true,
             );
           }
         },
@@ -125,18 +79,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Email',
                   border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.email_outlined),
                 ),
                 keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
-                  }
-                  if (!value.contains('@')) {
-                    return 'Please enter a valid email';
-                  }
-                  return null;
-                },
-                enabled: !_isLoading,
+                validator: FormValidators.validateEmail,
+                enabled: !ref.watch(loadingStateProvider),
+                textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -144,24 +92,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Password',
                   border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.lock_outline),
                 ),
                 obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your password';
-                  }
-                  if (value.length < 6) {
-                    return 'Password must be at least 6 characters';
-                  }
-                  return null;
-                },
-                enabled: !_isLoading,
+                validator: FormValidators.validatePassword,
+                enabled: !ref.watch(loadingStateProvider),
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _handleLogin(),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: _isLoading ? null : _handleLogin,
+                onPressed:
+                    ref.watch(loadingStateProvider) ? null : _handleLogin,
                 child:
-                    _isLoading
+                    ref.watch(loadingStateProvider)
                         ? const SizedBox(
                           height: 20,
                           width: 20,
@@ -169,7 +113,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         )
                         : const Text('Login'),
               ),
-              if (!_isLoading) ...[
+              if (!ref.watch(loadingStateProvider)) ...[
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () {
@@ -184,6 +128,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 TextButton(
                   onPressed: _handleForgotPassword,
                   child: const Text('Forgot Password?'),
+                ),
+                const SizedBox(height: 24),
+                const Text('Or sign in with', textAlign: TextAlign.center),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: EmailLinkSignIn(
+                    authService:
+                        ref.read(authViewModelProvider.notifier).authService,
+                  ),
                 ),
               ],
             ],

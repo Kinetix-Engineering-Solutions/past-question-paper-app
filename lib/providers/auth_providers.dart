@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/services/data%20source/auth_service_firebase.dart';
-import 'package:past_question_paper_stem/services/data%20source/firestore_database_firebase.dart';
-import 'package:past_question_paper_stem/services/data%20source/iauthservice.dart';
-import 'package:past_question_paper_stem/services/user_repository.dart';
+import 'package:past_question_paper_stem/services/auth_service_firebase.dart';
+import 'package:past_question_paper_stem/services/firestore_database_firebase.dart';
+import 'package:past_question_paper_stem/repositories/user_repository.dart';
 
 // Auth Service Provider
-final authServiceProvider = Provider<IAuthService>((ref) {
-  return AuthServiceFirebase();
+final authServiceProvider = Provider<AuthServiceFirebase>((ref) {
+  final service = AuthServiceFirebase();
+  return service;
 });
 
 // Firestore Database Service Provider

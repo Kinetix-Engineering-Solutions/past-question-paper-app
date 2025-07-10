@@ -1,7 +1,13 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/model/user.dart';
 import 'package:past_question_paper_stem/providers/auth_providers.dart';
+import 'package:past_question_paper_stem/services/auth_service_firebase.dart';
+import 'package:past_question_paper_stem/Exceptions/auth_exception.dart';
+import 'package:past_question_paper_stem/views/home_screen.dart';
+import 'package:past_question_paper_stem/views/login.dart';
+import 'package:past_question_paper_stem/widgets/custom_snackbar.dart';
+import 'package:past_question_paper_stem/utils/loading_state.dart';
 
 // Auth View Model Provider
 final authViewModelProvider =
@@ -19,76 +25,303 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
     });
   }
 
-  /// Sign in with email and password
-  Future<void> signIn({required String email, required String password}) async {
+  // Expose the auth service for email link sign-in
+  AuthServiceFirebase get authService => _ref.read(authServiceProvider);
+
+  /// Sign in with email and password in the UI
+  Future<void> signInUserInUI({
+    required String email,
+    required String password,
+    required BuildContext context,
+    required GlobalKey<FormState> formKey,
+  }) async {
+    // Validate form
+    if (!formKey.currentState!.validate()) return;
+
     try {
+      // Set loading state
+      _ref.read(loadingStateProvider.notifier).state = true;
+
+      // Set auth state to loading
       state = const AsyncValue.loading();
+
+      // Attempt sign in
       final user = await _ref
           .read(userRepositoryProvider)
           .signIn(email, password);
+
+      // Update auth state with user data
       state = AsyncValue.data(user);
-    } on FirebaseAuthException catch (e) {
-      state = AsyncValue.error(_getErrorMessage(e), StackTrace.current);
+
+      // Navigate to home screen after successful sign in
+      if (!context.mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } on AuthException catch (e) {
+      // Update auth state with error
+      state = AsyncValue.error(e.message, StackTrace.current);
+
+      // Show error message
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: e.message,
+          isError: true,
+        );
+      }
+    } catch (e) {
+      // Handle unexpected errors
+      state = AsyncValue.error(
+        'An unexpected error occurred',
+        StackTrace.current,
+      );
+
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: 'An unexpected error occurred',
+          isError: true,
+        );
+      }
+    } finally {
+      // Reset loading state
+      _ref.read(loadingStateProvider.notifier).state = false;
     }
   }
 
-  /// Sign up with email and password
-  Future<void> signUp({required String email, required String password}) async {
+  /// Sign up with email and password in the UI
+  Future<void> signUpUserInUI({
+    required String email,
+    required String password,
+    required BuildContext context,
+    required GlobalKey<FormState> formKey,
+  }) async {
+    // Validate form
+    if (!formKey.currentState!.validate()) return;
+
     try {
+      // Set loading state
+      _ref.read(loadingStateProvider.notifier).state = true;
+
+      // Set auth state to loading
       state = const AsyncValue.loading();
+
+      // Attempt sign up
       final user = await _ref
           .read(userRepositoryProvider)
           .signUp(email, password);
+
+      // Update auth state with user data
       state = AsyncValue.data(user);
-    } on FirebaseAuthException catch (e) {
-      state = AsyncValue.error(_getErrorMessage(e), StackTrace.current);
-    }
-  }
 
-  /// Sign out the current user
-  Future<void> signOut() async {
-    try {
-      await _ref.read(userRepositoryProvider).signOut();
-      state = const AsyncValue.data(null);
+      // Navigate to home screen after successful sign up
+      if (!context.mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } on AuthException catch (e) {
+      // Update auth state with error
+      state = AsyncValue.error(e.message, StackTrace.current);
+
+      // Show error message
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: e.message,
+          isError: true,
+        );
+      }
     } catch (e) {
-      state = AsyncValue.error(e, StackTrace.current);
+      // Handle unexpected errors
+      state = AsyncValue.error(
+        'An unexpected error occurred',
+        StackTrace.current,
+      );
+
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: 'An unexpected error occurred',
+          isError: true,
+        );
+      }
+    } finally {
+      // Reset loading state
+      _ref.read(loadingStateProvider.notifier).state = false;
     }
   }
 
-  //
-  Future<void> sendPasswordResetEmail(String email) async {
+  /// Sign out the current user in the UI
+  Future<void> signOutUserInUI({required BuildContext context}) async {
     try {
-      state = const AsyncValue.loading();
-      await _ref.read(userRepositoryProvider).sendPasswordResetEmail(email);
+      // Set loading state
+      _ref.read(loadingStateProvider.notifier).state = true;
+
+      // Attempt sign out
+      await _ref.read(userRepositoryProvider).signOut();
+
+      // Update auth state
       state = const AsyncValue.data(null);
-    } on FirebaseAuthException catch (e) {
-      state = AsyncValue.error(_getErrorMessage(e), StackTrace.current);
+
+      // Navigate to login screen after successful sign out
+      if (!context.mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false, // Remove all previous routes
+      );
+    } on AuthException catch (e) {
+      // Update auth state with error
+      state = AsyncValue.error(e.message, StackTrace.current);
+
+      // Show error message
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: e.message,
+          isError: true,
+        );
+      }
+    } catch (e) {
+      // Handle unexpected errors
+      state = AsyncValue.error('Failed to sign out', StackTrace.current);
+
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: 'Failed to sign out',
+          isError: true,
+        );
+      }
+    } finally {
+      // Reset loading state
+      _ref.read(loadingStateProvider.notifier).state = false;
     }
   }
 
-  /// Get the current user
+  /// Send password reset email in the UI
+  Future<void> sendPasswordResetEmailInUI({
+    required String email,
+    required BuildContext context,
+    required GlobalKey<FormState> formKey,
+  }) async {
+    // Validate form
+    if (!formKey.currentState!.validate()) return;
+
+    try {
+      // Set loading state
+      _ref.read(loadingStateProvider.notifier).state = true;
+
+      // Set auth state to loading
+      state = const AsyncValue.loading();
+
+      // Attempt to send password reset email
+      await _ref.read(userRepositoryProvider).sendPasswordResetEmail(email);
+
+      // Update auth state
+      state = const AsyncValue.data(null);
+
+      // Show success message
+      if (!context.mounted) return;
+      CustomSnackBar.show(
+        context: context,
+        message: 'Password reset email sent. Please check your inbox.',
+        isError: false,
+      );
+    } on AuthException catch (e) {
+      // Update auth state with error
+      state = AsyncValue.error(e.message, StackTrace.current);
+
+      // Show error message
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: e.message,
+          isError: true,
+        );
+      }
+    } catch (e) {
+      // Handle unexpected errors
+      state = AsyncValue.error(
+        'An unexpected error occurred',
+        StackTrace.current,
+      );
+
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: 'An unexpected error occurred',
+          isError: true,
+        );
+      }
+    } finally {
+      // Reset loading state
+      _ref.read(loadingStateProvider.notifier).state = false;
+    }
+  }
+
+  /// Get the current user from the repository
   AppUser? get currentUser => _ref.read(currentUserProvider);
 
-  String _getErrorMessage(FirebaseAuthException e) {
-    switch (e.code) {
-      case 'user-not-found':
-        return 'No user found with this email.';
-      case 'wrong-password':
-        return 'Wrong password provided.';
-      case 'email-already-in-use':
-        return 'An account already exists with this email.';
-      case 'weak-password':
-        return 'The password provided is too weak.';
-      case 'invalid-email':
-        return 'The email address is not valid.';
-      case 'user-disabled':
-        return 'This user account has been disabled.';
-      case 'operation-not-allowed':
-        return 'Operation not allowed. Please contact support.';
-      case 'too-many-requests':
-        return 'Too many requests. Try again later.';
-      default:
-        return 'An error occurred. Please try again.';
+  /// Sign in with email link in the UI
+  Future<void> signInWithEmailLinkInUI({
+    required String email,
+    required String emailLink,
+    required BuildContext context,
+  }) async {
+    try {
+      // Set loading state
+      _ref.read(loadingStateProvider.notifier).state = true;
+
+      // Set auth state to loading
+      state = const AsyncValue.loading();
+
+      // Attempt sign in with email link
+      final user = await _ref
+          .read(userRepositoryProvider)
+          .signInWithEmailLink(email, emailLink);
+
+      // Update auth state with user data
+      state = AsyncValue.data(user);
+
+      // Navigate to home screen after successful sign in
+      if (!context.mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } on AuthException catch (e) {
+      // Update auth state with error
+      state = AsyncValue.error(e.message, StackTrace.current);
+
+      // Show error message
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: e.message,
+          isError: true,
+        );
+      }
+    } catch (e) {
+      // Handle unexpected errors
+      state = AsyncValue.error(
+        'An unexpected error occurred',
+        StackTrace.current,
+      );
+
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: 'An unexpected error occurred',
+          isError: true,
+        );
+      }
+    } finally {
+      // Reset loading state
+      _ref.read(loadingStateProvider.notifier).state = false;
     }
   }
 }

@@ -1,11 +1,24 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:past_question_paper_stem/model/user.dart';
-import 'package:past_question_paper_stem/services/data%20source/firestore_database_firebase.dart';
-import 'package:past_question_paper_stem/services/data%20source/iauthservice.dart';
+import 'package:past_question_paper_stem/services/firestore_database_firebase.dart';
+import 'package:past_question_paper_stem/services/iauthservice.dart';
+import 'package:past_question_paper_stem/Exceptions/auth_exception.dart';
 
 class AuthServiceFirebase implements IAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirestoreDatabaseService _database = FirestoreDatabaseService();
+  static const String _emailForSignInKey = 'email_for_link_sign_in';
+
+  // Configure Firebase ActionCodeSettings for email link sign-in
+  final ActionCodeSettings actionCodeSettings = ActionCodeSettings(
+    url: 'https://vibe-code-4c59f.firebaseapp.com',
+    handleCodeInApp: true,
+    //iOSBundleId: 'com.example.ios',
+    androidPackageName: 'com.example.past_question_paper_stem',
+    androidInstallApp: true,
+    androidMinimumVersion: '12',
+  );
 
   // Convert Firebase User to AppUser
   AppUser? _userFromFirebaseUser(User? user) {
@@ -33,10 +46,12 @@ class AuthServiceFirebase implements IAuthService {
         password: password,
       );
       return result;
-    } catch (e) {
-      rethrow;
+    } on FirebaseAuthException catch (e) {
+      throw AuthException.fromFirebaseAuth(e);
     }
   }
+
+  /// Sign up with email and password
 
   @override
   Future<UserCredential> signUpWithEmailAndPassword(
@@ -53,9 +68,9 @@ class AuthServiceFirebase implements IAuthService {
       // Create AppUser instance
       final appUser = _userFromFirebaseUser(result.user);
       if (appUser == null) {
-        throw FirebaseAuthException(
+        throw AuthException(
+          'Failed to create user profile',
           code: 'user-creation-failed',
-          message: 'Failed to create user profile',
         );
       }
 
@@ -63,8 +78,8 @@ class AuthServiceFirebase implements IAuthService {
       await _database.saveUser(appUser);
 
       return result;
-    } catch (e) {
-      rethrow;
+    } on FirebaseAuthException catch (e) {
+      throw AuthException.fromFirebaseAuth(e);
     }
   }
 
@@ -73,8 +88,70 @@ class AuthServiceFirebase implements IAuthService {
     await _auth.signOut();
   }
 
+  /// Sends a password reset email to the user
+  /// This method is used when the user forgets their password
   @override
   Future<void> sendPasswordResetEmail(String email) async {
-    await _auth.sendPasswordResetEmail(email: email);
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException.fromFirebaseAuth(e);
+    }
+  }
+
+  /// Sends a sign-in link to the user's email
+  @override
+  Future<void> sendSignInLinkToEmail(String email) async {
+    try {
+      await _auth.sendSignInLinkToEmail(
+        email: email,
+        actionCodeSettings: actionCodeSettings,
+      );
+      // Save the email locally to use it for sign-in completion
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_emailForSignInKey, email);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException.fromFirebaseAuth(e);
+    }
+  }
+
+  /// Completes the sign-in process with the received email link
+  @override
+  Future<UserCredential> signInWithEmailLink(
+    String email,
+    String emailLink,
+  ) async {
+    try {
+      final UserCredential result = await _auth.signInWithEmailLink(
+        email: email,
+        emailLink: emailLink,
+      );
+
+      // If this is a new user, create their profile in Firestore
+      if (result.additionalUserInfo?.isNewUser ?? false) {
+        final appUser = _userFromFirebaseUser(result.user);
+        if (appUser == null) {
+          throw AuthException(
+            'Failed to create user profile',
+            code: 'user-creation-failed',
+          );
+        }
+        await _database.saveUser(appUser);
+      }
+
+      // Clear the saved email after successful sign-in
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_emailForSignInKey);
+
+      return result;
+    } on FirebaseAuthException catch (e) {
+      throw AuthException.fromFirebaseAuth(e);
+    }
+  }
+
+  /// Checks if the given link is a valid email sign-in link
+  @override
+  bool isSignInWithEmailLink(String emailLink) {
+    return _auth.isSignInWithEmailLink(emailLink);
   }
 }

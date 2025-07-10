@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/firebase_options.dart';
+import 'package:past_question_paper_stem/services/deep_link_handler.dart';
+import 'package:past_question_paper_stem/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_stem/views/login.dart';
 import 'package:past_question_paper_stem/views/signup_screen.dart';
 
@@ -30,11 +32,37 @@ class MyApp extends ConsumerWidget {
           centerTitle: true,
         ),
       ),
-      initialRoute: '/login',
+      home: const AppInitializer(),
       routes: {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignUpScreen(),
       },
     );
+  }
+}
+
+class AppInitializer extends ConsumerStatefulWidget {
+  const AppInitializer({super.key});
+
+  @override
+  ConsumerState<AppInitializer> createState() => _AppInitializerState();
+}
+
+class _AppInitializerState extends ConsumerState<AppInitializer> {
+  @override
+  void initState() {
+    super.initState();
+    _initializeDeepLinks();
+  }
+
+  Future<void> _initializeDeepLinks() async {
+    final authService = ref.read(authViewModelProvider.notifier).authService;
+    final deepLinkHandler = DeepLinkHandler(authService, context: context);
+    await deepLinkHandler.handleIncomingLinks();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const LoginScreen();
   }
 }

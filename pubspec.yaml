@@ -18,6 +18,9 @@ dependencies:
   path: ^1.8.3
   uuid: ^4.3.3
   flutter_riverpod: ^2.6.1
+  shared_preferences: ^2.5.3
+  app_links: ^6.4.0
+  
 
 dev_dependencies:
   flutter_test:
