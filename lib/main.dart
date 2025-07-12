@@ -3,9 +3,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/firebase_options.dart';
 import 'package:past_question_paper_stem/services/deep_link_handler.dart';
+import 'package:past_question_paper_stem/services/navigation_service.dart';
 import 'package:past_question_paper_stem/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_stem/views/login.dart';
 import 'package:past_question_paper_stem/views/signup_screen.dart';
+import 'package:past_question_paper_stem/views/home_screen.dart';
+import 'package:past_question_paper_stem/views/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +25,7 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
       title: 'STEM Question Papers',
+      navigatorKey: NavigationService.navigatorKey,
       theme: ThemeData(
         primarySwatch: Colors.blue,
         scaffoldBackgroundColor: Colors.grey[100],
@@ -36,6 +40,8 @@ class MyApp extends ConsumerWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignUpScreen(),
+        '/home': (context) => const HomeScreen(),
+        '/onboarding': (context) => const OnboardingScreen(),
       },
     );
   }
@@ -63,6 +69,38 @@ class _AppInitializerState extends ConsumerState<AppInitializer> {
 
   @override
   Widget build(BuildContext context) {
-    return const LoginScreen();
+    final authState = ref.watch(authViewModelProvider);
+
+    return authState.when(
+      data: (user) {
+        if (user == null) {
+          // User is not logged in
+          return const LoginScreen();
+        } else if (user.hasCompletedProfile) {
+          // User is logged in and has completed profile
+          return const HomeScreen();
+        } else {
+          // User is logged in but hasn't completed profile
+          return const OnboardingScreen();
+        }
+      },
+      loading:
+          () => const Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Loading...', style: TextStyle(fontSize: 16)),
+                ],
+              ),
+            ),
+          ),
+      error: (error, stack) {
+        // On error, default to login screen
+        return const LoginScreen();
+      },
+    );
   }
 }

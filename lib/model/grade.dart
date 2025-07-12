@@ -77,4 +77,51 @@ class Grade {
   @override
   int get hashCode =>
       id.hashCode ^ name.hashCode ^ level.hashCode ^ description.hashCode;
+
+  // Default grades for common educational systems
+  static List<Grade> get defaultGrades {
+    final now = DateTime.now();
+    return [
+      Grade(
+        id: 'grade-8',
+        name: 'Grade 8',
+        level: 8,
+        description: 'Junior Secondary School Grade 8',
+        createdAt: now,
+        updatedAt: now,
+      ),
+      Grade(
+        id: 'grade-9',
+        name: 'Grade 9',
+        level: 9,
+        description: 'Junior Secondary School Grade 9',
+        createdAt: now,
+        updatedAt: now,
+      ),
+      Grade(
+        id: 'grade-10',
+        name: 'Grade 10',
+        level: 10,
+        description: 'Senior Secondary School Grade 10',
+        createdAt: now,
+        updatedAt: now,
+      ),
+      Grade(
+        id: 'grade-11',
+        name: 'Grade 11',
+        level: 11,
+        description: 'Senior Secondary School Grade 11',
+        createdAt: now,
+        updatedAt: now,
+      ),
+      Grade(
+        id: 'grade-12',
+        name: 'Grade 12',
+        level: 12,
+        description: 'Senior Secondary School Grade 12',
+        createdAt: now,
+        updatedAt: now,
+      ),
+    ];
+  }
 }

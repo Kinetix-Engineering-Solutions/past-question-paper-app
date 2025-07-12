@@ -22,9 +22,9 @@ final userRepositoryProvider = Provider<UserRepository>((ref) {
   );
 });
 
-// Auth State Provider - Streams the current auth state
+// Auth State Provider - Streams the current auth state with Firestore profile data
 final authStateProvider = StreamProvider((ref) {
-  return ref.watch(userRepositoryProvider).userAuthState;
+  return ref.watch(userRepositoryProvider).userAuthStateWithProfile;
 });
 
 // Current User Provider

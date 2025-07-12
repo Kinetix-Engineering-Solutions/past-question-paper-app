@@ -154,4 +154,22 @@ class AuthServiceFirebase implements IAuthService {
   bool isSignInWithEmailLink(String emailLink) {
     return _auth.isSignInWithEmailLink(emailLink);
   }
+
+  /// Checks if a user is currently logged in
+  /// This persists across app restarts automatically via Firebase
+  bool isUserLoggedIn() {
+    return _auth.currentUser != null;
+  }
+
+  /// Gets the current authentication state
+  /// Returns true if user is authenticated, false otherwise
+  bool get isAuthenticated => _auth.currentUser != null;
+
+  /// Wait for the initial auth state to be determined
+  /// Useful for splash screens or app initialization
+  Future<AppUser?> waitForAuthInitialization() async {
+    // Firebase Auth automatically restores the user session
+    // This just waits for the first auth state change
+    return await authStateChanges.first;
+  }
 }
