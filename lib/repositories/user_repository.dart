@@ -15,6 +15,23 @@ class UserRepository {
 
   Stream<AppUser?> get userAuthState => _authService.authStateChanges;
 
+  /// Stream that includes Firestore profile data
+  Stream<AppUser?> get userAuthStateWithProfile {
+    return _authService.authStateChanges.asyncMap((user) async {
+      if (user == null) return null;
+
+      try {
+        // Get the user with profile from Firestore
+        final userWithProfile = await getUserFromFirestore(user.id);
+        return userWithProfile ??
+            user; // Fallback to basic user if Firestore fails
+      } catch (e) {
+        // If Firestore fails, return the basic user
+        return user;
+      }
+    });
+  }
+
   Future<AppUser> signIn(String email, String password) async {
     try {
       await _authService.signInWithEmailAndPassword(email, password);
@@ -25,7 +42,10 @@ class UserRepository {
           code: 'user-not-found',
         );
       }
-      return user;
+
+      // Get user profile from Firestore
+      final userWithProfile = await getUserFromFirestore(user.id);
+      return userWithProfile ?? user;
     } on AuthException {
       rethrow;
     }
@@ -41,6 +61,8 @@ class UserRepository {
           code: 'user-not-found',
         );
       }
+
+      // For new users, return the user without profile (they'll go to onboarding)
       return user;
     } on AuthException {
       rethrow;
@@ -73,7 +95,10 @@ class UserRepository {
           code: 'user-not-found',
         );
       }
-      return user;
+
+      // Get user profile from Firestore
+      final userWithProfile = await getUserFromFirestore(user.id);
+      return userWithProfile ?? user;
     } on AuthException {
       rethrow;
     }

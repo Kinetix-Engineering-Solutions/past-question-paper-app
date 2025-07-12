@@ -3,9 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/model/user.dart';
 import 'package:past_question_paper_stem/providers/auth_providers.dart';
 import 'package:past_question_paper_stem/services/auth_service_firebase.dart';
+import 'package:past_question_paper_stem/services/navigation_service.dart';
 import 'package:past_question_paper_stem/Exceptions/auth_exception.dart';
-import 'package:past_question_paper_stem/views/home_screen.dart';
-import 'package:past_question_paper_stem/views/login.dart';
 import 'package:past_question_paper_stem/widgets/custom_snackbar.dart';
 import 'package:past_question_paper_stem/utils/loading_state.dart';
 
@@ -53,12 +52,14 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
       // Update auth state with user data
       state = AsyncValue.data(user);
 
-      // Navigate to home screen after successful sign in
+      // Navigate based on profile completion
       if (!context.mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+
+      if (user.hasCompletedProfile) {
+        await NavigationService.navigateToHome();
+      } else {
+        await NavigationService.navigateToOnboarding();
+      }
     } on AuthException catch (e) {
       // Update auth state with error
       state = AsyncValue.error(e.message, StackTrace.current);
@@ -116,12 +117,14 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
       // Update auth state with user data
       state = AsyncValue.data(user);
 
-      // Navigate to home screen after successful sign up
+      // Navigate based on profile completion
       if (!context.mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+
+      if (user.hasCompletedProfile) {
+        await NavigationService.navigateToHome();
+      } else {
+        await NavigationService.navigateToOnboarding();
+      }
     } on AuthException catch (e) {
       // Update auth state with error
       state = AsyncValue.error(e.message, StackTrace.current);
@@ -163,17 +166,17 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
       // Attempt sign out
       await _ref.read(userRepositoryProvider).signOut();
 
-      // Update auth state
+      // Immediately update auth state to null to trigger navigation
       state = const AsyncValue.data(null);
 
-      // Navigate to login screen after successful sign out
-      if (!context.mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-        (route) => false, // Remove all previous routes
-      );
+      // Reset loading state
+      _ref.read(loadingStateProvider.notifier).state = false;
+
+      // The AppInitializer will automatically navigate to login when user becomes null
     } on AuthException catch (e) {
+      // Reset loading state on error
+      _ref.read(loadingStateProvider.notifier).state = false;
+
       // Update auth state with error
       state = AsyncValue.error(e.message, StackTrace.current);
 
@@ -186,6 +189,9 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
         );
       }
     } catch (e) {
+      // Reset loading state on error
+      _ref.read(loadingStateProvider.notifier).state = false;
+
       // Handle unexpected errors
       state = AsyncValue.error('Failed to sign out', StackTrace.current);
 
@@ -196,9 +202,6 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
           isError: true,
         );
       }
-    } finally {
-      // Reset loading state
-      _ref.read(loadingStateProvider.notifier).state = false;
     }
   }
 
@@ -287,12 +290,14 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
       // Update auth state with user data
       state = AsyncValue.data(user);
 
-      // Navigate to home screen after successful sign in
+      // Navigate based on profile completion
       if (!context.mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+
+      if (user.hasCompletedProfile) {
+        await NavigationService.navigateToHome();
+      } else {
+        await NavigationService.navigateToOnboarding();
+      }
     } on AuthException catch (e) {
       // Update auth state with error
       state = AsyncValue.error(e.message, StackTrace.current);
@@ -324,4 +329,31 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
       _ref.read(loadingStateProvider.notifier).state = false;
     }
   }
+
+  /// Refresh current user data (useful after profile updates)
+  Future<void> refreshUser() async {
+    try {
+      final currentUser = state.value;
+      if (currentUser?.id != null) {
+        state = const AsyncValue.loading();
+        final updatedUser = await _ref
+            .read(userRepositoryProvider)
+            .getUserFromFirestore(currentUser!.id);
+        state = AsyncValue.data(updatedUser);
+      }
+    } catch (e) {
+      state = AsyncValue.error(
+        'Failed to refresh user data',
+        StackTrace.current,
+      );
+    }
+  }
+
+  /// Check if user is currently authenticated (persists across app restarts)
+  bool get isUserLoggedIn {
+    return state.hasValue && state.value != null;
+  }
+
+  /// Get the current authentication state as a boolean
+  bool get isAuthenticated => isUserLoggedIn;
 }

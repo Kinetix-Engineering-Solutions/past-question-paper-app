@@ -65,7 +65,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      backgroundColor: const Color(0xFF121212), // Dark background
+      appBar: AppBar(
+        title: const Text('Login', style: TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF1E1E1E),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -76,10 +82,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             children: [
               TextFormField(
                 controller: _emailController,
+                style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
                   labelText: 'Email',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email_outlined),
+                  labelStyle: TextStyle(color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                  prefixIcon: Icon(Icons.email_outlined, color: Colors.grey),
+                  fillColor: Color(0xFF1E1E1E),
+                  filled: true,
                 ),
                 keyboardType: TextInputType.emailAddress,
                 validator: FormValidators.validateEmail,
@@ -89,10 +107,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
+                style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
                   labelText: 'Password',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.lock_outline),
+                  labelStyle: TextStyle(color: Colors.grey),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blue),
+                  ),
+                  prefixIcon: Icon(Icons.lock_outline, color: Colors.grey),
+                  fillColor: Color(0xFF1E1E1E),
+                  filled: true,
                 ),
                 obscureText: true,
                 validator: FormValidators.validatePassword,
@@ -104,6 +134,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ElevatedButton(
                 onPressed:
                     ref.watch(loadingStateProvider) ? null : _handleLogin,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
                 child:
                     ref.watch(loadingStateProvider)
                         ? const SizedBox(
@@ -123,14 +161,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     );
                   },
+                  style: TextButton.styleFrom(foregroundColor: Colors.blue),
                   child: const Text('Don\'t have an account? Sign Up'),
                 ),
                 TextButton(
                   onPressed: _handleForgotPassword,
+                  style: TextButton.styleFrom(foregroundColor: Colors.grey),
                   child: const Text('Forgot Password?'),
                 ),
-                const SizedBox(height: 24),
-                const Text('Or sign in with', textAlign: TextAlign.center),
+                /* const Text('Or sign in with', textAlign: TextAlign.center),
                 const SizedBox(height: 8),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -138,7 +177,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     authService:
                         ref.read(authViewModelProvider.notifier).authService,
                   ),
-                ),
+                ), */
               ],
             ],
           ),
