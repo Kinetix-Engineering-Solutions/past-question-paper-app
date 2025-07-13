@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/model/user.dart';
 import 'package:past_question_paper_stem/providers/auth_providers.dart';
+import 'package:past_question_paper_stem/providers/navigation_providers.dart';
 import 'package:past_question_paper_stem/services/auth_service_firebase.dart';
 import 'package:past_question_paper_stem/services/navigation_service.dart';
 import 'package:past_question_paper_stem/Exceptions/auth_exception.dart';
@@ -165,6 +166,9 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
 
       // Attempt sign out
       await _ref.read(userRepositoryProvider).signOut();
+
+      // Reset navigation to home tab for next login
+      _ref.read(bottomNavigationProvider.notifier).reset();
 
       // Immediately update auth state to null to trigger navigation
       state = const AsyncValue.data(null);

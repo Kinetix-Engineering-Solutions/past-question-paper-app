@@ -7,7 +7,7 @@ import 'package:past_question_paper_stem/services/navigation_service.dart';
 import 'package:past_question_paper_stem/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_stem/views/login.dart';
 import 'package:past_question_paper_stem/views/signup_screen.dart';
-import 'package:past_question_paper_stem/views/home_screen.dart';
+import 'package:past_question_paper_stem/views/main_navigation_screen.dart';
 import 'package:past_question_paper_stem/views/onboarding_screen.dart';
 
 void main() async {
@@ -40,7 +40,7 @@ class MyApp extends ConsumerWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignUpScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/home': (context) => const MainNavigationScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
       },
     );
@@ -78,7 +78,7 @@ class _AppInitializerState extends ConsumerState<AppInitializer> {
           return const LoginScreen();
         } else if (user.hasCompletedProfile) {
           // User is logged in and has completed profile
-          return const HomeScreen();
+          return const MainNavigationScreen();
         } else {
           // User is logged in but hasn't completed profile
           return const OnboardingScreen();
