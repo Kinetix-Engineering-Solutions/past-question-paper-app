@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:past_question_paper_stem/views/home_screen.dart';
+import 'package:past_question_paper_stem/views/main_navigation_screen.dart';
 import 'package:past_question_paper_stem/views/login.dart';
 import 'package:past_question_paper_stem/views/onboarding_screen.dart';
 
@@ -14,7 +14,7 @@ class NavigationService {
     if (context == null) return;
 
     await Navigator.of(context!).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
       (route) => false, // Remove all previous routes
     );
   }
