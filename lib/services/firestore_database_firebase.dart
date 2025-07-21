@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:past_question_paper_stem/model/user.dart';
 import 'package:past_question_paper_stem/model/grade.dart';
 import 'package:past_question_paper_stem/model/subject.dart';
+import 'package:past_question_paper_stem/model/topic.dart';
 
 class FirestoreDatabaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -151,6 +152,115 @@ class FirestoreDatabaseService {
                   : DateTime.now(),
         );
       }).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Fetches all topics from Firestore
+  Future<List<Topic>> getTopics() async {
+    try {
+      final snapshot = await _firestore.collection('topics').get();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return Topic(
+          id: doc.id,
+          name: data['name'] as String? ?? '',
+          description: data['description'] as String? ?? '',
+          subjectId: data['subjectId'] as String? ?? '',
+          gradeIds: List<String>.from(data['gradeIds'] ?? []),
+          order: data['order'] as int? ?? 0,
+          season: data['season'] as String? ?? 'Spring 2024',
+          createdAt:
+              data['createdAt'] != null
+                  ? (data['createdAt'] as Timestamp).toDate()
+                  : DateTime.now(),
+          updatedAt:
+              data['updatedAt'] != null
+                  ? (data['updatedAt'] as Timestamp).toDate()
+                  : DateTime.now(),
+        );
+      }).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Fetches topics for a specific subject
+  Future<List<Topic>> getTopicsForSubject(String subjectId) async {
+    try {
+      final snapshot =
+          await _firestore
+              .collection('topics')
+              .where('subjectId', isEqualTo: subjectId)
+              .orderBy('order')
+              .get();
+
+      final topics =
+          snapshot.docs.map((doc) {
+            final data = doc.data();
+            return Topic(
+              id: doc.id,
+              name: data['name'] as String? ?? '',
+              description: data['description'] as String? ?? '',
+              subjectId: data['subjectId'] as String? ?? '',
+              gradeIds: List<String>.from(data['gradeIds'] ?? []),
+              order: data['order'] as int? ?? 0,
+              season: data['season'] as String? ?? 'Spring 2024',
+              createdAt:
+                  data['createdAt'] != null
+                      ? (data['createdAt'] as Timestamp).toDate()
+                      : DateTime.now(),
+              updatedAt:
+                  data['updatedAt'] != null
+                      ? (data['updatedAt'] as Timestamp).toDate()
+                      : DateTime.now(),
+            );
+          }).toList();
+
+      return topics;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Fetches topics available for a specific grade and subject
+  Future<List<Topic>> getTopicsForSubjectAndGrade(
+    String subjectId,
+    String gradeId,
+  ) async {
+    try {
+      final snapshot =
+          await _firestore
+              .collection('topics')
+              .where('subjectId', isEqualTo: subjectId)
+              .where('gradeIds', arrayContains: gradeId)
+              .orderBy('order')
+              .get();
+
+      final topics =
+          snapshot.docs.map((doc) {
+            final data = doc.data();
+            return Topic(
+              id: doc.id,
+              name: data['name'] as String? ?? '',
+              description: data['description'] as String? ?? '',
+              subjectId: data['subjectId'] as String? ?? '',
+              gradeIds: List<String>.from(data['gradeIds'] ?? []),
+              order: data['order'] as int? ?? 0,
+              season: data['season'] as String? ?? 'Spring 2024',
+              createdAt:
+                  data['createdAt'] != null
+                      ? (data['createdAt'] as Timestamp).toDate()
+                      : DateTime.now(),
+              updatedAt:
+                  data['updatedAt'] != null
+                      ? (data['updatedAt'] as Timestamp).toDate()
+                      : DateTime.now(),
+            );
+          }).toList();
+
+      return topics;
     } catch (e) {
       rethrow;
     }

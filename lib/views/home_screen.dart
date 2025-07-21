@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/viewmodels/home_viewmodel.dart';
 import 'package:past_question_paper_stem/model/subject.dart';
+import 'package:past_question_paper_stem/views/subject_topics_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -116,7 +117,10 @@ class HomeScreen extends ConsumerWidget {
                         // Subjects List
                         if (homeViewModel.userSubjects.isNotEmpty) ...[
                           ...homeViewModel.userSubjects
-                              .map((subject) => _buildSubjectCard(subject))
+                              .map(
+                                (subject) =>
+                                    _buildSubjectCard(context, subject),
+                              )
                               .toList(),
                         ] else ...[
                           // No subjects selected yet
@@ -176,7 +180,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSubjectCard(Subject subject) {
+  Widget _buildSubjectCard(BuildContext context, Subject subject) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: Card(
@@ -212,7 +216,13 @@ class HomeScreen extends ConsumerWidget {
             color: Colors.grey[400],
           ),
           onTap: () {
-            // TODO: Navigate to subject details or practice
+            print('🏠 Tapping subject: ${subject.name} (ID: "${subject.id}")');
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SubjectTopicsScreen(subject: subject),
+              ),
+            );
           },
         ),
       ),
