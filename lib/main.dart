@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/firebase_options.dart';
 import 'package:past_question_paper_stem/services/deep_link_handler.dart';
 import 'package:past_question_paper_stem/services/navigation_service.dart';
+import 'package:past_question_paper_stem/utils/app_theme.dart';
 import 'package:past_question_paper_stem/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_stem/views/login.dart';
 import 'package:past_question_paper_stem/views/signup_screen.dart';
@@ -26,16 +27,7 @@ class MyApp extends ConsumerWidget {
     return MaterialApp(
       title: 'STEM Question Papers',
       navigatorKey: NavigationService.navigatorKey,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Colors.grey[100],
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          elevation: 0,
-          centerTitle: true,
-        ),
-      ),
+      theme: AppTheme.paperAndInkTheme,
       home: const AppInitializer(),
       routes: {
         '/login': (context) => const LoginScreen(),

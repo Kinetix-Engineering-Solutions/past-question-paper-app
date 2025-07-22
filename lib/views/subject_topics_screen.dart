@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/model/topic.dart';
 import 'package:past_question_paper_stem/model/subject.dart';
+import 'package:past_question_paper_stem/utils/app_theme.dart';
 import 'package:past_question_paper_stem/viewmodels/topic_viewmodel.dart';
 import 'package:past_question_paper_stem/viewmodels/home_viewmodel.dart';
+import 'package:past_question_paper_stem/widgets/custom_tab_bar.dart';
+import 'package:past_question_paper_stem/widgets/topics_list_widget.dart';
+import 'package:past_question_paper_stem/widgets/materials_widget.dart';
 
 class SubjectTopicsScreen extends ConsumerStatefulWidget {
   final Subject subject;
@@ -16,6 +19,9 @@ class SubjectTopicsScreen extends ConsumerStatefulWidget {
 }
 
 class _SubjectTopicsScreenState extends ConsumerState<SubjectTopicsScreen> {
+  String? expandedTopicId; // Track which topic is expanded
+  int selectedTabIndex = 0; // Track selected tab (0: Topics, 1: Materials)
+
   @override
   void initState() {
     super.initState();
@@ -38,7 +44,6 @@ class _SubjectTopicsScreenState extends ConsumerState<SubjectTopicsScreen> {
   Widget build(BuildContext context) {
     final topicState = ref.watch(topicViewModelProvider);
     final topicViewModel = ref.read(topicViewModelProvider.notifier);
-    final filteredTopics = topicViewModel.getFilteredTopics();
 
     // Listen for errors
     ref.listen(topicViewModelProvider, (previous, current) {
@@ -89,8 +94,8 @@ class _SubjectTopicsScreenState extends ConsumerState<SubjectTopicsScreen> {
                             : Icons.radio_button_unchecked,
                         color:
                             topicState.selectedSeason == null
-                                ? Colors.blue
-                                : Colors.grey,
+                                ? AppColors.charcoal
+                                : AppColors.mediumGray,
                       ),
                       const SizedBox(width: 8),
                       const Text('All Seasons'),
@@ -110,8 +115,8 @@ class _SubjectTopicsScreenState extends ConsumerState<SubjectTopicsScreen> {
                                   : Icons.radio_button_unchecked,
                               color:
                                   topicState.selectedSeason == season
-                                      ? Colors.purple
-                                      : Colors.grey,
+                                      ? AppColors.charcoal
+                                      : AppColors.mediumGray,
                             ),
                             const SizedBox(width: 8),
                             Text(season),
@@ -138,163 +143,47 @@ class _SubjectTopicsScreenState extends ConsumerState<SubjectTopicsScreen> {
                     ],
                   ),
                 )
-                : topicState.topics.isEmpty
-                ? _buildEmptyState()
-                : RefreshIndicator(
-                  onRefresh: () async {
-                    _loadTopicsForSubject();
-                  },
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Filter indicators
-                        _buildActiveFilters(),
-
-                        // Topics list
-                        _buildTopicsList(filteredTopics),
-                      ],
+                : Column(
+                  children: [
+                    // Custom Tab Bar
+                    CustomTabBar(
+                      tabs: const ['Topics', 'Materials'],
+                      selectedIndex: selectedTabIndex,
+                      onTabSelected: (index) {
+                        setState(() {
+                          selectedTabIndex = index;
+                          expandedTopicId =
+                              null; // Collapse any expanded topic when switching tabs
+                        });
+                      },
                     ),
-                  ),
+
+                    // Active filters (only show for topics tab)
+                    if (selectedTabIndex == 0) _buildActiveFilters(),
+
+                    // Tab content
+                    Expanded(
+                      child:
+                          selectedTabIndex == 0
+                              ? RefreshIndicator(
+                                onRefresh: () async {
+                                  _loadTopicsForSubject();
+                                },
+                                child: TopicsListWidget(
+                                  topics: topicViewModel.getFilteredTopics(),
+                                  subject: widget.subject,
+                                  expandedTopicId: expandedTopicId,
+                                  onTopicExpanded: (topicId) {
+                                    setState(() {
+                                      expandedTopicId = topicId;
+                                    });
+                                  },
+                                ),
+                              )
+                              : MaterialsWidget(subject: widget.subject),
+                    ),
+                  ],
                 ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.topic_outlined, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              'No Topics Available',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Topics for ${widget.subject.name} will appear here when they are added.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => _loadTopicsForSubject(),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Refresh'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTopicsList(List<Topic> topics) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'All Topics',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
-        ...topics.map((topic) => _buildTopicCard(topic)).toList(),
-      ],
-    );
-  }
-
-  Widget _buildTopicCard(Topic topic) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
-          leading: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.blue.shade100,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(Icons.topic, color: Colors.blue.shade600, size: 24),
-          ),
-          title: Text(
-            topic.name,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 4),
-              Text(
-                topic.description,
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.purple.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.purple.withOpacity(0.3)),
-                    ),
-                    child: Text(
-                      topic.season,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.purple.shade600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          trailing: Icon(
-            Icons.arrow_forward_ios,
-            size: 16,
-            color: Colors.grey[400],
-          ),
-          onTap: () {
-            // TODO: Navigate to QuestionsScreen where users can filter by:
-            // - Question Type (Multiple Choice, Essay, Problem Solving)
-            // - Quiz Mode (Rapid Quiz, Exam Session, Practice Mode)
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Selected topic: ${topic.name}\nNext: Questions screen with type filtering',
-                ),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          },
-        ),
       ),
     );
   }
@@ -308,36 +197,39 @@ class _SubjectTopicsScreenState extends ConsumerState<SubjectTopicsScreen> {
       return const SizedBox.shrink();
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text(
-              'Active Filters:',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-            const Spacer(),
-            TextButton(
-              onPressed: () => topicViewModel.clearFilters(),
-              child: const Text('Clear All'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            if (topicState.selectedSeason != null)
-              _buildFilterChip(
-                'Season: ${topicState.selectedSeason}',
-                () => topicViewModel.setSeasonFilter(null),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Active Filters:',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
               ),
-          ],
-        ),
-        const SizedBox(height: 16),
-      ],
+              const Spacer(),
+              TextButton(
+                onPressed: () => topicViewModel.clearFilters(),
+                child: const Text('Clear All'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (topicState.selectedSeason != null)
+                _buildFilterChip(
+                  'Season: ${topicState.selectedSeason}',
+                  () => topicViewModel.setSeasonFilter(null),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
     );
   }
 

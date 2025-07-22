@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:past_question_paper_stem/utils/app_theme.dart';
 import 'package:past_question_paper_stem/viewmodels/home_viewmodel.dart';
-import 'package:past_question_paper_stem/widgets/user_profile_card.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -17,7 +17,7 @@ class ProfileScreen extends ConsumerWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: Icon(Icons.logout, color: AppColors.charcoal),
             onPressed: () => homeViewModel.showSignOutDialog(context),
             tooltip: 'Sign Out',
           ),
@@ -31,17 +31,13 @@ class ProfileScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // User Profile Card
-                    const UserProfileCard(),
-
-                    const SizedBox(height: 30),
-
                     // Profile Actions
-                    const Text(
+                    Text(
                       'Profile Settings',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: AppColors.inkBlack,
                       ),
                     ),
 
@@ -51,39 +47,58 @@ class ProfileScreen extends ConsumerWidget {
                       child: Column(
                         children: [
                           ListTile(
-                            leading: const Icon(Icons.edit, color: Colors.blue),
+                            leading: Icon(
+                              Icons.edit,
+                              color: AppColors.charcoal,
+                            ),
                             title: const Text('Edit Profile'),
-                            subtitle: const Text('Update your information'),
-                            trailing: const Icon(Icons.arrow_forward_ios),
+                            subtitle: Text(
+                              'Update your information',
+                              style: TextStyle(color: AppColors.graphite),
+                            ),
+                            trailing: Icon(
+                              Icons.arrow_forward_ios,
+                              color: AppColors.charcoal,
+                            ),
                             onTap: () => homeViewModel.navigateToProfileSetup(),
                           ),
                           const Divider(height: 1),
                           if (homeViewModel.userGrade != null)
                             ListTile(
-                              leading: const Icon(
+                              leading: Icon(
                                 Icons.grade,
-                                color: Colors.orange,
+                                color: AppColors.charcoal,
                               ),
                               title: Text(
                                 'Grade ${homeViewModel.userGrade!.level}',
                               ),
-                              subtitle: Text(homeViewModel.userGrade!.name),
-                              trailing: const Icon(Icons.arrow_forward_ios),
+                              subtitle: Text(
+                                homeViewModel.userGrade!.name,
+                                style: TextStyle(color: AppColors.graphite),
+                              ),
+                              trailing: Icon(
+                                Icons.arrow_forward_ios,
+                                color: AppColors.charcoal,
+                              ),
                               onTap:
                                   () => homeViewModel.navigateToProfileSetup(),
                             ),
                           if (homeViewModel.userGrade != null)
                             const Divider(height: 1),
                           ListTile(
-                            leading: const Icon(
+                            leading: Icon(
                               Icons.book,
-                              color: Colors.green,
+                              color: AppColors.charcoal,
                             ),
                             title: const Text('My Subjects'),
                             subtitle: Text(
                               '${homeViewModel.userSubjects.length} subjects selected',
+                              style: TextStyle(color: AppColors.graphite),
                             ),
-                            trailing: const Icon(Icons.arrow_forward_ios),
+                            trailing: Icon(
+                              Icons.arrow_forward_ios,
+                              color: AppColors.charcoal,
+                            ),
                             onTap: () => homeViewModel.navigateToSubjects(),
                           ),
                         ],
@@ -98,11 +113,14 @@ class ProfileScreen extends ConsumerWidget {
                       child: ElevatedButton.icon(
                         onPressed:
                             () => homeViewModel.showSignOutDialog(context),
-                        icon: const Icon(Icons.logout),
-                        label: const Text('Sign Out'),
+                        icon: Icon(Icons.logout, color: AppColors.paperWhite),
+                        label: Text(
+                          'Sign Out',
+                          style: TextStyle(color: AppColors.paperWhite),
+                        ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
+                          backgroundColor: AppColors.charcoal,
+                          foregroundColor: AppColors.paperWhite,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
