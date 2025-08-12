@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/providers/navigation_providers.dart';
-import 'package:past_question_paper_stem/utils/app_theme.dart';
 import 'package:past_question_paper_stem/views/home_screen.dart';
 import 'package:past_question_paper_stem/views/subjects_screen.dart';
-import 'package:past_question_paper_stem/views/practice_screen.dart';
+import 'package:past_question_paper_stem/views/practice_selection_screen.dart';
 import 'package:past_question_paper_stem/views/profile_screen.dart';
 
 class MainNavigationScreen extends ConsumerWidget {
@@ -20,7 +19,7 @@ class MainNavigationScreen extends ConsumerWidget {
         children: [
           const HomeScreen(),
           const SubjectsScreen(),
-          const PracticeScreen(),
+          const PracticeSelectionScreen(),
           const ProfileScreen(),
         ],
       ),

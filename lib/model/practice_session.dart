@@ -85,6 +85,9 @@ class PracticeSession {
   /// Check if session is expired (time limit reached)
   bool get isExpired => status == PracticeSessionStatus.timeExpired;
 
+  /// Check if session is finished (completed or expired)
+  bool get isFinished => isCompleted || isExpired;
+
   /// Get elapsed time from start
   Duration get elapsedTime {
     final now = DateTime.now();
@@ -135,27 +138,43 @@ class PracticeSession {
 
   /// Calculate score if session is completed
   int calculateScore() {
-    if (!isCompleted) return 0;
+    // Only calculate score for finished sessions (completed or time expired)
+    if (status != PracticeSessionStatus.completed &&
+        status != PracticeSessionStatus.timeExpired) {
+      print(
+        '🏆 calculateScore: Not finished yet (status: $status), returning 0',
+      );
+      return 0;
+    }
 
     int correctAnswers = 0;
     for (final question in questions) {
       final userAnswer = userAnswers[question.id];
-      if (userAnswer != null && _isAnswerCorrect(question, userAnswer)) {
+      if (userAnswer != null && isAnswerCorrect(question, userAnswer)) {
         correctAnswers++;
       }
     }
 
-    return (correctAnswers / questions.length * 100).round();
+    final score = (correctAnswers / questions.length * 100).round();
+    print(
+      '🏆 calculateScore: $correctAnswers/$questions.length = $score% (status: $status)',
+    );
+    return score;
   }
 
   /// Check if a user answer is correct for a given question
-  bool _isAnswerCorrect(Question question, dynamic userAnswer) {
+  bool isAnswerCorrect(Question question, dynamic userAnswer) {
     switch (question.questionType.toLowerCase()) {
       case 'multiple-choice':
       case 'true-false':
         return question.correctAnswer.contains(userAnswer.toString());
 
       case 'drag-and-drop':
+        // Handle new drag-and-drop format with dragItems/dragTargets
+        if (question.hasDragDropData && userAnswer is List<String>) {
+          return _validateDragAndDropPairs(question, userAnswer);
+        }
+        // Legacy format fallback
         if (userAnswer is List<int>) {
           return _listsEqual(userAnswer, question.correctOrder);
         }
@@ -166,12 +185,75 @@ class PracticeSession {
     }
   }
 
+  /// Format user answer for display
+  String formatUserAnswer(Question question, dynamic userAnswer) {
+    switch (question.questionType.toLowerCase()) {
+      case 'drag-and-drop':
+        if (question.hasDragDropData && userAnswer is List<String>) {
+          return userAnswer
+              .map((pair) {
+                final parts = pair.split('->');
+                if (parts.length == 2) {
+                  final dragItem = question.getDragItemById(parts[0]);
+                  final dropTarget = question.getDropTargetById(parts[1]);
+                  return '${dragItem?.text ?? parts[0]} → ${dropTarget?.text ?? parts[1]}';
+                }
+                return pair;
+              })
+              .join(', ');
+        }
+        return userAnswer.toString();
+      default:
+        return userAnswer.toString();
+    }
+  }
+
+  /// Format correct answer for display
+  String formatCorrectAnswer(Question question) {
+    switch (question.questionType.toLowerCase()) {
+      case 'drag-and-drop':
+        if (question.hasDragDropData) {
+          return question.dragTargets!
+              .map((target) {
+                final dragItem = question.getDragItemById(target.correctPair);
+                return '${dragItem?.text ?? target.correctPair} → ${target.text ?? target.id}';
+              })
+              .join(', ');
+        }
+        return question.correctAnswer.join(', ');
+      default:
+        return question.correctAnswer.join(', ');
+    }
+  }
+
   /// Helper method to compare two lists for equality
   bool _listsEqual<T>(List<T> list1, List<T> list2) {
     if (list1.length != list2.length) return false;
     for (int i = 0; i < list1.length; i++) {
       if (list1[i] != list2[i]) return false;
     }
+    return true;
+  }
+
+  /// Validate drag-and-drop pairs for new format
+  bool _validateDragAndDropPairs(Question question, List<String> userPairs) {
+    // Convert user answers from ['dragId->targetId'] format to a map
+    final userPairMap = <String, String>{};
+    for (final pair in userPairs) {
+      final parts = pair.split('->');
+      if (parts.length == 2) {
+        userPairMap[parts[1]] = parts[0]; // targetId -> dragId
+      }
+    }
+
+    // Check each target has correct drag item
+    for (final target in question.dragTargets!) {
+      final userDragId = userPairMap[target.id];
+      if (userDragId != target.correctPair) {
+        return false;
+      }
+    }
+
     return true;
   }
 

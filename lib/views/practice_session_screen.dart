@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/model/practice_session.dart';
+import 'package:past_question_paper_stem/utils/app_colors.dart';
+import 'package:past_question_paper_stem/widgets/drag_and_drop/drag_item_card.dart';
+import 'package:past_question_paper_stem/widgets/drag_and_drop/drop_target_slot.dart';
 import 'package:past_question_paper_stem/model/question.dart';
 import 'package:past_question_paper_stem/viewmodels/practice_viewmodel.dart';
 import 'package:past_question_paper_stem/views/practice_results_screen.dart';
@@ -14,7 +17,17 @@ class PracticeSessionScreen extends ConsumerStatefulWidget {
 }
 
 class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
-  String? selectedAnswer;
+  String? selectedAnswer; // For multiple-choice and true-false questions
+  String?
+  selectedDragItemId; // For tracking selected drag item in drag-and-drop
+  List<String>? dragAndDropAnswer; // For drag and drop answers
+  late Map<String, String> dragAndDropPairs; // For tracking drag and drop pairs
+
+  @override
+  void initState() {
+    super.initState();
+    dragAndDropPairs = <String, String>{};
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,8 +61,8 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
       appBar: AppBar(
         title: Text(session.topic.name),
         centerTitle: true,
-        backgroundColor: Colors.blue.shade600,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.accent,
+        foregroundColor: AppColors.neutralCard,
         leading: IconButton(
           icon: const Icon(Icons.pause),
           onPressed: () => _showPauseDialog(practiceViewModel),
@@ -131,7 +144,7 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
           LinearProgressIndicator(
             value: session.progress,
             backgroundColor: Colors.grey[300],
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade600),
+            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.accent),
           ),
         ],
       ),
@@ -139,107 +152,47 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
   }
 
   Widget _buildQuestionInfo(PracticeSession session) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.blue.shade100,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            session.mode.name,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.blue.shade700,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.green.shade100,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            '${session.answeredCount}/${session.questions.length} Answered',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.green.shade700,
-            ),
-          ),
-        ),
-      ],
-    );
+    return const SizedBox.shrink(); // Remove all chips for cleaner UI
   }
 
   Widget _buildQuestionCard(Question question) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getQuestionTypeColor(
-                      question.questionType,
-                    ).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    question.questionType.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: _getQuestionTypeColor(question.questionType),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+    return Padding(
+      // Remove Card container for cleaner look
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            question.questionText,
+            style: const TextStyle(fontSize: 18, height: 1.3),
+          ),
+          if (question.hasQuestionImage) ...[
             const SizedBox(height: 16),
-            Text(
-              question.questionText,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                height: 1.3,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                question.questionImage!,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 200,
+                    color: Colors.grey[200],
+                    child: const Center(child: Icon(Icons.image_not_supported)),
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 200,
+                    color: Colors.grey[200],
+                    child: const Center(child: CircularProgressIndicator()),
+                  );
+                },
               ),
             ),
-            if (question.hasQuestionImage) ...[
-              const SizedBox(height: 16),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  question.questionImage!,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 200,
-                      color: Colors.grey[200],
-                      child: const Center(
-                        child: Icon(Icons.image_not_supported),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
           ],
-        ),
+        ],
       ),
     );
   }
@@ -278,8 +231,7 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
                 side: BorderSide(
-                  color:
-                      isSelected ? Colors.blue.shade600 : Colors.grey.shade300,
+                  color: isSelected ? AppColors.accent : Colors.grey.shade300,
                   width: isSelected ? 2 : 1,
                 ),
               ),
@@ -296,7 +248,7 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
                         decoration: BoxDecoration(
                           color:
                               isSelected
-                                  ? Colors.blue.shade600
+                                  ? AppColors.accent
                                   : Colors.grey.shade200,
                           shape: BoxShape.circle,
                         ),
@@ -306,7 +258,9 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color:
-                                  isSelected ? Colors.white : Colors.grey[600],
+                                  isSelected
+                                      ? AppColors.neutralCard
+                                      : Colors.grey[600],
                             ),
                           ),
                         ),
@@ -317,7 +271,7 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
                           option,
                           style: TextStyle(
                             fontSize: 16,
-                            color: isSelected ? Colors.blue.shade600 : null,
+                            color: isSelected ? AppColors.accent : null,
                           ),
                         ),
                       ),
@@ -333,24 +287,120 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
   }
 
   Widget _buildDragAndDropOptions(Question question) {
+    if (!question.isDragAndDrop || !question.hasDragDropData) {
+      return const Text(
+        'Invalid drag and drop question data',
+        style: TextStyle(color: Colors.red),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Drag and drop to arrange in correct order:',
+          'Drag items to the correct targets:',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 16),
+
+        // Drag Items Section
+        const Text(
+          'Items to Drag:',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
-        const Text(
-          'Drag and drop functionality coming soon...',
-          style: TextStyle(
-            fontSize: 14,
-            fontStyle: FontStyle.italic,
-            color: Colors.grey,
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children:
+              question.dragItems!.map((dragItem) {
+                final isUsed = dragAndDropPairs.containsValue(dragItem.id);
+                return _buildDragItem(dragItem, isUsed);
+              }).toList(),
+        ),
+
+        const SizedBox(height: 24),
+
+        // Drop Targets Section
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.green.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.green.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Drop Targets:',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green.shade700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Column(
+                children:
+                    question.dragTargets!.map((dropTarget) {
+                      return _buildDropTarget(question, dropTarget);
+                    }).toList(),
+              ),
+            ],
           ),
         ),
-        // TODO: Implement drag and drop functionality
+
+        const SizedBox(height: 16),
+
+        // Instructions
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.orange.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.orange.shade200),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, color: Colors.orange.shade700, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Tap a blue item, then tap a green target to make a match',
+                  style: TextStyle(fontSize: 12, color: Colors.orange.shade700),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildDragItem(dynamic dragItem, bool isUsed) {
+    return DragItemCard(
+      dragItem: dragItem,
+      isUsed: isUsed,
+      selectedAnswerId: selectedDragItemId,
+      onTap: _selectDragItem,
+    );
+  }
+
+  Widget _buildDropTarget(Question question, dynamic dropTarget) {
+    final dragItemId = dragAndDropPairs[dropTarget.id];
+    final dragItem =
+        dragItemId != null
+            ? question.dragItems!
+                .where((item) => item.id == dragItemId)
+                .firstOrNull
+            : null;
+
+    return DropTargetSlot(
+      dropTarget: dropTarget,
+      dragItem: dragItem,
+      onTap: _selectDropTarget,
+      onRemove: _removePair,
     );
   }
 
@@ -358,6 +408,9 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
     PracticeSession session,
     PracticeViewModel viewModel,
   ) {
+    final currentQuestion = session.currentQuestion;
+    final canProceed = _canProceedToNext(currentQuestion);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -370,10 +423,8 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
             Expanded(
               child: OutlinedButton(
                 onPressed: () {
+                  _resetAnswerState();
                   viewModel.previousQuestion();
-                  setState(() {
-                    selectedAnswer = null;
-                  });
                 },
                 child: const Text('Previous'),
               ),
@@ -381,13 +432,10 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
           if (session.currentQuestionIndex > 0) const SizedBox(width: 16),
           Expanded(
             child: ElevatedButton(
-              onPressed:
-                  selectedAnswer != null || session.currentQuestionIndex > 0
-                      ? () => _nextQuestion(viewModel)
-                      : null,
+              onPressed: canProceed ? () => _nextQuestion(viewModel) : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue.shade600,
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.accent,
+                foregroundColor: AppColors.neutralCard,
               ),
               child: Text(session.isLastQuestion ? 'Finish' : 'Next'),
             ),
@@ -397,20 +445,103 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
     );
   }
 
+  bool _canProceedToNext(Question? currentQuestion) {
+    if (currentQuestion == null) return false;
+
+    if (currentQuestion.isDragAndDrop && currentQuestion.hasDragDropData) {
+      // For drag and drop, check if all targets have been paired
+      return dragAndDropPairs.length == currentQuestion.dragTargets!.length;
+    } else {
+      // For other question types, check if an answer is selected
+      return selectedAnswer != null;
+    }
+  }
+
+  void _resetAnswerState() {
+    setState(() {
+      selectedAnswer = null;
+      selectedDragItemId = null;
+      dragAndDropAnswer = null;
+      dragAndDropPairs = <String, String>{};
+    });
+  }
+
   void _selectAnswer(String answer) {
     setState(() {
       selectedAnswer = answer;
     });
   }
 
-  void _nextQuestion(PracticeViewModel viewModel) {
-    if (selectedAnswer != null) {
-      viewModel.answerQuestion(selectedAnswer);
-    }
-    viewModel.nextQuestion();
+  void _selectDragItem(String dragItemId) {
     setState(() {
-      selectedAnswer = null;
+      selectedDragItemId = dragItemId;
     });
+  }
+
+  void _selectDropTarget(String dropTargetId) {
+    if (selectedDragItemId != null) {
+      setState(() {
+        // Remove any existing pair for this drop target
+        dragAndDropPairs.removeWhere((key, value) => key == dropTargetId);
+        // Remove any existing pair for this drag item
+        dragAndDropPairs.removeWhere(
+          (key, value) => value == selectedDragItemId,
+        );
+        // Create new pair
+        dragAndDropPairs[dropTargetId] = selectedDragItemId!;
+        selectedDragItemId = null; // Clear selection
+      });
+
+      // Update the practice session with current pairs
+      _updateDragDropAnswer();
+    }
+  }
+
+  void _removePair(String dropTargetId) {
+    setState(() {
+      dragAndDropPairs.remove(dropTargetId);
+    });
+    _updateDragDropAnswer();
+  }
+
+  void _updateDragDropAnswer() {
+    // Convert pairs to answer format
+    final answerList =
+        dragAndDropPairs.entries
+            .map((entry) => '${entry.value}->${entry.key}')
+            .toList();
+
+    dragAndDropAnswer = answerList;
+
+    // Submit answer to practice viewmodel if all pairs are made
+    final practiceState = ref.read(practiceViewModelProvider);
+    final currentQuestion = practiceState.currentQuestion;
+
+    if (currentQuestion != null &&
+        currentQuestion.isDragAndDrop &&
+        currentQuestion.hasDragDropData &&
+        dragAndDropPairs.length == currentQuestion.dragTargets!.length) {
+      // All targets have been paired, submit answer
+      ref.read(practiceViewModelProvider.notifier).answerQuestion(answerList);
+    }
+  }
+
+  void _nextQuestion(PracticeViewModel viewModel) {
+    final practiceState = ref.read(practiceViewModelProvider);
+    final currentQuestion = practiceState.currentQuestion;
+
+    if (currentQuestion != null) {
+      if (currentQuestion.isDragAndDrop && currentQuestion.hasDragDropData) {
+        // For drag and drop, the answer is already submitted in _updateDragDropAnswer
+        // Just move to next question
+      } else if (selectedAnswer != null) {
+        // For other question types, submit the selected answer
+        viewModel.answerQuestion(selectedAnswer);
+      }
+    }
+
+    viewModel.nextQuestion();
+    _resetAnswerState();
   }
 
   void _showPauseDialog(PracticeViewModel viewModel) {
@@ -438,18 +569,5 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
         );
       },
     );
-  }
-
-  Color _getQuestionTypeColor(String questionType) {
-    switch (questionType.toLowerCase()) {
-      case 'multiple-choice':
-        return Colors.blue;
-      case 'true-false':
-        return Colors.green;
-      case 'drag-and-drop':
-        return Colors.orange;
-      default:
-        return Colors.grey;
-    }
   }
 }

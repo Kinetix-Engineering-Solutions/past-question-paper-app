@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/model/practice_session.dart';
 import 'package:past_question_paper_stem/model/question.dart';
 import 'package:past_question_paper_stem/viewmodels/practice_viewmodel.dart';
+import 'package:past_question_paper_stem/utils/app_colors.dart';
+import 'package:past_question_paper_stem/views/practice_session_screen.dart';
 
 class PracticeResultsScreen extends ConsumerWidget {
   const PracticeResultsScreen({super.key});
@@ -11,6 +13,20 @@ class PracticeResultsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final practiceState = ref.watch(practiceViewModelProvider);
     final practiceViewModel = ref.read(practiceViewModelProvider.notifier);
+
+    // Listen for new session creation and navigate to it
+    ref.listen(practiceViewModelProvider, (previous, current) {
+      // Check if a new session was created (different from results screen session)
+      if (current.currentSession != null &&
+          previous?.currentSession != current.currentSession &&
+          current.currentSession!.status == PracticeSessionStatus.inProgress) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const PracticeSessionScreen(),
+          ),
+        );
+      }
+    });
 
     final session = practiceState.currentSession;
     if (session == null) {
@@ -23,8 +39,8 @@ class PracticeResultsScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Practice Results'),
         centerTitle: true,
-        backgroundColor: Colors.blue.shade600,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.accent,
+        foregroundColor: AppColors.neutralCard,
         automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
@@ -38,7 +54,7 @@ class PracticeResultsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             _buildQuestionReview(session),
             const SizedBox(height: 32),
-            _buildActionButtons(context, practiceViewModel),
+            _buildActionButtons(context, ref, practiceViewModel),
           ],
         ),
       ),
@@ -49,6 +65,38 @@ class PracticeResultsScreen extends ConsumerWidget {
     final score = session.score ?? 0;
     final isGoodScore = score >= 70;
     final isExcellentScore = score >= 90;
+
+    // Calculate detailed stats for debugging
+    int correctAnswers = 0;
+    int totalQuestions = session.questions.length;
+    int answeredQuestions = 0;
+
+    for (final question in session.questions) {
+      final userAnswer = session.userAnswers[question.id];
+      if (userAnswer != null) {
+        answeredQuestions++;
+        if (session.isAnswerCorrect(question, userAnswer)) {
+          correctAnswers++;
+        }
+      }
+    }
+
+    // Manual score calculation for verification
+    final manualScore =
+        totalQuestions > 0
+            ? (correctAnswers / totalQuestions * 100).round()
+            : 0;
+
+    // Debug print to console
+    print('🏆 Score Debug:');
+    print('   Session score: $score');
+    print('   Manual calculation: $manualScore');
+    print('   Correct: $correctAnswers / $totalQuestions');
+    print('   Answered: $answeredQuestions');
+    print('   Session status: ${session.status}');
+    print('   Session completed: ${session.isCompleted}');
+    print('   Session expired: ${session.isExpired}');
+    print('   Session finished: ${session.isFinished}');
 
     Color scoreColor;
     String scoreEmoji;
@@ -107,6 +155,33 @@ class PracticeResultsScreen extends ConsumerWidget {
               'Your practice score',
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
+            const SizedBox(height: 8),
+            Text(
+              '$correctAnswers out of $totalQuestions correct ($answeredQuestions answered)',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            if (score != manualScore) ...[
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '⚠️ Score mismatch: Expected $manualScore%',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.orange,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -135,7 +210,7 @@ class PracticeResultsScreen extends ConsumerWidget {
               icon: Icons.topic,
               label: 'Topic',
               value: session.topic.name,
-              color: Colors.blue,
+              color: AppColors.accent,
             ),
             _buildSummaryRow(
               icon: Icons.access_time,
@@ -245,7 +320,8 @@ class PracticeResultsScreen extends ConsumerWidget {
   ) {
     final userAnswer = session.userAnswers[question.id];
     final isAnswered = userAnswer != null;
-    final isCorrect = isAnswered && _isAnswerCorrect(question, userAnswer);
+    final isCorrect =
+        isAnswered && session.isAnswerCorrect(question, userAnswer);
 
     Icon statusIcon;
     Color statusColor;
@@ -306,12 +382,12 @@ class PracticeResultsScreen extends ConsumerWidget {
                 const SizedBox(height: 4),
                 if (isAnswered) ...[
                   Text(
-                    'Your answer: $userAnswer',
+                    'Your answer: ${session.formatUserAnswer(question, userAnswer)}',
                     style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                   if (!isCorrect) ...[
                     Text(
-                      'Correct: ${question.correctAnswer.join(', ')}',
+                      'Correct: ${session.formatCorrectAnswer(question)}',
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.green,
@@ -340,8 +416,12 @@ class PracticeResultsScreen extends ConsumerWidget {
 
   Widget _buildActionButtons(
     BuildContext context,
+    WidgetRef ref,
     PracticeViewModel viewModel,
   ) {
+    final practiceState = ref.watch(practiceViewModelProvider);
+    final isStartingNewSession = practiceState.isLoading;
+
     return Column(
       children: [
         SizedBox(
@@ -349,13 +429,12 @@ class PracticeResultsScreen extends ConsumerWidget {
           child: ElevatedButton(
             onPressed: () {
               viewModel.endSession();
-              Navigator.of(context).popUntil(
-                (route) => route.settings.name == '/' || route.isFirst,
-              );
+              // Navigate back to the beginning of the navigation stack
+              Navigator.of(context).popUntil((route) => route.isFirst);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue.shade600,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.accent,
+              foregroundColor: AppColors.neutralCard,
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
             child: const Text(
@@ -368,46 +447,56 @@ class PracticeResultsScreen extends ConsumerWidget {
         SizedBox(
           width: double.infinity,
           child: OutlinedButton(
-            onPressed: () {
-              // TODO: Implement practice again functionality
-              viewModel.endSession();
-              Navigator.of(context).pop();
-            },
+            onPressed:
+                isStartingNewSession
+                    ? null
+                    : () async {
+                      try {
+                        await viewModel.startNewSession();
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to start new session: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
-            child: const Text(
-              'Practice Again',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
+            child:
+                isStartingNewSession
+                    ? const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Starting new session...',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    )
+                    : const Text(
+                      'Practice Again',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
           ),
         ),
       ],
     );
-  }
-
-  bool _isAnswerCorrect(Question question, dynamic userAnswer) {
-    switch (question.questionType.toLowerCase()) {
-      case 'multiple-choice':
-      case 'true-false':
-        return question.correctAnswer.contains(userAnswer.toString());
-
-      case 'drag-and-drop':
-        if (userAnswer is List<int>) {
-          return _listsEqual(userAnswer, question.correctOrder);
-        }
-        return false;
-
-      default:
-        return false;
-    }
-  }
-
-  bool _listsEqual<T>(List<T> list1, List<T> list2) {
-    if (list1.length != list2.length) return false;
-    for (int i = 0; i < list1.length; i++) {
-      if (list1[i] != list2[i]) return false;
-    }
-    return true;
   }
 }

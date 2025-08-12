@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/model/user.dart';
 import 'package:past_question_paper_stem/model/grade.dart';
 import 'package:past_question_paper_stem/model/subject.dart';
-import 'package:past_question_paper_stem/providers/auth_providers.dart';
+// import 'package:past_question_paper_stem/providers/auth_providers.dart';
 import 'package:past_question_paper_stem/providers/navigation_providers.dart';
 import 'package:past_question_paper_stem/services/firestore_database_firebase.dart';
 import 'package:past_question_paper_stem/viewmodels/auth_viewmodel.dart';
@@ -61,14 +61,14 @@ class HomeViewModel extends StateNotifier<HomeState> {
     _initializeHome();
 
     // Listen to auth state changes
-    _ref.listen(authStateProvider, (previous, next) {
+    _ref.listen(authViewModelProvider, (previous, next) {
       next.whenOrNull(
         data: (user) {
           if (user == null) {
             // User logged out - reset state
             state = const HomeState();
           } else {
-            // User logged in - update user and load data
+            // User logged in or profile updated - update user and load data
             state = state.copyWith(currentUser: user, isLoading: true);
             _loadUserData();
           }
@@ -86,13 +86,25 @@ class HomeViewModel extends StateNotifier<HomeState> {
         },
       );
     });
+
+    // Safety net: after initial build/navigation, ensure we load with the latest
+    // auth state in case of a timing race right after onboarding.
+    Future.microtask(() {
+      final auth = _ref.read(authViewModelProvider);
+      auth.whenOrNull(data: (user) {
+        if (user != null) {
+          state = state.copyWith(currentUser: user, isLoading: true);
+          _loadUserData();
+        }
+      });
+    });
   }
 
   /// Initialize home screen data
   Future<void> _initializeHome() async {
     try {
-      // Use auth state provider which includes Firestore profile data
-      final authState = _ref.read(authStateProvider);
+  // Read AuthViewModel state (reflects refreshes after onboarding)
+  final authState = _ref.read(authViewModelProvider);
       authState.whenOrNull(
         data: (currentUser) async {
           if (currentUser != null) {

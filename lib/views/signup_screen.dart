@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/utils/app_theme.dart';
+import 'package:past_question_paper_stem/utils/app_colors.dart';
 import 'package:past_question_paper_stem/utils/loading_state.dart';
 import 'package:past_question_paper_stem/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_stem/views/login.dart';
@@ -56,7 +56,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: ChalkboardGradients.spectrum),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.ink, AppColors.ink],
+          ),
+        ),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -129,7 +135,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         Icons.email_outlined,
                         color: AppColors.chalkWhite.withOpacity(0.7),
                       ),
-                      fillColor: AppColors.chalkboard.withOpacity(0.3),
+                      fillColor: AppColors.ink.withOpacity(0.3),
                       filled: true,
                     ),
                     keyboardType: TextInputType.emailAddress,
@@ -169,7 +175,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         Icons.lock_outline,
                         color: AppColors.chalkWhite.withOpacity(0.7),
                       ),
-                      fillColor: AppColors.chalkboard.withOpacity(0.3),
+                      fillColor: AppColors.ink.withOpacity(0.3),
                       filled: true,
                     ),
                     obscureText: true,
@@ -184,7 +190,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         ref.watch(loadingStateProvider) ? null : _handleSignUp,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.chalkWhite,
-                      foregroundColor: AppColors.chalkboard,
+                      foregroundColor: AppColors.ink,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -199,7 +205,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.chalkboard,
+                                  AppColors.ink,
                                 ),
                               ),
                             )
@@ -208,7 +214,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: AppColors.chalkboard,
+                                color: AppColors.ink,
                               ),
                             ),
                   ),

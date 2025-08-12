@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:past_question_paper_stem/model/subject.dart';
-import 'package:past_question_paper_stem/utils/app_theme.dart';
+import 'package:past_question_paper_stem/utils/app_colors.dart';
 
 class MaterialsWidget extends StatelessWidget {
   final Subject subject;
@@ -16,19 +16,19 @@ class MaterialsWidget extends StatelessWidget {
         'title': 'Past Question Papers',
         'description': 'Download previous exam papers for ${subject.name}',
         'icon': Icons.quiz,
-        'color': AppColors.orangeInk,
+        'color': AppColors.accent,
       },
       {
         'title': 'Study Guides',
         'description': 'Comprehensive study materials and notes',
         'icon': Icons.book,
-        'color': AppColors.charcoal,
+        'color': AppColors.ink,
       },
       {
         'title': 'Practice Tests',
         'description': 'Mock exams and practice assessments',
         'icon': Icons.assignment,
-        'color': AppColors.chalkboard,
+        'color': AppColors.ink,
       },
     ];
 
@@ -54,7 +54,7 @@ class MaterialsWidget extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.lightGray),
+            border: Border.all(color: AppColors.neutralBorder),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -63,14 +63,10 @@ class MaterialsWidget extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.lightGray.withOpacity(0.3),
+                  color: AppColors.neutralMid.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  material['icon'],
-                  color: AppColors.charcoal,
-                  size: 24,
-                ),
+                child: Icon(material['icon'], color: AppColors.ink, size: 24),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -87,13 +83,16 @@ class MaterialsWidget extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       material['description'],
-                      style: TextStyle(color: AppColors.graphite, fontSize: 14),
+                      style: TextStyle(
+                        color: AppColors.neutralMid,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(Icons.download, color: AppColors.charcoal, size: 24),
+              Icon(Icons.download, color: AppColors.ink, size: 24),
             ],
           ),
         ),
@@ -107,10 +106,10 @@ class MaterialsWidget extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Downloading $materialType for ${subject.name}...'),
-        backgroundColor: Colors.blue,
+        backgroundColor: AppColors.accent,
         action: SnackBarAction(
           label: 'View',
-          textColor: Colors.white,
+          textColor: AppColors.neutralCard,
           onPressed: () {
             // Navigate to a dedicated materials/downloads screen
             _showMaterialOptions(context, materialType);
@@ -145,7 +144,7 @@ class MaterialsWidget extends StatelessWidget {
                           width: 40,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: AppColors.lightGray,
+                            color: AppColors.neutralMid,
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -164,7 +163,7 @@ class MaterialsWidget extends StatelessWidget {
                       Text(
                         'Available downloads for this subject',
                         style: TextStyle(
-                          color: AppColors.graphite,
+                          color: AppColors.neutralMid,
                           fontSize: 14,
                         ),
                       ),
@@ -226,7 +225,7 @@ class MaterialsWidget extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.lightGray),
+            border: Border.all(color: AppColors.neutralBorder),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -235,10 +234,10 @@ class MaterialsWidget extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.lightGray.withOpacity(0.3),
+                  color: AppColors.neutralMid.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: AppColors.charcoal, size: 24),
+                child: Icon(icon, color: AppColors.ink, size: 24),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -255,12 +254,15 @@ class MaterialsWidget extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       size,
-                      style: TextStyle(color: AppColors.graphite, fontSize: 12),
+                      style: TextStyle(
+                        color: AppColors.neutralMid,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.download, color: AppColors.charcoal, size: 24),
+              Icon(Icons.download, color: AppColors.ink, size: 24),
             ],
           ),
         ),

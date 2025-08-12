@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/viewmodels/auth_viewmodel.dart';
+import 'package:past_question_paper_stem/utils/app_colors.dart';
 import 'package:past_question_paper_stem/providers/profile_providers.dart';
 
 class UserProfileCard extends ConsumerWidget {
@@ -74,19 +75,19 @@ class UserProfileCard extends ConsumerWidget {
                 // Grade Information
                 gradesAsync.when(
                   loading:
-                      () => const Row(
-                        children: [
-                          Icon(Icons.school, color: Colors.blue),
+                      () => Row(
+                        children: const [
+                          Icon(Icons.school, color: AppColors.accent),
                           SizedBox(width: 8),
                           Text('Loading grade...'),
                         ],
                       ),
                   error:
                       (error, stack) => Row(
-                        children: [
-                          Icon(Icons.school, color: Colors.blue[600]),
-                          const SizedBox(width: 8),
-                          const Text('Grade: Error loading'),
+                        children: const [
+                          Icon(Icons.school, color: AppColors.accent),
+                          SizedBox(width: 8),
+                          Text('Grade: Error loading'),
                         ],
                       ),
                   data: (grades) {
@@ -96,7 +97,7 @@ class UserProfileCard extends ConsumerWidget {
                             .firstOrNull;
                     return Row(
                       children: [
-                        Icon(Icons.school, color: Colors.blue[600]),
+                        const Icon(Icons.school, color: AppColors.accent),
                         const SizedBox(width: 8),
                         Text(
                           'Grade: ${grade?.name ?? 'Unknown'}',

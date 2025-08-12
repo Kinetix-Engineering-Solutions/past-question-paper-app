@@ -1,0 +1,36 @@
+
+[
+  {
+    "topicId": "YOUR_TOPIC_ID_HERE",
+    "questionType": "drag-and-drop",
+    "questionText": "Arrange these numbers in ascending order:",
+    "dragItems": [
+      {"id": "item1", "text": "5", "image": null},
+      {"id": "item2", "text": "2", "image": null},
+      {"id": "item3", "text": "8", "image": null},
+      {"id": "item4", "text": "1", "image": null}
+    ],
+    "dropTargets": [
+      {"id": "target1", "text": "First", "image": null, "correctPair": "item4"},
+      {"id": "target2", "text": "Second", "image": null, "correctPair": "item2"},
+      {"id": "target3", "text": "Third", "image": null, "correctPair": "item1"},
+      {"id": "target4", "text": "Fourth", "image": null, "correctPair": "item3"}
+    ],
+    "correctOrder": [3, 1, 0, 2],
+    "correctAnswer": ["1", "2", "5", "8"],
+    "explanation": "Numbers in ascending order: 1, 2, 5, 8",
+    "points": 10,
+    "timeAllocation": 60
+  },
+  {
+    "topicId": "YOUR_TOPIC_ID_HERE",
+    "questionType": "multiple-choice",
+    "questionText": "What is 2 + 2?",
+    "options": ["2", "3", "4", "5"],
+    "correctOrder": [],
+    "correctAnswer": ["4"],
+    "explanation": "2 + 2 equals 4",
+    "points": 5,
+    "timeAllocation": 30
+  }
+]

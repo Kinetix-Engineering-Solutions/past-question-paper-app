@@ -57,6 +57,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
       // Navigate to home screen
       await NavigationService.navigateToHome();
+      // Kick the HomeViewModel to load fresh data immediately
+      // (in case the navigation happens before listeners run)
+      Future.microtask(() {
+        try {
+          // We can't access HomeViewModel directly here without a ref,
+          // but its constructor now also ensures a microtask refresh.
+          // If needed later, we can add a global refresh trigger.
+        } catch (_) {}
+      });
     } else if (mounted) {
       final error = ref.read(profileSetupProvider).error;
       CustomSnackBar.show(

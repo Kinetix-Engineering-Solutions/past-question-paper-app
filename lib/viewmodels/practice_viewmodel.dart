@@ -4,7 +4,7 @@ import 'package:past_question_paper_stem/model/practice_mode.dart';
 import 'package:past_question_paper_stem/model/practice_session.dart';
 import 'package:past_question_paper_stem/model/topic.dart';
 import 'package:past_question_paper_stem/model/question.dart';
-import 'package:past_question_paper_stem/services/firestore_database_firebase.dart';
+import 'package:past_question_paper_stem/repositories/question_repository.dart';
 
 // Practice View Model Provider
 final practiceViewModelProvider =
@@ -55,7 +55,7 @@ class PracticeState {
 }
 
 class PracticeViewModel extends StateNotifier<PracticeState> {
-  final FirestoreDatabaseService _database = FirestoreDatabaseService();
+  final QuestionRepository _questionRepository = QuestionRepository();
   Timer? _timer;
 
   PracticeViewModel() : super(const PracticeState());
@@ -71,12 +71,37 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      // TODO: Implement getQuestionsForTopic in FirestoreDatabaseService
-      // For now, we'll use mock data
-      final questions = await _getMockQuestions(topic);
+      // Debug: Print the topic ID being used
+      print('🔍 Loading questions for topic ID: ${topic.id}');
+      print('🔍 Topic name: ${topic.name}');
 
-      state = state.copyWith(availableQuestions: questions, isLoading: false);
+      // Load questions from Firestore using QuestionRepository
+      final questions = await _questionRepository.getQuestionsForTopic(
+        topic.id,
+      );
+
+      // Debug: Print results
+      print('🔍 Found ${questions.length} questions for topic ${topic.id}');
+      if (questions.isNotEmpty) {
+        print('🔍 First question topicId: ${questions.first.topicId}');
+        print('🔍 First question type: ${questions.first.questionType}');
+      }
+
+      // Convert all gs:// URLs to HTTP URLs for better performance
+      print('🔄 Converting image URLs to HTTP URLs...');
+      final questionsWithUrls = await Future.wait(
+        questions.map((q) => q.withHttpUrls()),
+      );
+      print(
+        '✅ URL conversion completed for ${questionsWithUrls.length} questions',
+      );
+
+      state = state.copyWith(
+        availableQuestions: questionsWithUrls,
+        isLoading: false,
+      );
     } catch (e) {
+      print('❌ Error loading questions: $e');
       state = state.copyWith(
         error: 'Failed to load questions: ${e.toString()}',
         isLoading: false,
@@ -211,11 +236,15 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
 
     _timer?.cancel();
 
-    final completedSession = session.copyWith(
+    // First update the status, then calculate score
+    final sessionWithCompletedStatus = session.copyWith(
       status: PracticeSessionStatus.completed,
       endTime: DateTime.now(),
       duration: session.elapsedTime,
-      score: session.calculateScore(),
+    );
+
+    final completedSession = sessionWithCompletedStatus.copyWith(
+      score: sessionWithCompletedStatus.calculateScore(),
     );
 
     state = state.copyWith(currentSession: completedSession, showResults: true);
@@ -228,11 +257,15 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
 
     _timer?.cancel();
 
-    final expiredSession = session.copyWith(
+    // First update the status, then calculate score
+    final sessionWithExpiredStatus = session.copyWith(
       status: PracticeSessionStatus.timeExpired,
       endTime: DateTime.now(),
       duration: session.mode.duration,
-      score: session.calculateScore(),
+    );
+
+    final expiredSession = sessionWithExpiredStatus.copyWith(
+      score: sessionWithExpiredStatus.calculateScore(),
     );
 
     state = state.copyWith(currentSession: expiredSession, showResults: true);
@@ -307,45 +340,32 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
     return shuffled.take(maxQuestions).toList();
   }
 
-  /// Mock questions for testing (TODO: Replace with actual database calls)
-  Future<List<Question>> _getMockQuestions(Topic topic) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    return [
-      Question(
-        id: '1',
-        questionType: 'multiple-choice',
-        questionText: 'What is 2 + 2?',
-        options: ['2', '3', '4', '5'],
-        correctOrder: [],
-        correctAnswer: ['4'],
-        explanation: '2 + 2 equals 4',
-      ),
-      Question(
-        id: '2',
-        questionType: 'true-false',
-        questionText: 'The Earth is flat.',
-        options: ['True', 'False'],
-        correctOrder: [],
-        correctAnswer: ['False'],
-        explanation: 'The Earth is round',
-      ),
-      Question(
-        id: '3',
-        questionType: 'multiple-choice',
-        questionText: 'What is the capital of France?',
-        options: ['London', 'Berlin', 'Paris', 'Madrid'],
-        correctOrder: [],
-        correctAnswer: ['Paris'],
-        explanation: 'Paris is the capital of France',
-      ),
-    ];
-  }
-
   /// Clear error
   void clearError() {
     state = state.copyWith(error: null);
+  }
+
+  /// Start a new practice session with the same topic and mode as the current session
+  Future<void> startNewSession() async {
+    final currentSession = state.currentSession;
+    if (currentSession == null) {
+      state = state.copyWith(error: 'No current session to restart');
+      return;
+    }
+
+    final topic = currentSession.topic;
+    final mode = currentSession.mode;
+
+    // Clear current session first
+    endSession();
+
+    // Ensure we have questions loaded for this topic
+    if (state.availableQuestions.isEmpty) {
+      await loadQuestionsForTopic(topic);
+    }
+
+    // Start a new session with the same topic and mode
+    await startPracticeSession(topic, mode);
   }
 
   /// Reset all state

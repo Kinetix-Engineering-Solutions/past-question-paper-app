@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/utils/app_theme.dart';
+import 'package:past_question_paper_stem/utils/app_colors.dart';
 import 'package:past_question_paper_stem/viewmodels/home_viewmodel.dart';
 import 'package:past_question_paper_stem/model/subject.dart';
 import 'package:past_question_paper_stem/views/subject_topics_screen.dart';
@@ -19,7 +19,7 @@ class HomeScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(current.error!),
-            backgroundColor: AppColors.charcoal,
+            backgroundColor: AppColors.ink,
             action: SnackBarAction(
               label: 'Dismiss',
               onPressed: () => homeViewModel.clearError(),
@@ -30,6 +30,7 @@ class HomeScreen extends ConsumerWidget {
     });
 
     return Scaffold(
+      backgroundColor: AppColors.paper,
       body: SafeArea(
         child:
             homeState.isLoading || homeState.isSigningOut
@@ -41,14 +42,14 @@ class HomeScreen extends ConsumerWidget {
                       children: [
                         CircularProgressIndicator(
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            AppColors.charcoal,
+                            AppColors.ink,
                           ),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'Loading...',
                           style: TextStyle(
-                            color: AppColors.charcoal,
+                            color: AppColors.ink,
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
                           ),
@@ -78,50 +79,35 @@ class HomeScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   // Welcome Section
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: AppColors.charcoal.withOpacity(
-                                          0.3,
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Welcome back,',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: AppColors.ink.withOpacity(0.7),
                                         ),
-                                        width: 1.5,
                                       ),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Welcome back,',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: AppColors.charcoal
-                                                .withOpacity(0.7),
-                                          ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        homeViewModel.userDisplayName,
+                                        style: const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.ink,
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          homeViewModel.userDisplayName,
-                                          style: const TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.charcoal,
-                                          ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Ready to practice your STEM subjects?',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: AppColors.ink.withOpacity(0.8),
                                         ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'Ready to practice your STEM subjects?',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: AppColors.charcoal
-                                                .withOpacity(0.8),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
 
                                   const SizedBox(height: 24),
@@ -133,26 +119,19 @@ class HomeScreen extends ConsumerWidget {
                                     children: [
                                       Text(
                                         'My Subjects',
-                                        style: TextStyle(
-                                          fontSize: 20,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleLarge?.copyWith(
                                           fontWeight: FontWeight.bold,
-                                          color: AppColors.charcoal,
-                                          shadows: [
-                                            Shadow(
-                                              color: AppColors.chalkWhite
-                                                  .withOpacity(0.3),
-                                              blurRadius: 2,
-                                              offset: const Offset(1, 1),
-                                            ),
-                                          ],
+                                          color: AppColors.ink,
                                         ),
                                       ),
                                       TextButton(
                                         onPressed:
                                             homeViewModel.navigateToSubjects,
                                         style: TextButton.styleFrom(
-                                          backgroundColor: AppColors.charcoal
-                                              .withOpacity(0.1),
+                                          backgroundColor: AppColors.ink
+                                              .withOpacity(0.06),
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
                                               8,
@@ -161,8 +140,10 @@ class HomeScreen extends ConsumerWidget {
                                         ),
                                         child: Text(
                                           'View All',
-                                          style: TextStyle(
-                                            color: AppColors.charcoal,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.labelLarge?.copyWith(
+                                            color: AppColors.ink,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
@@ -189,19 +170,20 @@ class HomeScreen extends ConsumerWidget {
                                       width: double.infinity,
                                       padding: const EdgeInsets.all(20),
                                       decoration: BoxDecoration(
-                                        gradient: ChalkboardGradients.deep,
+                                        color: AppColors.ink,
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: AppColors.chalkWhite
+                                          color: AppColors.neutralMid
                                               .withOpacity(0.3),
                                           width: 1.5,
                                         ),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: AppColors.chalkboard
-                                                .withOpacity(0.3),
+                                            color: Colors.black.withOpacity(
+                                              0.2,
+                                            ),
                                             blurRadius: 8,
-                                            offset: const Offset(0, 4),
+                                            offset: const Offset(0, 2),
                                           ),
                                         ],
                                       ),
@@ -210,7 +192,7 @@ class HomeScreen extends ConsumerWidget {
                                           Icon(
                                             Icons.book_outlined,
                                             size: 48,
-                                            color: AppColors.chalkWhite,
+                                            color: AppColors.neutralCard,
                                           ),
                                           const SizedBox(height: 12),
                                           Text(
@@ -218,7 +200,7 @@ class HomeScreen extends ConsumerWidget {
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w500,
-                                              color: AppColors.chalkWhite,
+                                              color: AppColors.neutralCard,
                                             ),
                                           ),
                                           const SizedBox(height: 8),
@@ -226,7 +208,7 @@ class HomeScreen extends ConsumerWidget {
                                             'Add subjects to start practicing',
                                             style: TextStyle(
                                               fontSize: 14,
-                                              color: AppColors.chalkWhite
+                                              color: AppColors.neutralCard
                                                   .withOpacity(0.8),
                                             ),
                                           ),
@@ -237,19 +219,18 @@ class HomeScreen extends ConsumerWidget {
                                                     .navigateToSubjects,
                                             icon: Icon(
                                               Icons.add,
-                                              color: AppColors.chalkboard,
+                                              color: AppColors.ink,
                                             ),
                                             label: Text(
                                               'Add Subjects',
                                               style: TextStyle(
-                                                color: AppColors.chalkboard,
+                                                color: AppColors.ink,
+                                                fontWeight: FontWeight.w600,
                                               ),
                                             ),
                                             style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  AppColors.chalkWhite,
-                                              foregroundColor:
-                                                  AppColors.chalkboard,
+                                              backgroundColor: AppColors.ink,
+                                              foregroundColor: AppColors.paper,
                                             ),
                                           ),
                                         ],
@@ -271,64 +252,17 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildSubjectCard(BuildContext context, Subject subject) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        gradient: ChalkboardGradients.vertical,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.chalkboard.withOpacity(0.2),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+      margin: const EdgeInsets.only(bottom: 14),
       child: Card(
         elevation: 0,
-        color: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
-          leading: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.chalkWhite.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppColors.chalkWhite.withOpacity(0.4),
-                width: 1,
-              ),
-            ),
-            child: Icon(Icons.book, color: AppColors.chalkWhite, size: 24),
-          ),
-          title: Text(
-            subject.name,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-              color: AppColors.chalkWhite,
-            ),
-          ),
-          subtitle: Text(
-            subject.description,
-            style: TextStyle(
-              color: AppColors.chalkWhite.withOpacity(0.8),
-              fontSize: 14,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: Icon(
-            Icons.arrow_forward_ios,
-            size: 16,
-            color: AppColors.chalkWhite,
-          ),
+        color: AppColors.neutralCard,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: AppColors.neutralBorder),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
           onTap: () {
-            print('🏠 Tapping subject: ${subject.name} (ID: "${subject.id}")');
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -336,6 +270,76 @@ class HomeScreen extends ConsumerWidget {
               ),
             );
           },
+          child: SizedBox(
+            height: 88,
+            child: Row(
+              children: [
+                // Accent bar
+                Container(
+                  width: 6,
+                  decoration: const BoxDecoration(
+                    color: AppColors.ink,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(14),
+                      bottomLeft: Radius.circular(14),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Icon block
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: AppColors.ink,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.book,
+                    color: AppColors.paper,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        subject.name,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        subject.description,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.neutralMid,
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: AppColors.neutralMid,
+                ),
+                const SizedBox(width: 14),
+              ],
+            ),
+          ),
         ),
       ),
     );

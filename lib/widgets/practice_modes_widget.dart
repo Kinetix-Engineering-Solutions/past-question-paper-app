@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/model/topic.dart';
 import 'package:past_question_paper_stem/model/practice_mode.dart';
-import 'package:past_question_paper_stem/utils/app_theme.dart';
-import 'package:past_question_paper_stem/viewmodels/practice_viewmodel.dart';
-import 'package:past_question_paper_stem/views/practice_session_screen.dart';
+import 'package:past_question_paper_stem/utils/app_colors.dart';
+import 'package:past_question_paper_stem/views/practice_instructions_screen.dart';
 
 class PracticeModesWidget extends ConsumerWidget {
   final Topic topic;
@@ -27,7 +26,7 @@ class PracticeModesWidget extends ConsumerWidget {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppColors.charcoal,
+              color: AppColors.ink,
             ),
           ),
           const SizedBox(height: 12),
@@ -63,27 +62,20 @@ class PracticeModesWidget extends ConsumerWidget {
     Topic topic,
     PracticeMode mode,
   ) {
-    // Get different gradients for different practice modes
-    LinearGradient modeGradient;
-    switch (mode) {
-      case PracticeMode.standard:
-        modeGradient = ChalkboardGradients.classic;
-        break;
-      case PracticeMode.extended:
-        modeGradient = ChalkboardGradients.deep;
-        break;
-      default:
-        modeGradient = ChalkboardGradients.classic;
-        break;
-    }
+    // Use solid colors per mode (no gradients)
+    final Color modeColor = switch (mode) {
+      PracticeMode.standard => AppColors.ink,
+      PracticeMode.extended => AppColors.neutralMid,
+      _ => AppColors.ink,
+    };
 
     return Container(
       decoration: BoxDecoration(
-        gradient: modeGradient,
+        color: modeColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: AppColors.chalkboard.withOpacity(0.15),
+            color: AppColors.ink.withOpacity(0.15),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -105,16 +97,16 @@ class PracticeModesWidget extends ConsumerWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: AppColors.chalkWhite.withOpacity(0.2),
+                      color: AppColors.neutralCard.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: AppColors.chalkWhite.withOpacity(0.4),
+                        color: AppColors.neutralCard.withOpacity(0.4),
                         width: 1,
                       ),
                     ),
                     child: Icon(
                       mode.icon,
-                      color: AppColors.chalkWhite,
+                      color: AppColors.neutralCard,
                       size: 18,
                     ),
                   ),
@@ -124,10 +116,10 @@ class PracticeModesWidget extends ConsumerWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.chalkWhite.withOpacity(0.2),
+                      color: AppColors.neutralCard.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                        color: AppColors.chalkWhite.withOpacity(0.3),
+                        color: AppColors.neutralCard.withOpacity(0.3),
                         width: 0.5,
                       ),
                     ),
@@ -136,7 +128,7 @@ class PracticeModesWidget extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.chalkWhite,
+                        color: AppColors.neutralCard,
                       ),
                     ),
                   ),
@@ -150,7 +142,7 @@ class PracticeModesWidget extends ConsumerWidget {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.chalkWhite,
+                  color: AppColors.neutralCard,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -160,7 +152,7 @@ class PracticeModesWidget extends ConsumerWidget {
               Text(
                 mode.description,
                 style: TextStyle(
-                  color: AppColors.chalkWhite.withOpacity(0.8),
+                  color: AppColors.neutralCard.withOpacity(0.8),
                   fontSize: 11,
                 ),
                 textAlign: TextAlign.center,
@@ -172,7 +164,7 @@ class PracticeModesWidget extends ConsumerWidget {
               // Play button
               Icon(
                 Icons.play_circle_outline,
-                color: AppColors.chalkWhite,
+                color: AppColors.neutralCard,
                 size: 24,
               ),
             ],
@@ -188,27 +180,12 @@ class PracticeModesWidget extends ConsumerWidget {
     Topic topic,
     PracticeMode mode,
   ) async {
-    final practiceViewModel = ref.read(practiceViewModelProvider.notifier);
-
-    // Start the practice session
-    await practiceViewModel.startPracticeSession(topic, mode);
-
-    final practiceState = ref.read(practiceViewModelProvider);
-    if (practiceState.error == null && practiceState.currentSession != null) {
-      // Navigate to practice session screen
-      if (context.mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const PracticeSessionScreen(),
-          ),
-        );
-      }
-    } else if (practiceState.error != null) {
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(practiceState.error!),
-          backgroundColor: Colors.red,
+    // Navigate to instructions screen where questions will be loaded
+    if (context.mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder:
+              (context) => PracticeInstructionsScreen(topic: topic, mode: mode),
         ),
       );
     }

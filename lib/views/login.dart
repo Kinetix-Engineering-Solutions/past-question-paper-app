@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/utils/app_theme.dart';
+import 'package:past_question_paper_stem/utils/app_colors.dart';
 import 'package:past_question_paper_stem/utils/loading_state.dart';
 import 'package:past_question_paper_stem/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_stem/views/signup_screen.dart';
-import 'package:past_question_paper_stem/widgets/email_link_sign_in.dart';
 import 'package:past_question_paper_stem/widgets/custom_snackbar.dart';
 import 'package:past_question_paper_stem/utils/form_validators.dart';
 
@@ -67,7 +66,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(gradient: ChalkboardGradients.deep),
+        decoration: const BoxDecoration(gradient: PQPGradients.deep),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -85,7 +84,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         Icon(
                           Icons.school,
                           size: 80,
-                          color: AppColors.chalkWhite,
+                          color: AppColors.neutralCard,
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -93,7 +92,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.chalkWhite,
+                            color: AppColors.neutralCard,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -102,7 +101,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           'Sign in to continue your practice',
                           style: TextStyle(
                             fontSize: 16,
-                            color: AppColors.chalkWhite.withOpacity(0.8),
+                            color: AppColors.neutralCard.withOpacity(0.8),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -111,7 +110,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   TextFormField(
                     controller: _emailController,
-                    style: TextStyle(color: AppColors.chalkWhite),
+                    style: TextStyle(color: AppColors.neutralCard),
                     decoration: InputDecoration(
                       labelText: 'Email',
                       labelStyle: TextStyle(
@@ -138,9 +137,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       prefixIcon: Icon(
                         Icons.email_outlined,
-                        color: AppColors.chalkWhite.withOpacity(0.7),
+                        color: AppColors.neutralCard.withOpacity(0.7),
                       ),
-                      fillColor: AppColors.chalkboard.withOpacity(0.3),
+                      fillColor: AppColors.ink.withOpacity(0.3),
                       filled: true,
                     ),
                     keyboardType: TextInputType.emailAddress,
@@ -151,7 +150,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _passwordController,
-                    style: TextStyle(color: AppColors.chalkWhite),
+                    style: TextStyle(color: AppColors.neutralCard),
                     decoration: InputDecoration(
                       labelText: 'Password',
                       labelStyle: TextStyle(
@@ -178,9 +177,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       prefixIcon: Icon(
                         Icons.lock_outline,
-                        color: AppColors.chalkWhite.withOpacity(0.7),
+                        color: AppColors.neutralCard.withOpacity(0.7),
                       ),
-                      fillColor: AppColors.chalkboard.withOpacity(0.3),
+                      fillColor: AppColors.ink.withOpacity(0.3),
                       filled: true,
                     ),
                     obscureText: true,
@@ -195,7 +194,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ref.watch(loadingStateProvider) ? null : _handleLogin,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.chalkWhite,
-                      foregroundColor: AppColors.chalkboard,
+                      foregroundColor: AppColors.ink,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -210,7 +209,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.chalkboard,
+                                  AppColors.ink,
                                 ),
                               ),
                             )
@@ -219,7 +218,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: AppColors.chalkboard,
+                                color: AppColors.ink,
                               ),
                             ),
                   ),

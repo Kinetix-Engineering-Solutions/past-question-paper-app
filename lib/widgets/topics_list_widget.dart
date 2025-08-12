@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/model/topic.dart';
 import 'package:past_question_paper_stem/model/subject.dart';
+import 'package:past_question_paper_stem/utils/app_colors.dart';
 import 'package:past_question_paper_stem/utils/app_theme.dart';
 import 'package:past_question_paper_stem/widgets/topic_card.dart';
 
@@ -28,21 +29,21 @@ class TopicsListWidget extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.topic_outlined, size: 64, color: AppColors.charcoal),
+              Icon(Icons.topic_outlined, size: 64, color: AppColors.accent),
               const SizedBox(height: 16),
               Text(
                 'No Topics Available',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.graphite,
+                  color: AppColors.ink,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Topics for ${subject.name} will appear here when they are added.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: AppColors.graphite),
+                style: TextStyle(fontSize: 14, color: AppColors.neutralMid),
               ),
             ],
           ),

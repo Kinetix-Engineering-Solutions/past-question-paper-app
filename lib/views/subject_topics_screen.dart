@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/model/subject.dart';
+import 'package:past_question_paper_stem/utils/app_colors.dart';
 import 'package:past_question_paper_stem/utils/app_theme.dart';
 import 'package:past_question_paper_stem/viewmodels/topic_viewmodel.dart';
 import 'package:past_question_paper_stem/viewmodels/home_viewmodel.dart';
@@ -94,8 +95,8 @@ class _SubjectTopicsScreenState extends ConsumerState<SubjectTopicsScreen> {
                             : Icons.radio_button_unchecked,
                         color:
                             topicState.selectedSeason == null
-                                ? AppColors.charcoal
-                                : AppColors.mediumGray,
+                                ? Colors.orange
+                                : AppColors.neutralCard,
                       ),
                       const SizedBox(width: 8),
                       const Text('All Seasons'),
@@ -115,8 +116,8 @@ class _SubjectTopicsScreenState extends ConsumerState<SubjectTopicsScreen> {
                                   : Icons.radio_button_unchecked,
                               color:
                                   topicState.selectedSeason == season
-                                      ? AppColors.charcoal
-                                      : AppColors.mediumGray,
+                                      ? Colors.orange
+                                      : AppColors.neutralMid,
                             ),
                             const SizedBox(width: 8),
                             Text(season),
@@ -211,7 +212,10 @@ class _SubjectTopicsScreenState extends ConsumerState<SubjectTopicsScreen> {
               const Spacer(),
               TextButton(
                 onPressed: () => topicViewModel.clearFilters(),
-                child: const Text('Clear All'),
+                child: Text(
+                  'Clear All',
+                  style: TextStyle(color: Colors.orange),
+                ),
               ),
             ],
           ),
@@ -235,11 +239,11 @@ class _SubjectTopicsScreenState extends ConsumerState<SubjectTopicsScreen> {
 
   Widget _buildFilterChip(String label, VoidCallback onRemove) {
     return Chip(
-      label: Text(label),
+      label: Text(label, style: TextStyle(color: Colors.orange)),
       onDeleted: onRemove,
-      deleteIcon: const Icon(Icons.close, size: 16),
-      backgroundColor: Colors.blue.withOpacity(0.1),
-      side: BorderSide(color: Colors.blue.withOpacity(0.3)),
+      deleteIcon: Icon(Icons.close, size: 16, color: Colors.orange),
+      backgroundColor: Colors.orange.withOpacity(0.1),
+      side: BorderSide(color: Colors.orange.withOpacity(0.3)),
     );
   }
 }

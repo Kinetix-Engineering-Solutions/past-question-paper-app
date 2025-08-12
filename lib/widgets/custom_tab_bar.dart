@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:past_question_paper_stem/utils/app_colors.dart';
 import 'package:past_question_paper_stem/utils/app_theme.dart';
 
 class CustomTabBar extends StatelessWidget {
@@ -18,10 +19,10 @@ class CustomTabBar extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.lightGray.withOpacity(0.2),
+        color: AppColors.neutralMid.withOpacity(0.2),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.lightGray.withOpacity(0.3),
+          color: AppColors.neutralMid.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -39,13 +40,12 @@ class CustomTabBar extends StatelessWidget {
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      gradient: isSelected ? ChalkboardGradients.classic : null,
                       borderRadius: BorderRadius.circular(10),
                       boxShadow:
                           isSelected
                               ? [
                                 BoxShadow(
-                                  color: AppColors.chalkboard.withOpacity(0.2),
+                                  color: AppColors.neutralMid.withOpacity(0.2),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
@@ -61,7 +61,7 @@ class CustomTabBar extends StatelessWidget {
                         color:
                             isSelected
                                 ? AppColors.chalkWhite
-                                : AppColors.charcoal,
+                                : AppColors.neutralMid,
                       ),
                     ),
                   ),

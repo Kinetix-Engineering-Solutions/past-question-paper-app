@@ -20,6 +20,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   shared_preferences: ^2.5.3
   app_links: ^6.4.0
+  google_fonts: ^6.2.1
   
 
 dev_dependencies:

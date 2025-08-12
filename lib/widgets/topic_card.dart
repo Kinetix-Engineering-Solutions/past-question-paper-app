@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/model/topic.dart';
-import 'package:past_question_paper_stem/utils/app_theme.dart';
+import 'package:past_question_paper_stem/utils/app_colors.dart';
 import 'package:past_question_paper_stem/viewmodels/practice_viewmodel.dart';
 import 'package:past_question_paper_stem/widgets/practice_modes_widget.dart';
 
@@ -35,21 +35,21 @@ class TopicCard extends ConsumerWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                gradient: ChalkboardGradients.classic,
+                gradient: PQPGradients.classic,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: AppColors.chalkWhite.withOpacity(0.3),
+                  color: AppColors.neutralCard.withOpacity(0.3),
                   width: 1,
                 ),
               ),
-              child: Icon(Icons.topic, color: AppColors.chalkWhite, size: 24),
+              child: Icon(Icons.topic, color: AppColors.neutralCard, size: 24),
             ),
             title: Text(
               topic.name,
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 16,
-                color: AppColors.inkBlack,
+                color: AppColors.ink,
               ),
             ),
             subtitle: Column(
@@ -59,7 +59,7 @@ class TopicCard extends ConsumerWidget {
                 Text(
                   topic.description,
                   style: TextStyle(
-                    color: AppColors.graphite.withOpacity(0.8),
+                    color: AppColors.neutralMid.withOpacity(0.8),
                     fontSize: 14,
                   ),
                   maxLines: 2,
@@ -74,10 +74,10 @@ class TopicCard extends ConsumerWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.chalkboardLight.withOpacity(0.2),
+                        color: AppColors.neutralMid.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.chalkboardLight.withOpacity(0.4),
+                          color: AppColors.neutralMid.withOpacity(0.4),
                         ),
                       ),
                       child: Text(
@@ -85,7 +85,7 @@ class TopicCard extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.chalkboard,
+                          color: AppColors.ink,
                         ),
                       ),
                     ),
@@ -95,7 +95,7 @@ class TopicCard extends ConsumerWidget {
                         'Tap to practice',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.inkBlack.withOpacity(0.9),
+                          color: AppColors.ink.withOpacity(0.9),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -109,7 +109,7 @@ class TopicCard extends ConsumerWidget {
               child: Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
-                color: AppColors.graphite,
+                color: AppColors.neutralMid,
               ),
             ),
             onTap: () {
