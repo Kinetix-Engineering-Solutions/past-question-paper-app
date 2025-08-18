@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:past_question_paper_stem/widgets/drag_and_drop/drag_item_image.dart';
+import 'package:past_question_paper_stem/widgets/latex_text.dart';
 import 'package:past_question_paper_stem/utils/app_colors.dart';
 
 class DropTargetSlot extends StatelessWidget {
@@ -59,12 +60,10 @@ class DropTargetSlot extends StatelessWidget {
           DragItemImage(imageUrl: dropTarget.image!),
           const SizedBox(height: 8),
         ],
-        Text(
-          dropTarget.text ?? 'Target \${dropTarget.id}',
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            color: AppColors.ink,
-          ),
+        LatexText(
+          dropTarget.text ?? 'Target ${dropTarget.id}',
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+          textColor: AppColors.ink,
         ),
       ],
     );
@@ -78,12 +77,10 @@ class DropTargetSlot extends StatelessWidget {
           const Spacer(),
         ] else ...[
           Expanded(
-            child: Text(
-              dragItem.text ?? 'Item \${dragItem.id}',
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                color: AppColors.ink,
-              ),
+            child: LatexText(
+              dragItem.text ?? 'Item ${dragItem.id}',
+              textStyle: const TextStyle(fontWeight: FontWeight.w500),
+              textColor: AppColors.ink,
             ),
           ),
         ],

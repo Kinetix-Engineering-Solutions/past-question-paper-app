@@ -91,20 +91,22 @@ class HomeViewModel extends StateNotifier<HomeState> {
     // auth state in case of a timing race right after onboarding.
     Future.microtask(() {
       final auth = _ref.read(authViewModelProvider);
-      auth.whenOrNull(data: (user) {
-        if (user != null) {
-          state = state.copyWith(currentUser: user, isLoading: true);
-          _loadUserData();
-        }
-      });
+      auth.whenOrNull(
+        data: (user) {
+          if (user != null) {
+            state = state.copyWith(currentUser: user, isLoading: true);
+            _loadUserData();
+          }
+        },
+      );
     });
   }
 
   /// Initialize home screen data
   Future<void> _initializeHome() async {
     try {
-  // Read AuthViewModel state (reflects refreshes after onboarding)
-  final authState = _ref.read(authViewModelProvider);
+      // Read AuthViewModel state (reflects refreshes after onboarding)
+      final authState = _ref.read(authViewModelProvider);
       authState.whenOrNull(
         data: (currentUser) async {
           if (currentUser != null) {

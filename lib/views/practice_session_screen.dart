@@ -4,6 +4,7 @@ import 'package:past_question_paper_stem/model/practice_session.dart';
 import 'package:past_question_paper_stem/utils/app_colors.dart';
 import 'package:past_question_paper_stem/widgets/drag_and_drop/drag_item_card.dart';
 import 'package:past_question_paper_stem/widgets/drag_and_drop/drop_target_slot.dart';
+import 'package:past_question_paper_stem/widgets/latex_text.dart';
 import 'package:past_question_paper_stem/model/question.dart';
 import 'package:past_question_paper_stem/viewmodels/practice_viewmodel.dart';
 import 'package:past_question_paper_stem/views/practice_results_screen.dart';
@@ -162,9 +163,10 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          LatexText(
             question.questionText,
-            style: const TextStyle(fontSize: 18, height: 1.3),
+            fontSize: 18,
+            textStyle: const TextStyle(height: 1.3),
           ),
           if (question.hasQuestionImage) ...[
             const SizedBox(height: 16),
@@ -267,12 +269,10 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: Text(
+                        child: LatexText(
                           option,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: isSelected ? AppColors.accent : null,
-                          ),
+                          fontSize: 16,
+                          textColor: isSelected ? AppColors.accent : AppColors.ink,
                         ),
                       ),
                     ],

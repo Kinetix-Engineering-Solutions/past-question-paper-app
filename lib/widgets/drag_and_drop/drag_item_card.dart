@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:past_question_paper_stem/widgets/drag_and_drop/drag_item_image.dart';
+import 'package:past_question_paper_stem/widgets/latex_text.dart';
 import 'package:past_question_paper_stem/utils/app_colors.dart';
 
 class DragItemCard extends StatelessWidget {
@@ -66,9 +67,10 @@ class DragItemCard extends StatelessWidget {
           width: selectedAnswerId == dragItem.id ? 2 : 1,
         ),
       ),
-      child: Text(
-        dragItem.text ?? 'Item \${dragItem.id}',
-        style: TextStyle(fontWeight: FontWeight.w500, color: _getTextColor()),
+      child: LatexText(
+        dragItem.text ?? 'Item ${dragItem.id}',
+        textStyle: TextStyle(fontWeight: FontWeight.w500),
+        textColor: _getTextColor(),
       ),
     );
   }
