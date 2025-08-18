@@ -2,7 +2,7 @@ class Subject {
   final String id;
   final String name;
   final String description;
-  final String iconPath;
+  final String imageUrl;
   final List<String> gradeIds; // Grades this subject is available for
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -11,7 +11,7 @@ class Subject {
     required this.id,
     required this.name,
     required this.description,
-    required this.iconPath,
+    required this.imageUrl,
     required this.gradeIds,
     required this.createdAt,
     required this.updatedAt,
@@ -23,7 +23,7 @@ class Subject {
       id: json['id'] as String,
       name: json['name'] as String,
       description: json['description'] as String,
-      iconPath: json['iconPath'] as String,
+      imageUrl: json['imageUrl'] as String? ?? '',
       gradeIds: List<String>.from(json['gradeIds'] ?? []),
       createdAt:
           json['createdAt'] is DateTime
@@ -42,7 +42,7 @@ class Subject {
       'id': id,
       'name': name,
       'description': description,
-      'iconPath': iconPath,
+      'imageUrl': imageUrl,
       'gradeIds': gradeIds,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -54,7 +54,7 @@ class Subject {
     String? id,
     String? name,
     String? description,
-    String? iconPath,
+    String? imageUrl,
     List<String>? gradeIds,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -63,7 +63,7 @@ class Subject {
       id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,
-      iconPath: iconPath ?? this.iconPath,
+      imageUrl: imageUrl ?? this.imageUrl,
       gradeIds: gradeIds ?? this.gradeIds,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -78,11 +78,11 @@ class Subject {
           id == other.id &&
           name == other.name &&
           description == other.description &&
-          iconPath == other.iconPath;
+          imageUrl == other.imageUrl;
 
   @override
   int get hashCode =>
-      id.hashCode ^ name.hashCode ^ description.hashCode ^ iconPath.hashCode;
+      id.hashCode ^ name.hashCode ^ description.hashCode ^ imageUrl.hashCode;
 
   // Common STEM subjects
   static List<Subject> get defaultSubjects {
@@ -92,7 +92,7 @@ class Subject {
         id: 'math',
         name: 'Mathematics',
         description: 'Pure and Applied Mathematics',
-        iconPath: 'assets/icons/math.png',
+        imageUrl: 'gs://your-bucket/icons/math.png',
         gradeIds: ['grade-8', 'grade-9', 'grade-10', 'grade-11', 'grade-12'],
         createdAt: now,
         updatedAt: now,
@@ -101,7 +101,7 @@ class Subject {
         id: 'physics',
         name: 'Physics',
         description: 'Physical Sciences and Engineering',
-        iconPath: 'assets/icons/physics.png',
+        imageUrl: 'gs://your-bucket/icons/physics.png',
         gradeIds: ['grade-9', 'grade-10', 'grade-11', 'grade-12'],
         createdAt: now,
         updatedAt: now,
@@ -110,7 +110,7 @@ class Subject {
         id: 'chemistry',
         name: 'Chemistry',
         description: 'Chemical Sciences and Laboratory',
-        iconPath: 'assets/icons/chemistry.png',
+        imageUrl: 'gs://your-bucket/icons/chemistry.png',
         gradeIds: ['grade-9', 'grade-10', 'grade-11', 'grade-12'],
         createdAt: now,
         updatedAt: now,
@@ -119,7 +119,7 @@ class Subject {
         id: 'biology',
         name: 'Biology',
         description: 'Life Sciences and Natural Sciences',
-        iconPath: 'assets/icons/biology.png',
+        imageUrl: 'gs://your-bucket/icons/biology.png',
         gradeIds: ['grade-9', 'grade-10', 'grade-11', 'grade-12'],
         createdAt: now,
         updatedAt: now,
@@ -128,7 +128,7 @@ class Subject {
         id: 'computer-science',
         name: 'Computer Science',
         description: 'Programming and Information Technology',
-        iconPath: 'assets/icons/computer.png',
+        imageUrl: 'gs://your-bucket/icons/computer.png',
         gradeIds: ['grade-10', 'grade-11', 'grade-12'],
         createdAt: now,
         updatedAt: now,
@@ -137,7 +137,7 @@ class Subject {
         id: 'geography',
         name: 'Geography',
         description: 'Physical and Human Geography',
-        iconPath: 'assets/icons/geography.png',
+        imageUrl: 'gs://your-bucket/icons/geography.png',
         gradeIds: ['grade-8', 'grade-9', 'grade-10', 'grade-11', 'grade-12'],
         createdAt: now,
         updatedAt: now,

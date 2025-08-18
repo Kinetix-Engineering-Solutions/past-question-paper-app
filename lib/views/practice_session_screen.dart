@@ -272,7 +272,8 @@ class _PracticeSessionScreenState extends ConsumerState<PracticeSessionScreen> {
                         child: LatexText(
                           option,
                           fontSize: 16,
-                          textColor: isSelected ? AppColors.accent : AppColors.ink,
+                          textColor:
+                              isSelected ? AppColors.accent : AppColors.ink,
                         ),
                       ),
                     ],

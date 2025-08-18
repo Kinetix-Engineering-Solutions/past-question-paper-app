@@ -4,6 +4,7 @@ import 'package:past_question_paper_stem/utils/app_colors.dart';
 import 'package:past_question_paper_stem/viewmodels/home_viewmodel.dart';
 import 'package:past_question_paper_stem/model/subject.dart';
 import 'package:past_question_paper_stem/views/subject_topics_screen.dart';
+import 'package:past_question_paper_stem/widgets/firebase_image.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -78,33 +79,66 @@ class HomeScreen extends ConsumerWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Welcome Section
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                  // Welcome Section with Profile Avatar
+                                  Row(
                                     children: [
-                                      Text(
-                                        'Welcome back,',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: AppColors.ink.withOpacity(0.7),
+                                      // Welcome Text
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Welcome back,',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: AppColors.ink
+                                                    .withOpacity(0.7),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              homeViewModel.userDisplayName,
+                                              style: const TextStyle(
+                                                fontSize: 24,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.ink,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Ready to practice your STEM subjects?',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: AppColors.ink
+                                                    .withOpacity(0.8),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        homeViewModel.userDisplayName,
-                                        style: const TextStyle(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.ink,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'Ready to practice your STEM subjects?',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: AppColors.ink.withOpacity(0.8),
+                                      const SizedBox(width: 16),
+                                      // User Profile Avatar
+                                      CircleAvatar(
+                                        radius: 28,
+                                        backgroundColor: AppColors.accent,
+                                        child: CircleAvatar(
+                                          radius: 26,
+                                          backgroundColor: AppColors.ink,
+                                          child: Text(
+                                            homeViewModel
+                                                    .userDisplayName
+                                                    .isNotEmpty
+                                                ? homeViewModel
+                                                    .userDisplayName[0]
+                                                    .toUpperCase()
+                                                : 'U',
+                                            style: const TextStyle(
+                                              color: AppColors.paper,
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -287,17 +321,18 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 const SizedBox(width: 16),
                 // Icon block
-                Container(
+                SizedBox(
                   width: 52,
                   height: 52,
-                  decoration: BoxDecoration(
-                    color: AppColors.ink,
+                  child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.book,
-                    color: AppColors.paper,
-                    size: 26,
+                    child: FirebaseImage(
+                      imageUrl: subject.imageUrl,
+                      width: 52,
+                      height: 52,
+                      iconColor: AppColors.ink,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 18),

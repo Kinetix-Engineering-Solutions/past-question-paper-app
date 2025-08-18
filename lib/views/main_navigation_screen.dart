@@ -28,8 +28,14 @@ class MainNavigationScreen extends ConsumerWidget {
           ref.read(bottomNavigationProvider.notifier).setIndex(index);
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.backpack), label: 'Backpack'),
-          BottomNavigationBarItem(icon: Icon(Icons.trending_up), label: 'Progress'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.backpack),
+            label: 'Backpack',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.trending_up),
+            label: 'Progress',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),

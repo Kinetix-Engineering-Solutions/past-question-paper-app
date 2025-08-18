@@ -108,7 +108,7 @@ class FirestoreDatabaseService {
           id: doc.id,
           name: data['name'] as String? ?? '',
           description: data['description'] as String? ?? '',
-          iconPath: data['iconPath'] as String? ?? '',
+          imageUrl: data['imageUrl'] as String? ?? '',
           gradeIds: List<String>.from(data['gradeIds'] ?? []),
           createdAt:
               data['createdAt'] != null
@@ -140,7 +140,7 @@ class FirestoreDatabaseService {
           id: doc.id,
           name: data['name'] as String? ?? '',
           description: data['description'] as String? ?? '',
-          iconPath: data['iconPath'] as String? ?? '',
+          imageUrl: data['imageUrl'] as String? ?? '',
           gradeIds: List<String>.from(data['gradeIds'] ?? []),
           createdAt:
               data['createdAt'] != null
