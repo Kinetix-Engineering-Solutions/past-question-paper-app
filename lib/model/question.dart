@@ -1,42 +1,64 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:past_question_paper_stem/services/storage_service.dart';
-import 'package:past_question_paper_stem/model/drag_and_drop%20models/drag_Item.dart';
-import 'package:past_question_paper_stem/model/drag_and_drop%20models/drop_target.dart';
+import 'package:past_question_paper_stem/model/drag_and_drop models/drag_item.dart';
+import 'package:past_question_paper_stem/model/drag_and_drop models/drop_target.dart';
 
 class Question {
   final String id;
-  final String topicId; // Add this - links question to topic
-  final String questionType;
-  final String questionText;
-  final String? questionImage; // New field for question image
+  // --- Essential Metadata ---
+  final String subject;
+  final String paper;
+  final int grade;
+  final String topic; // Renamed from topicId
+  final String cognitiveLevel;
+  final int marks;
+  final int year;
+  final String season;
+
+  // --- Question Content ---
+  final String format; // Renamed from questionType
+  final String questionText; // Will contain plain text and LaTeX
+  final String? imageUrl; // Renamed from questionImage
   final List<String> options; // Text options (used when no option images)
   final List<String>? optionImages; // New field for option images
   final List<int> correctOrder; // For drag-and-drop questions
-  final List<String> correctAnswer;
+  final String correctAnswer; // Simplified from List<String> to String
   final String explanation;
-  final int? points; // Add this - question points
-  final int? timeAllocation; // Add this - seconds allocated for question
+  final int? points; // Legacy field - question points
+  final int? timeAllocation; // Legacy field - seconds allocated for question
 
-  // Drag and Drop specific fields
+  // Drag and Drop specific fields (preserved for backward compatibility)
   final List<DragItem>? dragItems; // For drag-and-drop questions
   final List<DropTarget>? dragTargets; // For drag-and-drop questions
 
+  // Backward compatibility getters for old field names
+  String get topicId => topic;
+  String get questionType => format;
+  String? get questionImage => imageUrl;
+  List<String> get correctAnswerList => [correctAnswer]; // For backward compatibility
+
   Question({
     required this.id,
-    required this.topicId, // Add this parameter
-    required this.questionType,
+    required this.subject,
+    required this.paper,
+    required this.grade,
+    required this.topic,
+    required this.cognitiveLevel,
+    required this.marks,
+    required this.year,
+    required this.season,
+    required this.format,
     required this.questionText,
-    this.questionImage, // Optional image URL for the question
-    this.options =
-        const <String>[], // Default to empty list when using image options
+    this.imageUrl,
+    required this.options,
     this.optionImages, // Optional image URLs for options
     required this.correctOrder,
     required this.correctAnswer,
     required this.explanation,
-    this.points, // Add optional points
-    this.timeAllocation, // Add optional time allocation
-    this.dragItems, // Add drag items for drag-and-drop questions
-    this.dragTargets, // Add drop targets for drag-and-drop questions
+    this.points, // Legacy field - optional points
+    this.timeAllocation, // Legacy field - optional time allocation
+    this.dragItems, // For drag-and-drop questions
+    this.dragTargets, // For drag-and-drop questions
   });
   factory Question.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
@@ -45,12 +67,35 @@ class Question {
         data['optionImages'] != null &&
         (data['optionImages'] as List).isNotEmpty;
 
+    // Handle both old and new field names for backward compatibility
+    String topicValue = data['topic'] ?? data['topicId'] ?? '';
+    String formatValue = data['format'] ?? data['questionType'] ?? 'MCQ';
+    String? imageUrlValue = data['imageUrl'] ?? data['questionImage'];
+    
+    // Handle correctAnswer as both String and List for backward compatibility
+    String correctAnswerValue = '';
+    if (data['correctAnswer'] != null) {
+      if (data['correctAnswer'] is List) {
+        List<String> answerList = List<String>.from(data['correctAnswer']);
+        correctAnswerValue = answerList.isNotEmpty ? answerList.first : '';
+      } else {
+        correctAnswerValue = data['correctAnswer'].toString();
+      }
+    }
+
     return Question(
       id: doc.id,
-      topicId: data['topicId'] ?? '', // Add this field
-      questionType: data['questionType'] ?? '',
+      subject: data['subject'] ?? '',
+      paper: data['paper'] ?? '',
+      grade: data['grade'] ?? 12,
+      topic: topicValue,
+      cognitiveLevel: data['cognitiveLevel'] ?? '',
+      marks: data['marks'] ?? 0,
+      year: data['year'] ?? 0,
+      season: data['season'] ?? '',
+      format: formatValue,
       questionText: data['questionText'] ?? '',
-      questionImage: data['questionImage'],
+      imageUrl: imageUrlValue,
       // Load text options only if there are no option images
       options:
           hasImageBasedOptions
@@ -60,7 +105,7 @@ class Question {
       optionImages:
           hasImageBasedOptions ? List<String>.from(data['optionImages']) : null,
       correctOrder: List<int>.from(data['correctOrder'] ?? []),
-      correctAnswer: List<String>.from(data['correctAnswer'] ?? []),
+      correctAnswer: correctAnswerValue,
       explanation: data['explanation'] ?? '',
       points: data['points'],
       timeAllocation: data['timeAllocation'],
@@ -81,8 +126,15 @@ class Question {
   }
   Map<String, dynamic> toMap() {
     Map<String, dynamic> map = {
-      'topicId': topicId, // Add this field
-      'questionType': questionType,
+      'subject': subject,
+      'paper': paper,
+      'grade': grade,
+      'topic': topic,
+      'cognitiveLevel': cognitiveLevel,
+      'marks': marks,
+      'year': year,
+      'season': season,
+      'format': format,
       'questionText': questionText,
       'correctOrder': correctOrder,
       'correctAnswer': correctAnswer,
@@ -90,8 +142,8 @@ class Question {
     };
 
     // Add optional fields only if they exist
-    if (questionImage != null) {
-      map['questionImage'] = questionImage;
+    if (imageUrl != null) {
+      map['imageUrl'] = imageUrl;
     }
 
     if (points != null) {
@@ -141,7 +193,7 @@ class Question {
   }
 
   // Check if this is a drag-and-drop question
-  bool get isDragAndDrop => questionType == 'drag-and-drop';
+  bool get isDragAndDrop => format == 'drag-and-drop';
 
   // Check if drag-and-drop data is present and valid
   bool get hasDragDropData =>
@@ -184,7 +236,7 @@ class Question {
 
   // Check if this question has an image
   bool get hasQuestionImage =>
-      questionImage != null && questionImage!.isNotEmpty;
+      imageUrl != null && imageUrl!.isNotEmpty;
 
   // Check if should use text options (when no image options are available)
   bool get useTextOptions => !hasImageOptions && options.isNotEmpty;
@@ -206,7 +258,7 @@ class Question {
       // For new drag-and-drop with dragItems/dropTargets
       return dragItems!.length == dragTargets!.length;
     }
-    if (questionType == 'drag-and-drop') {
+    if (format == 'drag-and-drop') {
       // For legacy drag-and-drop with options/correctOrder
       final optionCount =
           hasImageOptions ? optionImages!.length : options.length;
@@ -234,7 +286,7 @@ class Question {
     try {
       // Convert question image URL if it exists
       if (hasQuestionImage) {
-        httpQuestionImage = await storageService.getDownloadUrl(questionImage!);
+        httpQuestionImage = await storageService.getDownloadUrl(imageUrl!);
       }
 
       // Convert option image URLs if they exist
@@ -284,10 +336,17 @@ class Question {
       // Return a new Question instance with HTTP URLs
       return Question(
         id: id,
-        topicId: topicId,
-        questionType: questionType,
+        subject: subject,
+        paper: paper,
+        grade: grade,
+        topic: topic,
+        cognitiveLevel: cognitiveLevel,
+        marks: marks,
+        year: year,
+        season: season,
+        format: format,
         questionText: questionText,
-        questionImage: httpQuestionImage,
+        imageUrl: httpQuestionImage,
         options: options, // Keep original text options
         optionImages: httpOptionImages,
         correctOrder: correctOrder,

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/model/question.dart';
-import 'package:past_question_paper_stem/model/drag_and_drop%20models/drag_and_drop_question.dart';
+import 'package:past_question_paper_stem/model/drag_and_drop models/drag_and_drop_question.dart';
 import 'package:past_question_paper_stem/viewmodels/practice_viewmodel.dart';
-import 'package:past_question_paper_stem/widgets/drag-and-drop%20widgets/drag_n_drop_widget.dart';
+import 'package:past_question_paper_stem/widgets/drag-and-drop widgets/drag_n_drop_widget.dart';
 
 class QuestionScreenTest extends ConsumerStatefulWidget {
   final String questionId;
@@ -134,7 +134,7 @@ class _QuestionScreenTestState extends ConsumerState<QuestionScreenTest> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'Question Type: ${question.questionType}',
+            'Question Type: ${question.format}',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           SizedBox(height: 16),
