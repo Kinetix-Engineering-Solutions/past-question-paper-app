@@ -310,10 +310,16 @@ class Question {
 
   // Format type checkers for UI rendering
   bool get isMCQ => format.toLowerCase() == 'mcq';
-  bool get isTrueFalse => format.toLowerCase() == 'true_false' || format.toLowerCase() == 'true-false';
-  bool get isShortAnswer => format.toLowerCase() == 'short_answer' || format.toLowerCase() == 'short-answer';
+  bool get isTrueFalse =>
+      format.toLowerCase() == 'true_false' ||
+      format.toLowerCase() == 'true-false';
+  bool get isShortAnswer =>
+      format.toLowerCase() == 'short_answer' ||
+      format.toLowerCase() == 'short-answer';
   bool get isEssay => format.toLowerCase() == 'essay';
-  bool get isFillInBlank => format.toLowerCase() == 'fill_blank' || format.toLowerCase() == 'fill-blank';
+  bool get isFillInBlank =>
+      format.toLowerCase() == 'fill_blank' ||
+      format.toLowerCase() == 'fill-blank';
 
   // Validate options length matches correctOrder length for drag-and-drop
   bool get hasValidOptionCount {

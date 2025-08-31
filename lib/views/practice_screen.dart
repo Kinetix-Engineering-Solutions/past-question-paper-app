@@ -4,7 +4,13 @@ import 'package:past_question_paper_stem/model/question.dart';
 import 'package:past_question_paper_stem/utils/app_colors.dart';
 import 'package:past_question_paper_stem/viewmodels/practice_viewmodel.dart';
 import 'package:past_question_paper_stem/views/practice_results_screen.dart';
-import 'package:past_question_paper_stem/widgets/latex_text.dart'; // Assuming you have a LaTeX widget
+import 'package:past_question_paper_stem/widgets/latex_text.dart';
+import 'package:past_question_paper_stem/widgets/question_formats/mcq_text_widget.dart';
+import 'package:past_question_paper_stem/widgets/question_formats/mcq_image_widget.dart';
+import 'package:past_question_paper_stem/widgets/question_formats/true_false_widget.dart';
+import 'package:past_question_paper_stem/widgets/question_formats/short_answer_widget.dart';
+import 'package:past_question_paper_stem/widgets/question_formats/essay_widget.dart';
+import 'package:past_question_paper_stem/widgets/question_formats/drag_and_drop_widget.dart';
 
 class PracticeScreen extends ConsumerStatefulWidget {
   final List<Question> questions;
@@ -207,179 +213,64 @@ class _QuestionView extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuestionContent(BuildContext context, WidgetRef ref, String? selectedOption) {
+  Widget _buildQuestionContent(
+    BuildContext context,
+    WidgetRef ref,
+    String? selectedOption,
+  ) {
     switch (question.format.toLowerCase()) {
       case 'mcq':
-        return _buildMCQOptions(ref, selectedOption);
+        if (question.hasImageOptions) {
+          return MCQImageWidget(
+            question: question,
+            selectedOption: selectedOption,
+          );
+        } else {
+          return MCQTextWidget(
+            question: question,
+            selectedOption: selectedOption,
+          );
+        }
       case 'drag-and-drop':
-        return _buildDragAndDropOptions(ref);
+        return DragAndDropWidget(
+          question: question,
+          currentAnswers: _parseDragDropAnswer(selectedOption),
+        );
       case 'true_false':
-        return _buildTrueFalseOptions(ref, selectedOption);
+      case 'true-false':
+        return TrueFalseWidget(
+          question: question,
+          selectedOption: selectedOption,
+        );
       case 'short_answer':
-        return _buildShortAnswerInput(ref);
+      case 'short-answer':
+        return ShortAnswerWidget(
+          question: question,
+          initialAnswer: selectedOption,
+        );
       case 'essay':
-        return _buildEssayInput(ref);
+        return EssayWidget(question: question, initialAnswer: selectedOption);
       default:
-        return _buildMCQOptions(ref, selectedOption); // Default to MCQ
-    }
-  }
-
-  // MCQ Options (Current implementation)
-  Widget _buildMCQOptions(WidgetRef ref, String? selectedOption) {
-    // Handle image options vs text options
-    if (question.hasImageOptions) {
-      return _buildImageOptions(ref, selectedOption);
-    } else {
-      return _buildTextOptions(ref, selectedOption);
-    }
-  }
-
-  // Text-based MCQ options
-  Widget _buildTextOptions(WidgetRef ref, String? selectedOption) {
-    return Column(
-      children: question.options.map((option) {
-        final isSelected = selectedOption == option;
-        return Card(
-          color: isSelected ? AppColors.accentSoft : AppColors.neutralCard,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: isSelected ? AppColors.accent : AppColors.neutralBorder,
-              width: 1.5,
-            ),
-          ),
-          child: ListTile(
-            title: LatexText(option),
-            onTap: () {
-              ref
-                  .read(practiceViewModelProvider.notifier)
-                  .answerQuestion(question.id, option);
-            },
-          ),
+        return MCQTextWidget(
+          question: question,
+          selectedOption: selectedOption,
         );
-      }).toList(),
-    );
-  }
-
-  // Image-based MCQ options
-  Widget _buildImageOptions(WidgetRef ref, String? selectedOption) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-      ),
-      itemCount: question.optionImages?.length ?? 0,
-      itemBuilder: (context, index) {
-        final imageUrl = question.optionImages![index];
-        final isSelected = selectedOption == imageUrl;
-        
-        return GestureDetector(
-          onTap: () {
-            ref
-                .read(practiceViewModelProvider.notifier)
-                .answerQuestion(question.id, imageUrl);
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? AppColors.accent : AppColors.neutralBorder,
-                width: isSelected ? 3 : 1,
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // True/False options
-  Widget _buildTrueFalseOptions(WidgetRef ref, String? selectedOption) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildOptionButton(ref, 'True', selectedOption == 'True'),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildOptionButton(ref, 'False', selectedOption == 'False'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOptionButton(WidgetRef ref, String option, bool isSelected) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected ? AppColors.accent : AppColors.neutralCard,
-        foregroundColor: isSelected ? Colors.white : AppColors.ink,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 16),
-      ),
-      onPressed: () {
-        ref
-            .read(practiceViewModelProvider.notifier)
-            .answerQuestion(question.id, option);
-      },
-      child: Text(option, style: const TextStyle(fontSize: 18)),
-    );
-  }
-
-  // Short answer input
-  Widget _buildShortAnswerInput(WidgetRef ref) {
-    return TextField(
-      decoration: const InputDecoration(
-        hintText: 'Enter your answer here...',
-        border: OutlineInputBorder(),
-      ),
-      onChanged: (value) {
-        ref
-            .read(practiceViewModelProvider.notifier)
-            .answerQuestion(question.id, value);
-      },
-    );
-  }
-
-  // Essay input
-  Widget _buildEssayInput(WidgetRef ref) {
-    return TextField(
-      decoration: const InputDecoration(
-        hintText: 'Write your essay here...',
-        border: OutlineInputBorder(),
-      ),
-      maxLines: 8,
-      onChanged: (value) {
-        ref
-            .read(practiceViewModelProvider.notifier)
-            .answerQuestion(question.id, value);
-      },
-    );
-  }
-
-  // Drag and drop (placeholder - would need more complex implementation)
-  Widget _buildDragAndDropOptions(WidgetRef ref) {
-    if (!question.isValidDragAndDrop) {
-      return const Text('Invalid drag and drop question');
     }
-    
-    // This would need a more complex drag-and-drop UI implementation
-    return const Center(
-      child: Text(
-        'Drag and Drop questions coming soon!',
-        style: TextStyle(fontSize: 18, fontStyle: FontStyle.italic),
-      ),
-    );
+  }
+
+  Map<String, String>? _parseDragDropAnswer(String? answerString) {
+    if (answerString == null || answerString.isEmpty) return null;
+
+    final Map<String, String> result = {};
+    final pairs = answerString.split(',');
+
+    for (final pair in pairs) {
+      final parts = pair.split(':');
+      if (parts.length == 2) {
+        result[parts[0]] = parts[1];
+      }
+    }
+
+    return result.isNotEmpty ? result : null;
   }
 }

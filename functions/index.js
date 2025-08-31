@@ -2,6 +2,7 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 admin.initializeApp();
 
+// Cloud Function to generate a test
 exports.generateTest = functions.https.onCall(async (data, context) => {
   // Authentication check temporarily disabled for testing
   // if (!context.auth) {
@@ -47,6 +48,7 @@ exports.generateTest = functions.https.onCall(async (data, context) => {
       const blueprintId = `${subject}_${normalizedPaper}_gr${grade}`.toLowerCase();
       console.log('Looking for blueprint:', blueprintId);
 
+      // Fetch the blueprint document from Firestore
       const blueprintDoc = await admin.firestore()
         .collection('blueprints')
         .doc(blueprintId)
@@ -83,6 +85,7 @@ exports.generateTest = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('not-found', 'No questions found for the selected criteria.');
       }
 
+      // Map Firestore documents to Question objects
       questions = questionSnapshot.docs.map(doc => {
         const questionData = doc.data();
         console.log('Raw question data from Firestore:', questionData);

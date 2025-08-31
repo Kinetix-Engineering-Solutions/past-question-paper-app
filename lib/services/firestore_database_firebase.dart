@@ -245,7 +245,9 @@ class FirestoreDatabaseService {
       return Map<String, dynamic>.from(result.data);
     } on FirebaseFunctionsException catch (e) {
       if (e.code == 'unauthenticated') {
-        throw Exception('Authentication failed. Please log out and log back in.');
+        throw Exception(
+          'Authentication failed. Please log out and log back in.',
+        );
       }
       rethrow;
     } catch (e) {
@@ -279,7 +281,9 @@ class FirestoreDatabaseService {
       return Map<String, dynamic>.from(result.data);
     } on FirebaseFunctionsException catch (e) {
       if (e.code == 'unauthenticated') {
-        throw Exception('Authentication failed. Please log out and log back in.');
+        throw Exception(
+          'Authentication failed. Please log out and log back in.',
+        );
       }
       rethrow;
     } catch (e) {
