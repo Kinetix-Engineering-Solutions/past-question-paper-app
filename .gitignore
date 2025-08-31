@@ -43,3 +43,75 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase configuration files - DO NOT COMMIT THESE!
+lib/firebase_options.dart
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+macos/Runner/GoogleService-Info.plist
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.staging
+*.env
+
+# API keys and secrets
+secrets.yaml
+secrets.json
+api_keys.json
+
+# Database and storage files
+*.db
+*.sqlite
+*.sqlite3
+
+# Local storage and cache
+/web/.firebase
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+
+# Test coverage
+coverage/
+test/coverage/
+
+# Platform specific build files
+/linux/build/
+/macos/build/
+/windows/build/
+/web/build/
+
+# IDE specific files
+*.code-workspace
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+
+# OS specific files
+Thumbs.db
+.DS_Store?
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Package manager files
+pubspec.lock.bak
+.packages.bak
+
+# Generated files that shouldn't be committed
+lib/generated_plugin_registrant.dart
+**/*.g.dart
+**/*.freezed.dart
+**/*.mocks.dart
+
+# Local database files
+*.realm
+*.realm.lock
+*.realm.management/
