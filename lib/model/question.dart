@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:past_question_paper_v1/model/drag_and_drop%20models/drag_item.dart';
+import 'package:past_question_paper_v1/model/drag_and_drop%20models/drop_target.dart';
 import 'package:past_question_paper_v1/services/storage_service.dart';
-import 'package:past_question_paper_v1/model/drag_and_drop models/drag_item.dart';
-import 'package:past_question_paper_v1/model/drag_and_drop models/drop_target.dart';
 
 class Question {
   final String id;
@@ -90,10 +90,9 @@ class Question {
       questionText: data['questionText'] ?? '',
       imageUrl: data['imageUrl'],
       options: List<String>.from(data['options'] ?? []),
-      optionImages:
-          data['optionImages'] != null
-              ? List<String>.from(data['optionImages'])
-              : null,
+      optionImages: data['optionImages'] != null
+          ? List<String>.from(data['optionImages'])
+          : null,
       correctOrder: List<int>.from(data['correctOrder'] ?? []),
       // Correct answer and explanation might not be sent from the cloud function
       // for security reasons (to prevent cheating), so we provide default values
@@ -102,18 +101,16 @@ class Question {
       points: data['points'],
       timeAllocation: data['timeAllocation'],
       // Load drag-and-drop specific data if present
-      dragItems:
-          data['dragItems'] != null
-              ? (data['dragItems'] as List<dynamic>)
-                  .map((item) => DragItem.fromMap(item))
-                  .toList()
-              : null,
-      dragTargets:
-          data['dragTargets'] != null
-              ? (data['dragTargets'] as List<dynamic>)
-                  .map((target) => DropTarget.fromMap(target))
-                  .toList()
-              : null,
+      dragItems: data['dragItems'] != null
+          ? (data['dragItems'] as List<dynamic>)
+                .map((item) => DragItem.fromMap(item))
+                .toList()
+          : null,
+      dragTargets: data['dragTargets'] != null
+          ? (data['dragTargets'] as List<dynamic>)
+                .map((target) => DropTarget.fromMap(target))
+                .toList()
+          : null,
     );
   }
 
@@ -154,31 +151,29 @@ class Question {
       questionText: data['questionText'] ?? '',
       imageUrl: imageUrlValue,
       // Load text options only if there are no option images
-      options:
-          hasImageBasedOptions
-              ? <String>[] // Empty list when using image options
-              : List<String>.from(data['options'] ?? []),
+      options: hasImageBasedOptions
+          ? <String>[] // Empty list when using image options
+          : List<String>.from(data['options'] ?? []),
       // Load image options if present
-      optionImages:
-          hasImageBasedOptions ? List<String>.from(data['optionImages']) : null,
+      optionImages: hasImageBasedOptions
+          ? List<String>.from(data['optionImages'])
+          : null,
       correctOrder: List<int>.from(data['correctOrder'] ?? []),
       correctAnswer: correctAnswerValue,
       explanation: data['explanation'] ?? '',
       points: data['points'],
       timeAllocation: data['timeAllocation'],
       // Load drag-and-drop specific data if present
-      dragItems:
-          data['dragItems'] != null
-              ? (data['dragItems'] as List<dynamic>)
-                  .map((item) => DragItem.fromMap(item))
-                  .toList()
-              : null,
-      dragTargets:
-          data['dragTargets'] != null
-              ? (data['dragTargets'] as List<dynamic>)
-                  .map((target) => DropTarget.fromMap(target))
-                  .toList()
-              : null,
+      dragItems: data['dragItems'] != null
+          ? (data['dragItems'] as List<dynamic>)
+                .map((item) => DragItem.fromMap(item))
+                .toList()
+          : null,
+      dragTargets: data['dragTargets'] != null
+          ? (data['dragTargets'] as List<dynamic>)
+                .map((target) => DropTarget.fromMap(target))
+                .toList()
+          : null,
     );
   }
   Map<String, dynamic> toMap() {
@@ -213,30 +208,24 @@ class Question {
 
     // Add drag-and-drop specific data if present
     if (dragItems != null && dragItems!.isNotEmpty) {
-      map['dragItems'] =
-          dragItems!
-              .map(
-                (item) => {
-                  'id': item.id,
-                  'text': item.text,
-                  'image': item.image,
-                },
-              )
-              .toList();
+      map['dragItems'] = dragItems!
+          .map(
+            (item) => {'id': item.id, 'text': item.text, 'image': item.image},
+          )
+          .toList();
     }
 
     if (dragTargets != null && dragTargets!.isNotEmpty) {
-      map['dropTargets'] =
-          dragTargets!
-              .map(
-                (target) => {
-                  'id': target.id,
-                  'text': target.text,
-                  'image': target.image,
-                  'correctPair': target.correctPair,
-                },
-              )
-              .toList();
+      map['dropTargets'] = dragTargets!
+          .map(
+            (target) => {
+              'id': target.id,
+              'text': target.text,
+              'image': target.image,
+              'correctPair': target.correctPair,
+            },
+          )
+          .toList();
     }
 
     // Save option images if they exist, otherwise save text options
@@ -329,8 +318,9 @@ class Question {
     }
     if (format == 'drag-and-drop') {
       // For legacy drag-and-drop with options/correctOrder
-      final optionCount =
-          hasImageOptions ? optionImages!.length : options.length;
+      final optionCount = hasImageOptions
+          ? optionImages!.length
+          : options.length;
       return optionCount == correctOrder.length;
     }
     return true;
@@ -433,5 +423,3 @@ class Question {
     }
   }
 }
-
-
