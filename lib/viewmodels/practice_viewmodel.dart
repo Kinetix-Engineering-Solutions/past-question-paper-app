@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/model/question.dart';
-import 'package:past_question_paper_stem/repositories/question_repository.dart';
+import 'package:past_question_paper_v1/model/question.dart';
+import 'package:past_question_paper_v1/repositories/question_repository.dart';
 
 // Riverpod provider for the PracticeViewModel
 final practiceViewModelProvider = StateNotifierProvider<
@@ -83,3 +83,5 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
     }
   }
 }
+
+

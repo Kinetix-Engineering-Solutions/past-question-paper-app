@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/model/user.dart';
-import 'package:past_question_paper_stem/repositories/user_repository.dart';
-import 'package:past_question_paper_stem/providers/auth_providers.dart'; // Assuming your userRepo provider is here
+import 'package:past_question_paper_v1/model/user.dart';
+import 'package:past_question_paper_v1/repositories/user_repository.dart';
+import 'package:past_question_paper_v1/providers/auth_providers.dart'; // Assuming your userRepo provider is here
 
 // Riverpod provider for the ProfileViewModel
 final profileViewModelProvider =
@@ -48,3 +48,5 @@ class ProfileViewModel extends StateNotifier<AsyncValue<AppUser?>> {
     }
   }
 }
+
+

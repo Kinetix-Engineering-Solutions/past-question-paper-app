@@ -1,7 +1,7 @@
-import 'package:past_question_paper_stem/model/user.dart';
-import 'package:past_question_paper_stem/services/firestore_database_firebase.dart';
-import 'package:past_question_paper_stem/services/iauthservice.dart';
-import 'package:past_question_paper_stem/Exceptions/auth_exception.dart';
+import 'package:past_question_paper_v1/model/user.dart';
+import 'package:past_question_paper_v1/services/firestore_database_firebase.dart';
+import 'package:past_question_paper_v1/services/iauthservice.dart';
+import 'package:past_question_paper_v1/Exceptions/auth_exception.dart';
 
 class UserRepository {
   final IAuthService _authService;
@@ -138,3 +138,5 @@ class UserRepository {
     }
   }
 }
+
+

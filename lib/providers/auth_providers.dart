@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/services/auth_service_firebase.dart';
-import 'package:past_question_paper_stem/services/firestore_database_firebase.dart';
-import 'package:past_question_paper_stem/repositories/user_repository.dart';
+import 'package:past_question_paper_v1/services/auth_service_firebase.dart';
+import 'package:past_question_paper_v1/services/firestore_database_firebase.dart';
+import 'package:past_question_paper_v1/repositories/user_repository.dart';
 
 // Auth Service Provider
 final authServiceProvider = Provider<AuthServiceFirebase>((ref) {
@@ -31,3 +31,5 @@ final authStateProvider = StreamProvider((ref) {
 final currentUserProvider = Provider((ref) {
   return ref.watch(userRepositoryProvider).currentUser;
 });
+
+

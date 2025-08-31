@@ -9,3 +9,5 @@ class DragItem {
     return DragItem(id: map['id'], text: map['text'], image: map['image']);
   }
 }
+
+

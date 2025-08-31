@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/model/question.dart';
-import 'package:past_question_paper_stem/utils/app_colors.dart';
-import 'package:past_question_paper_stem/viewmodels/practice_viewmodel.dart';
+import 'package:past_question_paper_v1/model/question.dart';
+import 'package:past_question_paper_v1/utils/app_colors.dart';
+import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
 
 class MCQImageWidget extends ConsumerWidget {
   final Question question;
@@ -143,3 +143,5 @@ class MCQImageWidget extends ConsumerWidget {
     );
   }
 }
+
+

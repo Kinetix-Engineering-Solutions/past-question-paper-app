@@ -1,5 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:past_question_paper_stem/model/user.dart';
+import 'package:past_question_paper_v1/model/user.dart';
 
 abstract class IAuthService {
   Stream<AppUser?> get authStateChanges;
@@ -26,3 +26,5 @@ abstract class IAuthService {
   /// Checks if the given link is a valid email sign-in link
   bool isSignInWithEmailLink(String emailLink);
 }
+
+

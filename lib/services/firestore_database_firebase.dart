@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:past_question_paper_stem/model/user.dart';
-import 'package:past_question_paper_stem/model/question.dart';
+import 'package:past_question_paper_v1/model/user.dart';
+import 'package:past_question_paper_v1/model/question.dart';
 
 class FirestoreDatabaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -333,3 +333,5 @@ class FirestoreDatabaseService {
     }
   }
 }
+
+

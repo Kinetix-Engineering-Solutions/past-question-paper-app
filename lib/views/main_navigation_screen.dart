@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/providers/navigation_providers.dart';
-import 'package:past_question_paper_stem/views/home_screen.dart';
-import 'package:past_question_paper_stem/views/test_configuration_screen.dart';
-import 'package:past_question_paper_stem/views/profile_screen.dart';
+import 'package:past_question_paper_v1/providers/navigation_providers.dart';
+import 'package:past_question_paper_v1/views/home_screen.dart';
+import 'package:past_question_paper_v1/views/test_configuration_screen.dart';
+import 'package:past_question_paper_v1/views/profile_screen.dart';
 
 class MainNavigationScreen extends ConsumerWidget {
   const MainNavigationScreen({super.key});
@@ -39,3 +39,5 @@ class MainNavigationScreen extends ConsumerWidget {
     );
   }
 }
+
+

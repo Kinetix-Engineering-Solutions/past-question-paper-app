@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
-import 'package:past_question_paper_stem/utils/app_colors.dart';
+import 'package:past_question_paper_v1/utils/app_colors.dart';
 
 class LatexText extends StatelessWidget {
   final String text;
@@ -182,3 +182,5 @@ class LatexText extends StatelessWidget {
     );
   }
 }
+
+

@@ -1,5 +1,5 @@
-import 'package:past_question_paper_stem/model/practice_mode.dart';
-import 'package:past_question_paper_stem/model/question.dart';
+import 'package:past_question_paper_v1/model/practice_mode.dart';
+import 'package:past_question_paper_v1/model/question.dart';
 
 class PracticeSession {
   final String id;
@@ -312,8 +312,9 @@ class PracticeSession {
       questions: questions,
       startTime: DateTime.parse(json['startTime']),
       endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : null,
-      duration:
-          json['duration'] != null ? Duration(seconds: json['duration']) : null,
+      duration: json['duration'] != null
+          ? Duration(seconds: json['duration'])
+          : null,
       userAnswers: Map<String, dynamic>.from(json['userAnswers'] ?? {}),
       status: PracticeSessionStatus.values.firstWhere(
         (status) => status.name == json['status'],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import 'app_colors.dart';
 
 /// PQP Typography: Montserrat for headings/titles, Inter for body/labels.
@@ -72,10 +73,9 @@ class AppTypography {
       ),
     );
 
-    TextStyle? scale(TextStyle? s) =>
-        (s == null || s.fontSize == null)
-            ? s
-            : s.copyWith(fontSize: s.fontSize! * fontScale);
+    TextStyle? scale(TextStyle? s) => (s == null || s.fontSize == null)
+        ? s
+        : s.copyWith(fontSize: s.fontSize! * fontScale);
 
     return composed.copyWith(
       headlineLarge: scale(composed.headlineLarge),

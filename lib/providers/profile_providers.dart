@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/services/firestore_database_firebase.dart';
-import 'package:past_question_paper_stem/viewmodels/auth_viewmodel.dart';
+import 'package:past_question_paper_v1/services/firestore_database_firebase.dart';
+import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
 
 // Available Grades Provider - Gets from questions collection
 final availableGradesProvider = FutureProvider<List<int>>((ref) async {
@@ -145,3 +145,5 @@ final profileSetupProvider =
 final firestoreDatabaseProvider = Provider<FirestoreDatabaseService>((ref) {
   return FirestoreDatabaseService();
 });
+
+

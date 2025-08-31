@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/utils/app_colors.dart';
-import 'package:past_question_paper_stem/utils/loading_state.dart';
-import 'package:past_question_paper_stem/viewmodels/auth_viewmodel.dart';
-import 'package:past_question_paper_stem/views/login.dart';
-import 'package:past_question_paper_stem/widgets/custom_snackbar.dart';
-import 'package:past_question_paper_stem/utils/form_validators.dart';
+import 'package:past_question_paper_v1/utils/app_colors.dart';
+import 'package:past_question_paper_v1/utils/loading_state.dart';
+import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
+import 'package:past_question_paper_v1/views/login.dart';
+import 'package:past_question_paper_v1/widgets/custom_snackbar.dart';
+import 'package:past_question_paper_v1/utils/form_validators.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -246,3 +246,5 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     );
   }
 }
+
+

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/model/user.dart';
-import 'package:past_question_paper_stem/providers/auth_providers.dart';
-import 'package:past_question_paper_stem/providers/navigation_providers.dart';
-import 'package:past_question_paper_stem/services/auth_service_firebase.dart';
-import 'package:past_question_paper_stem/services/navigation_service.dart';
-import 'package:past_question_paper_stem/Exceptions/auth_exception.dart';
-import 'package:past_question_paper_stem/widgets/custom_snackbar.dart';
-import 'package:past_question_paper_stem/utils/loading_state.dart';
+import 'package:past_question_paper_v1/model/user.dart';
+import 'package:past_question_paper_v1/providers/auth_providers.dart';
+import 'package:past_question_paper_v1/providers/navigation_providers.dart';
+import 'package:past_question_paper_v1/services/auth_service_firebase.dart';
+import 'package:past_question_paper_v1/services/navigation_service.dart';
+import 'package:past_question_paper_v1/Exceptions/auth_exception.dart';
+import 'package:past_question_paper_v1/widgets/custom_snackbar.dart';
+import 'package:past_question_paper_v1/utils/loading_state.dart';
 
 // Auth View Model Provider
 final authViewModelProvider =
@@ -361,3 +361,5 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
   /// Get the current authentication state as a boolean
   bool get isAuthenticated => isUserLoggedIn;
 }
+
+

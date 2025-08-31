@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:past_question_paper_stem/model/question.dart';
+import 'package:past_question_paper_v1/model/question.dart';
 
 // Riverpod provider to make the repository available throughout the app
 final questionRepositoryProvider = Provider<QuestionRepository>((ref) {
@@ -147,3 +147,5 @@ class QuestionRepository {
     }
   }
 }
+
+

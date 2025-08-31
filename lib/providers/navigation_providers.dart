@@ -21,3 +21,5 @@ class BottomNavigationNotifier extends StateNotifier<int> {
   // Reset to home tab (useful for logout/login scenarios)
   void reset() => state = 0;
 }
+
+

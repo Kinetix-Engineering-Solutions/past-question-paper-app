@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/model/user.dart';
-import 'package:past_question_paper_stem/utils/app_constants.dart';
-import 'package:past_question_paper_stem/viewmodels/auth_viewmodel.dart';
+import 'package:past_question_paper_v1/model/user.dart';
+import 'package:past_question_paper_v1/utils/app_constants.dart';
+import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
 
 // Riverpod provider for the HomeViewModel
 final homeViewModelProvider = StateNotifierProvider<HomeViewModel, HomeState>((
@@ -45,3 +45,5 @@ class HomeViewModel extends StateNotifier<HomeState> {
     state = state.copyWith(selectedGrade: grade);
   }
 }
+
+

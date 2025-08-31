@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/utils/app_colors.dart';
-import 'package:past_question_paper_stem/utils/app_constants.dart';
-import 'package:past_question_paper_stem/viewmodels/home_viewmodel.dart';
-import 'package:past_question_paper_stem/views/test_configuration_screen.dart';
+import 'package:past_question_paper_v1/utils/app_colors.dart';
+import 'package:past_question_paper_v1/utils/app_constants.dart';
+import 'package:past_question_paper_v1/viewmodels/home_viewmodel.dart';
+import 'package:past_question_paper_v1/views/test_configuration_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -146,3 +146,5 @@ class _SubjectList extends StatelessWidget {
     );
   }
 }
+
+

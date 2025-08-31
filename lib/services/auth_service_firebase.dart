@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:past_question_paper_stem/model/user.dart';
-import 'package:past_question_paper_stem/services/firestore_database_firebase.dart';
-import 'package:past_question_paper_stem/services/iauthservice.dart';
-import 'package:past_question_paper_stem/Exceptions/auth_exception.dart';
+import 'package:past_question_paper_v1/model/user.dart';
+import 'package:past_question_paper_v1/services/firestore_database_firebase.dart';
+import 'package:past_question_paper_v1/services/iauthservice.dart';
+import 'package:past_question_paper_v1/Exceptions/auth_exception.dart';
 
 class AuthServiceFirebase implements IAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -15,7 +15,7 @@ class AuthServiceFirebase implements IAuthService {
     url: 'https://vibe-code-4c59f.firebaseapp.com',
     handleCodeInApp: true,
     //iOSBundleId: 'com.example.ios',
-    androidPackageName: 'com.example.past_question_paper_stem',
+    androidPackageName: 'com.example.past_question_paper_v1',
     androidInstallApp: true,
     androidMinimumVersion: '12',
   );
@@ -173,3 +173,5 @@ class AuthServiceFirebase implements IAuthService {
     return await authStateChanges.first;
   }
 }
+
+

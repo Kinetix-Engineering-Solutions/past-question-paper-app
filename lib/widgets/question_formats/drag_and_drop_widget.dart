@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/model/question.dart';
-import 'package:past_question_paper_stem/model/drag_and_drop models/drag_item.dart';
-import 'package:past_question_paper_stem/model/drag_and_drop models/drop_target.dart';
-import 'package:past_question_paper_stem/utils/app_colors.dart';
-import 'package:past_question_paper_stem/viewmodels/practice_viewmodel.dart';
-import 'package:past_question_paper_stem/widgets/latex_text.dart';
+import 'package:past_question_paper_v1/model/question.dart';
+import 'package:past_question_paper_v1/model/drag_and_drop models/drag_item.dart';
+import 'package:past_question_paper_v1/model/drag_and_drop models/drop_target.dart';
+import 'package:past_question_paper_v1/utils/app_colors.dart';
+import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
+import 'package:past_question_paper_v1/widgets/latex_text.dart';
 
 class DragAndDropWidget extends ConsumerStatefulWidget {
   final Question question;
@@ -471,3 +471,5 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
     );
   }
 }
+
+

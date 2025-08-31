@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/utils/app_colors.dart';
-import 'package:past_question_paper_stem/utils/app_constants.dart';
-import 'package:past_question_paper_stem/viewmodels/auth_viewmodel.dart';
-import 'package:past_question_paper_stem/viewmodels/profile_viewmodel.dart';
+import 'package:past_question_paper_v1/utils/app_colors.dart';
+import 'package:past_question_paper_v1/utils/app_constants.dart';
+import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
+import 'package:past_question_paper_v1/viewmodels/profile_viewmodel.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -249,3 +249,5 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 }
+
+
