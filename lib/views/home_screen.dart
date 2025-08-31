@@ -1,221 +1,148 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:past_question_paper_stem/utils/app_colors.dart';
+import 'package:past_question_paper_stem/utils/app_constants.dart';
 import 'package:past_question_paper_stem/viewmodels/home_viewmodel.dart';
-import 'package:past_question_paper_stem/model/subject.dart';
+import 'package:past_question_paper_stem/views/test_configuration_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final homeState = ref.watch(homeViewModelProvider);
-    final homeViewModel = ref.read(homeViewModelProvider.notifier);
+    final user = homeState.user;
 
-    // Listen for errors
-    ref.listen(homeViewModelProvider, (previous, current) {
-      if (current.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(current.error!),
-            backgroundColor: Colors.red,
-            action: SnackBarAction(
-              label: 'Dismiss',
-              onPressed: () => homeViewModel.clearError(),
-            ),
-          ),
-        );
-      }
-    });
+    // Determine the user's grade. Default to 12 if not set.
+    final userGrade = homeState.user?.grade ?? 12;
 
     return Scaffold(
+      backgroundColor: AppColors.paper,
+      appBar: AppBar(
+        backgroundColor: AppColors.paper,
+        elevation: 0,
+        title: Text(
+          'Hello, ${user?.email ?? 'Student'}!',
+          style: const TextStyle(
+            color: AppColors.ink,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        // The grade selector in actions has been removed for a cleaner look.
+      ),
       body: SafeArea(
-        child:
-            homeState.isLoading || homeState.isSigningOut
-                ? const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 16),
-                        Text('Loading...'),
-                      ],
-                    ),
-                  ),
-                )
-                : RefreshIndicator(
-                  onRefresh: () => homeViewModel.refresh(),
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Welcome Section
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.blue.shade100),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Welcome back,',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                homeViewModel.userDisplayName,
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Ready to practice your STEM subjects?',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 8),
+              Text(
+                "Let's get practicing",
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(color: AppColors.neutralMid),
+              ),
+              const SizedBox(height: 24),
 
-                        const SizedBox(height: 24),
-
-                        // My Subjects Section
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'My Subjects',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: homeViewModel.navigateToSubjects,
-                              child: const Text('View All'),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Subjects List
-                        if (homeViewModel.userSubjects.isNotEmpty) ...[
-                          ...homeViewModel.userSubjects
-                              .map((subject) => _buildSubjectCard(subject))
-                              .toList(),
-                        ] else ...[
-                          // No subjects selected yet
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[50],
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey[200]!),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  Icons.book_outlined,
-                                  size: 48,
-                                  color: Colors.grey[400],
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'No subjects selected yet',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Add subjects to start practicing',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[500],
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                ElevatedButton.icon(
-                                  onPressed: homeViewModel.navigateToSubjects,
-                                  icon: const Icon(Icons.add),
-                                  label: const Text('Add Subjects'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blue,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-
-                        const SizedBox(height: 24),
-                      ],
-                    ),
-                  ),
+              // --- Subject List Header ---
+              Text(
+                'Your Subjects for Grade $userGrade',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: AppColors.ink,
+                  fontWeight: FontWeight.w600,
                 ),
+              ),
+              const SizedBox(height: 12),
+
+              // --- Personalized Subject List ---
+              Expanded(
+                child: _SubjectList(
+                  subjects:
+                      AppConstants.allSubjects.where((subject) {
+                        return user?.selectedSubjects?.isEmpty ?? true
+                            ? true
+                            : user!.selectedSubjects!.contains(subject);
+                      }).toList(),
+                  selectedGrade: userGrade,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
+}
 
-  Widget _buildSubjectCard(Subject subject) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
-          leading: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.blue.shade100,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(Icons.book, color: Colors.blue.shade600, size: 24),
-          ),
-          title: Text(
-            subject.name,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-          ),
-          subtitle: Text(
-            subject.description,
-            style: TextStyle(color: Colors.grey[600], fontSize: 14),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: Icon(
-            Icons.arrow_forward_ios,
-            size: 16,
-            color: Colors.grey[400],
-          ),
-          onTap: () {
-            // TODO: Navigate to subject details or practice
-          },
+// --- Helper Widget for Displaying Subjects ---
+class _SubjectList extends StatelessWidget {
+  final List<String> subjects;
+  final int selectedGrade;
+
+  const _SubjectList({required this.subjects, required this.selectedGrade});
+
+  @override
+  Widget build(BuildContext context) {
+    if (subjects.isEmpty) {
+      return const Center(
+        child: Text(
+          'No subjects selected for this grade.\nGo to your profile to add subjects.',
+          textAlign: TextAlign.center,
         ),
-      ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 8),
+      itemCount: subjects.length,
+      itemBuilder: (context, index) {
+        final subject = subjects[index];
+        return Card(
+          elevation: 2,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: AppColors.neutralBorder),
+          ),
+          color: AppColors.neutralCard,
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 10,
+            ),
+            title: Text(
+              subject,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.ink,
+              ),
+            ),
+            subtitle: Text(
+              'Paper 1 & 2 Available',
+              style: TextStyle(color: AppColors.neutralMid),
+            ),
+            trailing: const Icon(
+              Icons.arrow_forward_ios,
+              color: AppColors.accent,
+              size: 16,
+            ),
+            onTap: () {
+              // Navigate to the new Test Configuration Screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) => TestConfigurationScreen(
+                        subject: subject,
+                        grade: selectedGrade,
+                      ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

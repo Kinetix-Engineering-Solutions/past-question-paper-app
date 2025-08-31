@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:past_question_paper_stem/utils/app_colors.dart';
 import 'package:past_question_paper_stem/utils/loading_state.dart';
 import 'package:past_question_paper_stem/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_stem/views/signup_screen.dart';
-import 'package:past_question_paper_stem/widgets/email_link_sign_in.dart';
 import 'package:past_question_paper_stem/widgets/custom_snackbar.dart';
 import 'package:past_question_paper_stem/utils/form_validators.dart';
 
@@ -65,111 +65,194 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212), // Dark background
-      appBar: AppBar(
-        title: const Text('Login', style: TextStyle(color: Colors.white)),
-        backgroundColor: const Color(0xFF1E1E1E),
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: _emailController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  labelStyle: TextStyle(color: Colors.grey),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
+      body: Container(
+        decoration: const BoxDecoration(gradient: PQPGradients.deep),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // App Title
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 40),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.school,
+                          size: 80,
+                          color: AppColors.neutralCard,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'STEM Question Papers',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.neutralCard,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Sign in to continue your practice',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppColors.neutralCard.withOpacity(0.8),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.blue),
-                  ),
-                  prefixIcon: Icon(Icons.email_outlined, color: Colors.grey),
-                  fillColor: Color(0xFF1E1E1E),
-                  filled: true,
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: FormValidators.validateEmail,
-                enabled: !ref.watch(loadingStateProvider),
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _passwordController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  labelStyle: TextStyle(color: Colors.grey),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.blue),
-                  ),
-                  prefixIcon: Icon(Icons.lock_outline, color: Colors.grey),
-                  fillColor: Color(0xFF1E1E1E),
-                  filled: true,
-                ),
-                obscureText: true,
-                validator: FormValidators.validatePassword,
-                enabled: !ref.watch(loadingStateProvider),
-                textInputAction: TextInputAction.done,
-                onFieldSubmitted: (_) => _handleLogin(),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed:
-                    ref.watch(loadingStateProvider) ? null : _handleLogin,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child:
-                    ref.watch(loadingStateProvider)
-                        ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                        : const Text('Login'),
-              ),
-              if (!ref.watch(loadingStateProvider)) ...[
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const SignUpScreen(),
+                  TextFormField(
+                    controller: _emailController,
+                    style: TextStyle(color: AppColors.neutralCard),
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      labelStyle: TextStyle(
+                        color: AppColors.chalkWhite.withOpacity(0.7),
                       ),
-                    );
-                  },
-                  style: TextButton.styleFrom(foregroundColor: Colors.blue),
-                  child: const Text('Don\'t have an account? Sign Up'),
-                ),
-                TextButton(
-                  onPressed: _handleForgotPassword,
-                  style: TextButton.styleFrom(foregroundColor: Colors.grey),
-                  child: const Text('Forgot Password?'),
-                ),
-                /* const Text('Or sign in with', textAlign: TextAlign.center),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.chalkWhite.withOpacity(0.3),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.chalkWhite.withOpacity(0.3),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.chalkWhite,
+                          width: 2,
+                        ),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.email_outlined,
+                        color: AppColors.neutralCard.withOpacity(0.7),
+                      ),
+                      fillColor: AppColors.ink.withOpacity(0.3),
+                      filled: true,
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: FormValidators.validateEmail,
+                    enabled: !ref.watch(loadingStateProvider),
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _passwordController,
+                    style: TextStyle(color: AppColors.neutralCard),
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      labelStyle: TextStyle(
+                        color: AppColors.chalkWhite.withOpacity(0.7),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.chalkWhite.withOpacity(0.3),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.chalkWhite.withOpacity(0.3),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.chalkWhite,
+                          width: 2,
+                        ),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.lock_outline,
+                        color: AppColors.neutralCard.withOpacity(0.7),
+                      ),
+                      fillColor: AppColors.ink.withOpacity(0.3),
+                      filled: true,
+                    ),
+                    obscureText: true,
+                    validator: FormValidators.validatePassword,
+                    enabled: !ref.watch(loadingStateProvider),
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _handleLogin(),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed:
+                        ref.watch(loadingStateProvider) ? null : _handleLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.chalkWhite,
+                      foregroundColor: AppColors.ink,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 4,
+                    ),
+                    child:
+                        ref.watch(loadingStateProvider)
+                            ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.ink,
+                                ),
+                              ),
+                            )
+                            : Text(
+                              'Login',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                  ),
+                  if (!ref.watch(loadingStateProvider)) ...[
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const SignUpScreen(),
+                          ),
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.chalkWhite,
+                      ),
+                      child: Text(
+                        'Don\'t have an account? Sign Up',
+                        style: TextStyle(color: AppColors.chalkWhite),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _handleForgotPassword,
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.chalkWhite.withOpacity(0.8),
+                      ),
+                      child: Text(
+                        'Forgot Password?',
+                        style: TextStyle(
+                          color: AppColors.chalkWhite.withOpacity(0.8),
+                        ),
+                      ),
+                    ),
+                    /* const Text('Or sign in with', textAlign: TextAlign.center),
                 const SizedBox(height: 8),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -178,8 +261,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ref.read(authViewModelProvider.notifier).authService,
                   ),
                 ), */
-              ],
-            ],
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
       ),

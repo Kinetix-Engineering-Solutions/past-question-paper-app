@@ -1,138 +1,79 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+/// A simplified, flat user model for the application.
 class AppUser {
   final String id;
-  final String email;
-  final UserProfile? profile;
+  final String? email;
+  final String? name;
 
-  AppUser({required this.id, required this.email, this.profile});
+  // --- Personalization fields are now directly on the AppUser model ---
+  final int? grade;
+  final List<String>? selectedSubjects;
 
-  // Check if user has completed profile setup
-  bool get hasCompletedProfile => profile != null;
-
-  // Copy with method
-  AppUser copyWith({String? id, String? email, UserProfile? profile}) {
-    return AppUser(
-      id: id ?? this.id,
-      email: email ?? this.email,
-      profile: profile ?? this.profile,
-    );
-  }
-
-  // Convert to JSON
-  Map<String, dynamic> toJson() {
-    return {'id': id, 'email': email, 'profile': profile?.toJson()};
-  }
-
-  // Create from JSON
-  factory AppUser.fromJson(Map<String, dynamic> json) {
-    return AppUser(
-      id: json['id'] as String,
-      email: json['email'] as String,
-      profile:
-          json['profile'] != null
-              ? UserProfile.fromJson(json['profile'] as Map<String, dynamic>)
-              : null,
-    );
-  }
-}
-
-class UserProfile {
-  final String? firstName;
-  final String? lastName;
-  final String? schoolName;
-  final String gradeId;
-  final List<String> subjectIds;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-
-  const UserProfile({
-    this.firstName,
-    this.lastName,
-    this.schoolName,
-    required this.gradeId,
-    required this.subjectIds,
-    required this.createdAt,
-    required this.updatedAt,
+  AppUser({
+    required this.id,
+    this.email,
+    this.name,
+    this.grade,
+    this.selectedSubjects,
   });
 
-  // Get display name
-  String get displayName {
-    if (firstName != null && lastName != null) {
-      return '$firstName $lastName';
-    } else if (firstName != null) {
-      return firstName!;
-    } else if (lastName != null) {
-      return lastName!;
-    }
-    return 'Student';
-  }
+  // Check if user has completed profile setup
+  bool get hasCompletedProfile =>
+      grade != null && (selectedSubjects?.isNotEmpty ?? false);
 
-  // Copy with method
-  UserProfile copyWith({
-    String? firstName,
-    String? lastName,
-    String? schoolName,
-    String? gradeId,
-    List<String>? subjectIds,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
-    return UserProfile(
-      firstName: firstName ?? this.firstName,
-      lastName: lastName ?? this.lastName,
-      schoolName: schoolName ?? this.schoolName,
-      gradeId: gradeId ?? this.gradeId,
-      subjectIds: subjectIds ?? this.subjectIds,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
+  /// Creates an AppUser from a Firestore document snapshot.
+  factory AppUser.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    return AppUser(
+      id: doc.id,
+      email: data['email'],
+      name: data['name'],
+      grade: data['grade'],
+      // Ensure selectedSubjects is always a List<String>
+      selectedSubjects:
+          data['selectedSubjects'] != null
+              ? List<String>.from(data['selectedSubjects'])
+              : [],
     );
   }
 
-  // Convert to JSON
-  Map<String, dynamic> toJson() {
+  /// Creates a basic AppUser from a Firebase Auth user.
+  factory AppUser.fromFirebaseAuth(dynamic firebaseUser) {
+    return AppUser(
+      id: firebaseUser.uid,
+      email: firebaseUser.email,
+      name: firebaseUser.displayName,
+      // Preferences will be null for a new user until they are set
+      grade: null,
+      selectedSubjects: [],
+    );
+  }
+
+  /// Converts an AppUser instance to a map for Firestore.
+  Map<String, dynamic> toMap() {
     return {
-      'firstName': firstName,
-      'lastName': lastName,
-      'schoolName': schoolName,
-      'gradeId': gradeId,
-      'subjectIds': subjectIds,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'email': email,
+      'name': name,
+      'grade': grade,
+      'selectedSubjects': selectedSubjects,
     };
   }
 
-  // Create from JSON
-  factory UserProfile.fromJson(Map<String, dynamic> json) {
-    return UserProfile(
-      firstName: json['firstName'] as String?,
-      lastName: json['lastName'] as String?,
-      schoolName: json['schoolName'] as String?,
-      gradeId: json['gradeId'] as String,
-      subjectIds: List<String>.from(json['subjectIds'] ?? []),
-      createdAt:
-          json['createdAt'] is DateTime
-              ? json['createdAt']
-              : DateTime.parse(json['createdAt'] as String),
-      updatedAt:
-          json['updatedAt'] is DateTime
-              ? json['updatedAt']
-              : DateTime.parse(json['updatedAt'] as String),
+  /// Creates a copy of the user with updated values.
+  AppUser copyWith({
+    String? id,
+    String? email,
+    String? name,
+    int? grade,
+    List<String>? selectedSubjects,
+  }) {
+    return AppUser(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      name: name ?? this.name,
+      grade: grade ?? this.grade,
+      selectedSubjects: selectedSubjects ?? this.selectedSubjects,
     );
   }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is UserProfile &&
-          runtimeType == other.runtimeType &&
-          firstName == other.firstName &&
-          lastName == other.lastName &&
-          schoolName == other.schoolName &&
-          gradeId == other.gradeId;
-
-  @override
-  int get hashCode =>
-      firstName.hashCode ^
-      lastName.hashCode ^
-      schoolName.hashCode ^
-      gradeId.hashCode;
 }

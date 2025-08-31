@@ -48,3 +48,14 @@ app.*.map.json
 /linux/flutter/ephemeral/
 /macos/Flutter/ephemeral/
 /macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Firebase configuration files (contains sensitive API keys)
+/lib/firebase_options.dart
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
+/web/firebase-config.js
+
+# Environment variables
+.env
+.env.local
+.env.production

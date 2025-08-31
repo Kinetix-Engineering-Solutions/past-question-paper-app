@@ -1,9 +1,11 @@
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/firebase_options.dart';
 import 'package:past_question_paper_stem/services/deep_link_handler.dart';
 import 'package:past_question_paper_stem/services/navigation_service.dart';
+import 'package:past_question_paper_stem/utils/app_theme.dart';
 import 'package:past_question_paper_stem/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_stem/views/login.dart';
 import 'package:past_question_paper_stem/views/signup_screen.dart';
@@ -14,6 +16,17 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Initialize Firebase with platform-specific options
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Activate App Check
+  await FirebaseAppCheck.instance.activate(
+    // Use the debug provider for testing in debug builds.
+    // You will need to configure the reCAPTCHA v3 provider for production.
+    webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
+    // Set androidProvider to `AndroidProvider.debug`
+    androidProvider: AndroidProvider.debug,
+    // Set appleProvider to `AppleProvider.debug`
+    appleProvider: AppleProvider.debug,
+  );
 
   runApp(const ProviderScope(child: MyApp()));
 }
@@ -26,16 +39,7 @@ class MyApp extends ConsumerWidget {
     return MaterialApp(
       title: 'STEM Question Papers',
       navigatorKey: NavigationService.navigatorKey,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Colors.grey[100],
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          elevation: 0,
-          centerTitle: true,
-        ),
-      ),
+      theme: AppTheme.paperAndInkTheme,
       home: const AppInitializer(),
       routes: {
         '/login': (context) => const LoginScreen(),

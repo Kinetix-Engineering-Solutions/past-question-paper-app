@@ -4,7 +4,8 @@ import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
-/// Default [FirebaseOptions] for use with your Firebase apps.
+/// Template for Firebase options - Copy this to firebase_options.dart and add your keys
+/// DO NOT commit firebase_options.dart to version control!
 ///
 /// Example:
 /// ```dart
@@ -41,46 +42,46 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBSxz-doRd7dKPRWOHH7-w2bkWZdWNeVqs',
-    appId: '1:304255065963:web:ef29b8260fce36503eb62e',
-    messagingSenderId: '304255065963',
-    projectId: 'vibe-code-4c59f',
-    authDomain: 'vibe-code-4c59f.firebaseapp.com',
-    storageBucket: 'vibe-code-4c59f.firebasestorage.app',
+    apiKey: 'YOUR_WEB_API_KEY_HERE',
+    appId: 'YOUR_WEB_APP_ID_HERE',
+    messagingSenderId: 'YOUR_SENDER_ID_HERE',
+    projectId: 'your-project-id',
+    authDomain: 'your-project-id.firebaseapp.com',
+    storageBucket: 'your-project-id.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyA4Z4X_7NsN9HNfvsTSZhoCrsyJhZDMWh4',
-    appId: '1:304255065963:android:548f4ad3bbeda6283eb62e',
-    messagingSenderId: '304255065963',
-    projectId: 'vibe-code-4c59f',
-    storageBucket: 'vibe-code-4c59f.firebasestorage.app',
+    apiKey: 'YOUR_ANDROID_API_KEY_HERE',
+    appId: 'YOUR_ANDROID_APP_ID_HERE',
+    messagingSenderId: 'YOUR_SENDER_ID_HERE',
+    projectId: 'your-project-id',
+    storageBucket: 'your-project-id.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCnH8bzRH57-tdSSe_mv3R9Ec1u_TV9IIA',
-    appId: '1:304255065963:ios:13b254d3f64077f73eb62e',
-    messagingSenderId: '304255065963',
-    projectId: 'vibe-code-4c59f',
-    storageBucket: 'vibe-code-4c59f.firebasestorage.app',
+    apiKey: 'YOUR_IOS_API_KEY_HERE',
+    appId: 'YOUR_IOS_APP_ID_HERE',
+    messagingSenderId: 'YOUR_SENDER_ID_HERE',
+    projectId: 'your-project-id',
+    storageBucket: 'your-project-id.firebasestorage.app',
     iosBundleId: 'com.example.pastQuestionPaperStem',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCnH8bzRH57-tdSSe_mv3R9Ec1u_TV9IIA',
-    appId: '1:304255065963:ios:13b254d3f64077f73eb62e',
-    messagingSenderId: '304255065963',
-    projectId: 'vibe-code-4c59f',
-    storageBucket: 'vibe-code-4c59f.firebasestorage.app',
+    apiKey: 'YOUR_MACOS_API_KEY_HERE',
+    appId: 'YOUR_MACOS_APP_ID_HERE',
+    messagingSenderId: 'YOUR_SENDER_ID_HERE',
+    projectId: 'your-project-id',
+    storageBucket: 'your-project-id.firebasestorage.app',
     iosBundleId: 'com.example.pastQuestionPaperStem',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBSxz-doRd7dKPRWOHH7-w2bkWZdWNeVqs',
-    appId: '1:304255065963:web:7dc2e3ba30a6abf23eb62e',
-    messagingSenderId: '304255065963',
-    projectId: 'vibe-code-4c59f',
-    authDomain: 'vibe-code-4c59f.firebaseapp.com',
-    storageBucket: 'vibe-code-4c59f.firebasestorage.app',
+    apiKey: 'YOUR_WINDOWS_API_KEY_HERE',
+    appId: 'YOUR_WINDOWS_APP_ID_HERE',
+    messagingSenderId: 'YOUR_SENDER_ID_HERE',
+    projectId: 'your-project-id',
+    authDomain: 'your-project-id.firebaseapp.com',
+    storageBucket: 'your-project-id.firebasestorage.app',
   );
 }

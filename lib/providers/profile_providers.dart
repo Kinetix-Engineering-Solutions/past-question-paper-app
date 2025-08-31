@@ -1,45 +1,38 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/model/grade.dart';
-import 'package:past_question_paper_stem/model/subject.dart';
-import 'package:past_question_paper_stem/model/user.dart';
 import 'package:past_question_paper_stem/services/firestore_database_firebase.dart';
 import 'package:past_question_paper_stem/viewmodels/auth_viewmodel.dart';
 
-// Available Grades Provider - Fetches from Firestore
-final availableGradesProvider = FutureProvider<List<Grade>>((ref) async {
+// Available Grades Provider - Gets from questions collection
+final availableGradesProvider = FutureProvider<List<int>>((ref) async {
   final database = ref.read(firestoreDatabaseProvider);
-  return await database.getGrades();
+  return await database.getAvailableGrades();
 });
 
-// Available Subjects Provider - Fetches from Firestore
-final availableSubjectsProvider = FutureProvider<List<Subject>>((ref) async {
+// Available Subjects Provider - Gets from questions collection
+final availableSubjectsProvider = FutureProvider<List<String>>((ref) async {
   final database = ref.read(firestoreDatabaseProvider);
-  return await database.getSubjects();
+  return await database.getAvailableSubjects();
 });
 
-// Subjects for Selected Grade Provider - Fetches from Firestore
-final subjectsForGradeProvider = FutureProvider.family<List<Subject>, String>((
+// Subjects for Selected Grade Provider
+final subjectsForGradeProvider = FutureProvider.family<List<String>, int>((
   ref,
-  gradeId,
+  grade,
 ) async {
   final database = ref.read(firestoreDatabaseProvider);
-  return await database.getSubjectsForGrade(gradeId);
+  return await database.getAvailableSubjects(grade: grade);
 });
 
 // Profile Setup State
 class ProfileSetupState {
-  final String? firstName;
-  final String? lastName;
-  final String? schoolName;
-  final Grade? selectedGrade;
-  final List<Subject> selectedSubjects;
+  final String? name;
+  final int? selectedGrade;
+  final List<String> selectedSubjects;
   final bool isLoading;
   final String? error;
 
   const ProfileSetupState({
-    this.firstName,
-    this.lastName,
-    this.schoolName,
+    this.name,
     this.selectedGrade,
     this.selectedSubjects = const [],
     this.isLoading = false,
@@ -47,18 +40,14 @@ class ProfileSetupState {
   });
 
   ProfileSetupState copyWith({
-    String? firstName,
-    String? lastName,
-    String? schoolName,
-    Grade? selectedGrade,
-    List<Subject>? selectedSubjects,
+    String? name,
+    int? selectedGrade,
+    List<String>? selectedSubjects,
     bool? isLoading,
     String? error,
   }) {
     return ProfileSetupState(
-      firstName: firstName ?? this.firstName,
-      lastName: lastName ?? this.lastName,
-      schoolName: schoolName ?? this.schoolName,
+      name: name ?? this.name,
       selectedGrade: selectedGrade ?? this.selectedGrade,
       selectedSubjects: selectedSubjects ?? this.selectedSubjects,
       isLoading: isLoading ?? this.isLoading,
@@ -78,44 +67,27 @@ class ProfileSetupViewModel extends StateNotifier<ProfileSetupState> {
 
   ProfileSetupViewModel(this._ref) : super(const ProfileSetupState());
 
-  // Update first name
-  void updateFirstName(String firstName) {
-    state = state.copyWith(firstName: firstName, error: null);
-  }
-
-  // Update last name
-  void updateLastName(String lastName) {
-    state = state.copyWith(lastName: lastName, error: null);
-  }
-
-  // Update school name
-  void updateSchoolName(String schoolName) {
-    state = state.copyWith(schoolName: schoolName, error: null);
+  // Update name
+  void updateName(String name) {
+    state = state.copyWith(name: name, error: null);
   }
 
   // Select grade
-  void selectGrade(Grade grade) {
-    // Clear selected subjects if they're not available for the new grade
-    final availableSubjectIds =
-        grade.id == state.selectedGrade?.id
-            ? state.selectedSubjects
-            : state.selectedSubjects
-                .where((subject) => subject.gradeIds.contains(grade.id))
-                .toList();
-
+  void selectGrade(int grade) {
+    // Clear selected subjects when changing grade since they might not be available
     state = state.copyWith(
       selectedGrade: grade,
-      selectedSubjects: availableSubjectIds,
+      selectedSubjects: [],
       error: null,
     );
   }
 
   // Toggle subject selection
-  void toggleSubjectSelection(Subject subject) {
-    final currentSubjects = List<Subject>.from(state.selectedSubjects);
+  void toggleSubjectSelection(String subject) {
+    final currentSubjects = List<String>.from(state.selectedSubjects);
 
-    if (currentSubjects.any((s) => s.id == subject.id)) {
-      currentSubjects.removeWhere((s) => s.id == subject.id);
+    if (currentSubjects.contains(subject)) {
+      currentSubjects.remove(subject);
     } else {
       currentSubjects.add(subject);
     }
@@ -140,19 +112,13 @@ class ProfileSetupViewModel extends StateNotifier<ProfileSetupState> {
     try {
       state = state.copyWith(isLoading: true, error: null);
 
-      final profile = UserProfile(
-        firstName: state.firstName?.trim(),
-        lastName: state.lastName?.trim(),
-        schoolName: state.schoolName?.trim(),
-        gradeId: state.selectedGrade!.id,
-        subjectIds: state.selectedSubjects.map((s) => s.id).toList(),
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-
-      // Save to Firestore
+      // Update user with new preferences
       final database = _ref.read(firestoreDatabaseProvider);
-      await database.saveUserProfile(userId, profile);
+      await database.updateUserPreferences(
+        userId,
+        state.selectedGrade!,
+        state.selectedSubjects,
+      );
 
       // Refresh auth state to reflect the new profile
       await _ref.read(authViewModelProvider.notifier).refreshUser();
