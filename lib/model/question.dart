@@ -35,7 +35,9 @@ class Question {
   String get topicId => topic;
   String get questionType => format;
   String? get questionImage => imageUrl;
-  List<String> get correctAnswerList => [correctAnswer]; // For backward compatibility
+  List<String> get correctAnswerList => [
+    correctAnswer,
+  ]; // For backward compatibility
 
   Question({
     required this.id,
@@ -60,6 +62,61 @@ class Question {
     this.dragItems, // For drag-and-drop questions
     this.dragTargets, // For drag-and-drop questions
   });
+
+  /// Factory constructor to create Question from Cloud Function data
+  factory Question.fromMap(Map<String, dynamic> data) {
+    // Handle correctAnswer as both String and List for backward compatibility
+    String correctAnswerValue = '';
+    if (data['correctAnswer'] != null) {
+      if (data['correctAnswer'] is List) {
+        List<String> answerList = List<String>.from(data['correctAnswer']);
+        correctAnswerValue = answerList.isNotEmpty ? answerList.first : '';
+      } else {
+        correctAnswerValue = data['correctAnswer'].toString();
+      }
+    }
+
+    return Question(
+      id: data['id'] ?? '',
+      subject: data['subject'] ?? '',
+      paper: data['paper'] ?? '',
+      grade: data['grade'] ?? 12,
+      topic: data['topic'] ?? '',
+      cognitiveLevel: data['cognitiveLevel'] ?? '',
+      marks: data['marks'] ?? 0,
+      year: data['year'] ?? 0,
+      season: data['season'] ?? '',
+      format: data['format'] ?? 'MCQ',
+      questionText: data['questionText'] ?? '',
+      imageUrl: data['imageUrl'],
+      options: List<String>.from(data['options'] ?? []),
+      optionImages:
+          data['optionImages'] != null
+              ? List<String>.from(data['optionImages'])
+              : null,
+      correctOrder: List<int>.from(data['correctOrder'] ?? []),
+      // Correct answer and explanation might not be sent from the cloud function
+      // for security reasons (to prevent cheating), so we provide default values
+      correctAnswer: correctAnswerValue,
+      explanation: data['explanation'] ?? '',
+      points: data['points'],
+      timeAllocation: data['timeAllocation'],
+      // Load drag-and-drop specific data if present
+      dragItems:
+          data['dragItems'] != null
+              ? (data['dragItems'] as List<dynamic>)
+                  .map((item) => DragItem.fromMap(item))
+                  .toList()
+              : null,
+      dragTargets:
+          data['dragTargets'] != null
+              ? (data['dragTargets'] as List<dynamic>)
+                  .map((target) => DropTarget.fromMap(target))
+                  .toList()
+              : null,
+    );
+  }
+
   factory Question.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
@@ -71,7 +128,7 @@ class Question {
     String topicValue = data['topic'] ?? data['topicId'] ?? '';
     String formatValue = data['format'] ?? data['questionType'] ?? 'MCQ';
     String? imageUrlValue = data['imageUrl'] ?? data['questionImage'];
-    
+
     // Handle correctAnswer as both String and List for backward compatibility
     String correctAnswerValue = '';
     if (data['correctAnswer'] != null) {
@@ -235,8 +292,7 @@ class Question {
   bool get hasImageOptions => optionImages != null && optionImages!.isNotEmpty;
 
   // Check if this question has an image
-  bool get hasQuestionImage =>
-      imageUrl != null && imageUrl!.isNotEmpty;
+  bool get hasQuestionImage => imageUrl != null && imageUrl!.isNotEmpty;
 
   // Check if should use text options (when no image options are available)
   bool get useTextOptions => !hasImageOptions && options.isNotEmpty;
@@ -251,6 +307,13 @@ class Question {
     }
     return options;
   }
+
+  // Format type checkers for UI rendering
+  bool get isMCQ => format.toLowerCase() == 'mcq';
+  bool get isTrueFalse => format.toLowerCase() == 'true_false' || format.toLowerCase() == 'true-false';
+  bool get isShortAnswer => format.toLowerCase() == 'short_answer' || format.toLowerCase() == 'short-answer';
+  bool get isEssay => format.toLowerCase() == 'essay';
+  bool get isFillInBlank => format.toLowerCase() == 'fill_blank' || format.toLowerCase() == 'fill-blank';
 
   // Validate options length matches correctOrder length for drag-and-drop
   bool get hasValidOptionCount {

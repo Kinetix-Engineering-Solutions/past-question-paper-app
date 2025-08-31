@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/model/drag_and_drop%20models/drag_Item.dart';
-import 'package:past_question_paper_stem/model/drag_and_drop%20models/drag_and_drop_question.dart';
+import 'package:past_question_paper_stem/model/drag_and_drop models/drag_item.dart';
+import 'package:past_question_paper_stem/model/drag_and_drop models/drag_and_drop_question.dart';
 
 // State class for drag and drop quiz
 class DragDropQuizState {

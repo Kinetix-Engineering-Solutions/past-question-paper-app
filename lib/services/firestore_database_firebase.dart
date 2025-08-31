@@ -1,11 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:past_question_paper_stem/model/user.dart';
-import 'package:past_question_paper_stem/model/grade.dart';
-import 'package:past_question_paper_stem/model/subject.dart';
-import 'package:past_question_paper_stem/model/topic.dart';
+import 'package:past_question_paper_stem/model/question.dart';
 
 class FirestoreDatabaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFunctions _functions = FirebaseFunctions.instance;
 
   /// Saves a user to Firestore
   Future<void> saveUser(AppUser user) async {
@@ -25,243 +26,305 @@ class FirestoreDatabaseService {
       final doc = await _firestore.collection('users').doc(userId).get();
       if (!doc.exists || doc.data() == null) return null;
 
-      final data = doc.data()!;
-      return AppUser(
-        id: doc.id,
-        email: data['email'] as String,
-        profile:
-            data['profile'] != null
-                ? UserProfile.fromJson(data['profile'] as Map<String, dynamic>)
-                : null,
-      );
+      return AppUser.fromFirestore(doc);
     } catch (e) {
       rethrow;
     }
   }
 
-  /// Saves user profile to Firestore
-  Future<void> saveUserProfile(String userId, UserProfile profile) async {
+  /// Updates the user document with user information
+  Future<void> updateUser(AppUser user) async {
     try {
-      await _firestore.collection('users').doc(userId).update({
-        'profile': profile.toJson(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  /// Updates the user document with profile information
-  Future<void> updateUserWithProfile(AppUser user) async {
-    try {
-      final data = {
-        'email': user.email,
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
-
-      if (user.profile != null) {
-        data['profile'] = user.profile!.toJson();
-      }
-
       await _firestore
           .collection('users')
           .doc(user.id)
-          .set(data, SetOptions(merge: true));
+          .set(user.toMap(), SetOptions(merge: true));
     } catch (e) {
       rethrow;
     }
   }
 
-  /// Fetches all grades from Firestore
-  Future<List<Grade>> getGrades() async {
+  /// Fetches questions directly from Firestore with optional filters
+  Future<List<Question>> getQuestions({
+    String? subject,
+    String? paper,
+    int? grade,
+    String? topic,
+    int? year,
+    String? season,
+    int? limit,
+  }) async {
     try {
-      final snapshot = await _firestore.collection('grades').get();
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        return Grade(
-          id: doc.id,
-          name: data['name'] as String? ?? '',
-          level: data['level'] as int? ?? 0,
-          description: data['description'] as String? ?? '',
-          createdAt:
-              data['createdAt'] != null
-                  ? (data['createdAt'] as Timestamp).toDate()
-                  : DateTime.now(),
-          updatedAt:
-              data['updatedAt'] != null
-                  ? (data['updatedAt'] as Timestamp).toDate()
-                  : DateTime.now(),
-        );
-      }).toList();
+      Query<Map<String, dynamic>> query = _firestore.collection('questions');
+
+      // Apply filters if provided
+      if (subject != null) {
+        query = query.where('subject', isEqualTo: subject);
+      }
+      if (paper != null) {
+        query = query.where('paper', isEqualTo: paper);
+      }
+      if (grade != null) {
+        query = query.where('grade', isEqualTo: grade);
+      }
+      if (topic != null) {
+        query = query.where('topic', isEqualTo: topic);
+      }
+      if (year != null) {
+        query = query.where('year', isEqualTo: year);
+      }
+      if (season != null) {
+        query = query.where('season', isEqualTo: season);
+      }
+      if (limit != null) {
+        query = query.limit(limit);
+      }
+
+      final snapshot = await query.get();
+      return snapshot.docs.map((doc) => Question.fromFirestore(doc)).toList();
     } catch (e) {
       rethrow;
     }
   }
 
-  /// Fetches all subjects from Firestore
-  Future<List<Subject>> getSubjects() async {
+  /// Gets a single question by ID
+  Future<Question?> getQuestion(String questionId) async {
     try {
-      final snapshot = await _firestore.collection('subjects').get();
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        return Subject(
-          id: doc.id,
-          name: data['name'] as String? ?? '',
-          description: data['description'] as String? ?? '',
-          imageUrl: data['imageUrl'] as String? ?? '',
-          gradeIds: List<String>.from(data['gradeIds'] ?? []),
-          createdAt:
-              data['createdAt'] != null
-                  ? (data['createdAt'] as Timestamp).toDate()
-                  : DateTime.now(),
-          updatedAt:
-              data['updatedAt'] != null
-                  ? (data['updatedAt'] as Timestamp).toDate()
-                  : DateTime.now(),
-        );
-      }).toList();
+      final doc =
+          await _firestore.collection('questions').doc(questionId).get();
+      if (!doc.exists) return null;
+      return Question.fromFirestore(doc);
     } catch (e) {
       rethrow;
     }
   }
 
-  /// Fetches subjects available for a specific grade
-  Future<List<Subject>> getSubjectsForGrade(String gradeId) async {
+  /// Gets available subjects from questions collection (denormalized approach)
+  Future<List<String>> getAvailableSubjects({int? grade}) async {
     try {
-      final snapshot =
-          await _firestore
-              .collection('subjects')
-              .where('gradeIds', arrayContains: gradeId)
-              .get();
+      Query<Map<String, dynamic>> query = _firestore.collection('questions');
 
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        return Subject(
-          id: doc.id,
-          name: data['name'] as String? ?? '',
-          description: data['description'] as String? ?? '',
-          imageUrl: data['imageUrl'] as String? ?? '',
-          gradeIds: List<String>.from(data['gradeIds'] ?? []),
-          createdAt:
-              data['createdAt'] != null
-                  ? (data['createdAt'] as Timestamp).toDate()
-                  : DateTime.now(),
-          updatedAt:
-              data['updatedAt'] != null
-                  ? (data['updatedAt'] as Timestamp).toDate()
-                  : DateTime.now(),
-        );
-      }).toList();
+      if (grade != null) {
+        query = query.where('grade', isEqualTo: grade);
+      }
+
+      final snapshot = await query.get();
+      final subjects =
+          snapshot.docs
+              .map((doc) => doc.data()['subject'] as String)
+              .where((subject) => subject.isNotEmpty)
+              .toSet()
+              .toList();
+
+      subjects.sort();
+      return subjects;
     } catch (e) {
       rethrow;
     }
   }
 
-  /// Fetches all topics from Firestore
-  Future<List<Topic>> getTopics() async {
+  /// Gets available papers for a subject from questions collection
+  Future<List<String>> getAvailablePapers({
+    required String subject,
+    int? grade,
+  }) async {
     try {
-      final snapshot = await _firestore.collection('topics').get();
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        return Topic(
-          id: doc.id,
-          name: data['name'] as String? ?? '',
-          description: data['description'] as String? ?? '',
-          subjectId: data['subjectId'] as String? ?? '',
-          gradeIds: List<String>.from(data['gradeIds'] ?? []),
-          order: data['order'] as int? ?? 0,
-          season: data['season'] as String? ?? 'Spring 2024',
-          createdAt:
-              data['createdAt'] != null
-                  ? (data['createdAt'] as Timestamp).toDate()
-                  : DateTime.now(),
-          updatedAt:
-              data['updatedAt'] != null
-                  ? (data['updatedAt'] as Timestamp).toDate()
-                  : DateTime.now(),
-        );
-      }).toList();
+      Query<Map<String, dynamic>> query = _firestore
+          .collection('questions')
+          .where('subject', isEqualTo: subject);
+
+      if (grade != null) {
+        query = query.where('grade', isEqualTo: grade);
+      }
+
+      final snapshot = await query.get();
+      final papers =
+          snapshot.docs
+              .map((doc) => doc.data()['paper'] as String)
+              .where((paper) => paper.isNotEmpty)
+              .toSet()
+              .toList();
+
+      papers.sort();
+      return papers;
     } catch (e) {
       rethrow;
     }
   }
 
-  /// Fetches topics for a specific subject
-  Future<List<Topic>> getTopicsForSubject(String subjectId) async {
+  /// Gets available topics for a subject/paper from questions collection
+  Future<List<String>> getAvailableTopics({
+    required String subject,
+    String? paper,
+    int? grade,
+  }) async {
     try {
-      final snapshot =
-          await _firestore
-              .collection('topics')
-              .where('subjectId', isEqualTo: subjectId)
-              .orderBy('order')
-              .get();
+      Query<Map<String, dynamic>> query = _firestore
+          .collection('questions')
+          .where('subject', isEqualTo: subject);
 
+      if (paper != null) {
+        query = query.where('paper', isEqualTo: paper);
+      }
+      if (grade != null) {
+        query = query.where('grade', isEqualTo: grade);
+      }
+
+      final snapshot = await query.get();
       final topics =
-          snapshot.docs.map((doc) {
-            final data = doc.data();
-            return Topic(
-              id: doc.id,
-              name: data['name'] as String? ?? '',
-              description: data['description'] as String? ?? '',
-              subjectId: data['subjectId'] as String? ?? '',
-              gradeIds: List<String>.from(data['gradeIds'] ?? []),
-              order: data['order'] as int? ?? 0,
-              season: data['season'] as String? ?? 'Spring 2024',
-              createdAt:
-                  data['createdAt'] != null
-                      ? (data['createdAt'] as Timestamp).toDate()
-                      : DateTime.now(),
-              updatedAt:
-                  data['updatedAt'] != null
-                      ? (data['updatedAt'] as Timestamp).toDate()
-                      : DateTime.now(),
-            );
-          }).toList();
+          snapshot.docs
+              .map((doc) => doc.data()['topic'] as String)
+              .where((topic) => topic.isNotEmpty)
+              .toSet()
+              .toList();
 
+      topics.sort();
       return topics;
     } catch (e) {
       rethrow;
     }
   }
 
-  /// Fetches topics available for a specific grade and subject
-  Future<List<Topic>> getTopicsForSubjectAndGrade(
-    String subjectId,
-    String gradeId,
+  /// Gets available grades from questions collection
+  Future<List<int>> getAvailableGrades({String? subject}) async {
+    try {
+      Query<Map<String, dynamic>> query = _firestore.collection('questions');
+
+      if (subject != null) {
+        query = query.where('subject', isEqualTo: subject);
+      }
+
+      final snapshot = await query.get();
+      final grades =
+          snapshot.docs
+              .map((doc) => doc.data()['grade'] as int)
+              .where((grade) => grade > 0)
+              .toSet()
+              .toList();
+
+      grades.sort();
+      return grades;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Calls the generateTest Cloud Function to create a test
+  Future<Map<String, dynamic>> generateTest({
+    required int grade,
+    required String subject,
+    required String paper,
+    int? year,
+    String? season,
+    required String mode, // 'full_exam', 'quick_practice', 'topic_specific'
+    String? topicId,
+    int questionCount = 20,
+  }) async {
+    try {
+      // Wait for auth state to be ready and check if user is authenticated
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('You must be logged in to generate a test.');
+      }
+
+      // Wait for the ID token to ensure it's ready for the function call
+      await user.getIdToken(true); // Force refresh the token
+
+      final callable = _functions.httpsCallable('generateTest');
+      final result = await callable.call({
+        'grade': grade,
+        'subject': subject,
+        'paper': paper,
+        'year': year,
+        'season': season,
+        'mode': mode,
+        'topicId': topicId,
+        'questionCount': questionCount,
+      });
+
+      return Map<String, dynamic>.from(result.data);
+    } on FirebaseFunctionsException catch (e) {
+      if (e.code == 'unauthenticated') {
+        throw Exception('Authentication failed. Please log out and log back in.');
+      }
+      rethrow;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Calls the gradeTest Cloud Function to grade a completed test
+  Future<Map<String, dynamic>> gradeTest({
+    required Map<String, String> answers, // questionId -> userAnswer
+    required String subject,
+    required String paper,
+  }) async {
+    try {
+      // Wait for auth state to be ready and check if user is authenticated
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('You must be logged in to submit test results.');
+      }
+
+      // Wait for the ID token to ensure it's ready for the function call
+      await user.getIdToken(true); // Force refresh the token
+
+      final callable = _functions.httpsCallable('gradeTest');
+      final result = await callable.call({
+        'answers': answers,
+        'subject': subject,
+        'paper': paper,
+      });
+
+      return Map<String, dynamic>.from(result.data);
+    } on FirebaseFunctionsException catch (e) {
+      if (e.code == 'unauthenticated') {
+        throw Exception('Authentication failed. Please log out and log back in.');
+      }
+      rethrow;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Gets user's test results from their sub-collection
+  Future<List<Map<String, dynamic>>> getUserTestResults(String userId) async {
+    try {
+      final snapshot =
+          await _firestore
+              .collection('users')
+              .doc(userId)
+              .collection('testResults')
+              .orderBy('testDate', descending: true)
+              .get();
+
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'id': doc.id,
+          ...data,
+          'testDate': (data['testDate'] as Timestamp?)?.toDate(),
+        };
+      }).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Updates the user's document with their selected grade and subjects.
+  Future<void> updateUserPreferences(
+    String userId,
+    int grade,
+    List<String> subjects,
   ) async {
     try {
-      final snapshot =
-          await _firestore
-              .collection('topics')
-              .where('subjectId', isEqualTo: subjectId)
-              .where('gradeIds', arrayContains: gradeId)
-              .orderBy('order')
-              .get();
-
-      final topics =
-          snapshot.docs.map((doc) {
-            final data = doc.data();
-            return Topic(
-              id: doc.id,
-              name: data['name'] as String? ?? '',
-              description: data['description'] as String? ?? '',
-              subjectId: data['subjectId'] as String? ?? '',
-              gradeIds: List<String>.from(data['gradeIds'] ?? []),
-              order: data['order'] as int? ?? 0,
-              season: data['season'] as String? ?? 'Spring 2024',
-              createdAt:
-                  data['createdAt'] != null
-                      ? (data['createdAt'] as Timestamp).toDate()
-                      : DateTime.now(),
-              updatedAt:
-                  data['updatedAt'] != null
-                      ? (data['updatedAt'] as Timestamp).toDate()
-                      : DateTime.now(),
-            );
-          }).toList();
-
-      return topics;
+      await _firestore.collection('users').doc(userId).update({
+        'grade': grade,
+        'selectedSubjects': subjects,
+      });
     } catch (e) {
+      // Handle potential errors, e.g., permissions issues
+      print('Error updating user preferences: $e');
       rethrow;
     }
   }

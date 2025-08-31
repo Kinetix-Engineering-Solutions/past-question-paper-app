@@ -1,10 +1,12 @@
 import 'package:past_question_paper_stem/model/practice_mode.dart';
-import 'package:past_question_paper_stem/model/topic.dart';
 import 'package:past_question_paper_stem/model/question.dart';
 
 class PracticeSession {
   final String id;
-  final Topic topic;
+  final String topicName;
+  final String subject;
+  final String paper;
+  final int grade;
   final PracticeMode mode;
   final List<Question> questions;
   final DateTime startTime;
@@ -17,7 +19,10 @@ class PracticeSession {
 
   const PracticeSession({
     required this.id,
-    required this.topic,
+    required this.topicName,
+    required this.subject,
+    required this.paper,
+    required this.grade,
     required this.mode,
     required this.questions,
     required this.startTime,
@@ -31,13 +36,19 @@ class PracticeSession {
 
   /// Create a new practice session
   factory PracticeSession.create({
-    required Topic topic,
+    required String topicName,
+    required String subject,
+    required String paper,
+    required int grade,
     required PracticeMode mode,
     required List<Question> questions,
   }) {
     return PracticeSession(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      topic: topic,
+      topicName: topicName,
+      subject: subject,
+      paper: paper,
+      grade: grade,
       mode: mode,
       questions: questions,
       startTime: DateTime.now(),
@@ -50,7 +61,10 @@ class PracticeSession {
   /// Copy with updated fields
   PracticeSession copyWith({
     String? id,
-    Topic? topic,
+    String? topicName,
+    String? subject,
+    String? paper,
+    int? grade,
     PracticeMode? mode,
     List<Question>? questions,
     DateTime? startTime,
@@ -63,7 +77,10 @@ class PracticeSession {
   }) {
     return PracticeSession(
       id: id ?? this.id,
-      topic: topic ?? this.topic,
+      topicName: topicName ?? this.topicName,
+      subject: subject ?? this.subject,
+      paper: paper ?? this.paper,
+      grade: grade ?? this.grade,
       mode: mode ?? this.mode,
       questions: questions ?? this.questions,
       startTime: startTime ?? this.startTime,
@@ -167,7 +184,7 @@ class PracticeSession {
     switch (question.questionType.toLowerCase()) {
       case 'multiple-choice':
       case 'true-false':
-        return question.correctAnswer.contains(userAnswer.toString());
+        return question.correctAnswer == userAnswer.toString();
 
       case 'drag-and-drop':
         // Handle new drag-and-drop format with dragItems/dragTargets
@@ -220,9 +237,9 @@ class PracticeSession {
               })
               .join(', ');
         }
-        return question.correctAnswer.join(', ');
+        return question.correctAnswer;
       default:
-        return question.correctAnswer.join(', ');
+        return question.correctAnswer;
     }
   }
 
@@ -261,7 +278,10 @@ class PracticeSession {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'topicId': topic.id,
+      'topicName': topicName,
+      'subject': subject,
+      'paper': paper,
+      'grade': grade,
       'mode': mode.name,
       'startTime': startTime.toIso8601String(),
       'endTime': endTime?.toIso8601String(),
@@ -277,12 +297,14 @@ class PracticeSession {
   /// Create from JSON
   static PracticeSession fromJson(
     Map<String, dynamic> json,
-    Topic topic,
     List<Question> questions,
   ) {
     return PracticeSession(
       id: json['id'],
-      topic: topic,
+      topicName: json['topicName'] ?? '',
+      subject: json['subject'] ?? '',
+      paper: json['paper'] ?? '',
+      grade: json['grade'] ?? 12,
       mode: PracticeMode.values.firstWhere(
         (mode) => mode.name == json['mode'],
         orElse: () => PracticeMode.standard,

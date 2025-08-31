@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_stem/providers/navigation_providers.dart';
 import 'package:past_question_paper_stem/views/home_screen.dart';
-import 'package:past_question_paper_stem/views/subjects_screen.dart';
+import 'package:past_question_paper_stem/views/test_configuration_screen.dart';
 import 'package:past_question_paper_stem/views/profile_screen.dart';
 
 class MainNavigationScreen extends ConsumerWidget {
@@ -17,7 +17,7 @@ class MainNavigationScreen extends ConsumerWidget {
         index: currentIndex,
         children: [
           const HomeScreen(),
-          const SubjectsScreen(),
+          const TestConfigurationScreen(subject: '', grade: 1),
           const ProfileScreen(),
         ],
       ),
@@ -28,13 +28,10 @@ class MainNavigationScreen extends ConsumerWidget {
           ref.read(bottomNavigationProvider.notifier).setIndex(index);
         },
         items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.backpack), label: 'PQP'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.backpack),
-            label: 'Backpack',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.trending_up),
-            label: 'Progress',
+            icon: Icon(Icons.quiz),
+            label: 'Test Generator',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],

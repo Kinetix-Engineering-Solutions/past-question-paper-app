@@ -1,174 +1,149 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:past_question_paper_stem/model/question.dart';
-import 'package:past_question_paper_stem/model/question_type.dart';
 
+// Riverpod provider to make the repository available throughout the app
+final questionRepositoryProvider = Provider<QuestionRepository>((ref) {
+  // You can specify the region if your functions are not in us-central1
+  final functions = FirebaseFunctions.instance;
+
+  // For development, you might want to connect to the emulator
+  // Uncomment the following line if you're using the Firebase emulator
+  // functions.useFunctionsEmulator('localhost', 5001);
+
+  return QuestionRepository(functions);
+});
+
+/// This repository is the bridge between the Flutter app and the backend Cloud Functions.
+/// It does NOT contain any direct Firestore query logic.
 class QuestionRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final String _collection = 'questions';
+  final FirebaseFunctions _functions;
 
-  /// Load all questions for a specific topic
-  Future<List<Question>> getQuestionsForTopic(String topicId) async {
+  QuestionRepository(this._functions);
+
+  /// Generates a test by calling the 'generateTest' Cloud Function.
+  ///
+  /// Takes a map of options (e.g., grade, subject, mode) and returns a list of questions.
+  Future<List<Question>> generateTest(Map<String, dynamic> options) async {
     try {
-      print('🔍 QuestionRepository: Querying questions for topicId: $topicId');
+      // Authentication checks temporarily disabled for testing
+      // Wait for auth state to be ready and check if user is authenticated
+      // final user = FirebaseAuth.instance.currentUser;
+      // print('Current user: ${user?.uid}'); // Debug
+      // if (user == null) {
+      //   throw Exception('You must be logged in to generate a test.');
+      // }
 
-      final querySnapshot =
-          await _firestore
-              .collection(_collection)
-              .where('topicId', isEqualTo: topicId)
-              .get();
+      // Wait for the ID token to ensure it's ready for the function call
+      // final token = await user.getIdToken(true); // Force refresh the token
+      // print('Got ID token: ${token?.isNotEmpty ?? false}'); // Debug
 
+      // Get a reference to the Cloud Function
+      final callable = _functions.httpsCallable('generateTest');
+
+      print('Calling generateTest with options: $options'); // Debug
       print(
-        '🔍 QuestionRepository: Found ${querySnapshot.docs.length} documents',
-      );
+        'Grade: ${options['grade']} (type: ${options['grade'].runtimeType}), Subject: ${options['subject']}',
+      ); // More detailed debug
 
-      if (querySnapshot.docs.isNotEmpty) {
-        // Debug: Print the first document's data
-        final firstDoc = querySnapshot.docs.first;
-        final firstDocData = firstDoc.data();
-        print('🔍 First document ID: ${firstDoc.id}');
-        print('🔍 First document topicId: ${firstDocData['topicId']}');
-        print(
-          '🔍 First document questionType: ${firstDocData['questionType']}',
+      // Validate that required parameters are present
+      if (options['grade'] == null || options['subject'] == null) {
+        throw Exception('Grade and subject are required parameters');
+      }
+
+      // Call the function with the user's selected options
+      final result = await callable.call(options);
+
+      print('Cloud Function result type: ${result.data.runtimeType}'); // Debug
+      print('Cloud Function result: ${result.data}'); // Debug
+
+      // The function now returns the questions array directly, not wrapped in a map
+      final List<dynamic> questionDataList = result.data as List<dynamic>;
+
+      if (questionDataList.isEmpty) {
+        return [];
+      }
+
+      // Parse the raw map data into a list of Question objects with safe casting
+      return questionDataList.map((data) {
+        // Convert Map<Object?, Object?> to Map<String, dynamic>
+        if (data is Map) {
+          final Map<String, dynamic> safeMap = {};
+          data.forEach((key, value) {
+            if (key is String) {
+              safeMap[key] = value;
+            }
+          });
+          return Question.fromMap(safeMap);
+        }
+        throw Exception('Invalid question data format');
+      }).toList();
+    } on FirebaseFunctionsException catch (e) {
+      // Handle specific cloud function errors
+      print(
+        'FirebaseFunctionsException: ${e.code} - ${e.message} - ${e.details}',
+      );
+      if (e.code == 'unauthenticated') {
+        throw Exception(
+          'Authentication failed. Please log out and log back in.',
         );
       }
-
-      return querySnapshot.docs
-          .map((doc) => Question.fromFirestore(doc))
-          .toList();
+      throw Exception('Failed to generate test. Please try again.');
     } catch (e) {
-      print('❌ QuestionRepository error: $e');
-      print('Error loading questions for topic $topicId: $e');
-      return [];
+      // Handle any other errors
+      print('An unexpected error occurred while generating test: $e');
+      throw Exception('An unexpected error occurred.');
     }
   }
 
-  /// Load questions of a specific type for a topic
-  Future<List<Question>> getQuestionsByType(
-    String topicId,
-    QuestionType type,
-  ) async {
-    try {
-      final querySnapshot =
-          await _firestore
-              .collection(_collection)
-              .where('topicId', isEqualTo: topicId)
-              .where('questionType', isEqualTo: type.value)
-              .get();
-
-      return querySnapshot.docs
-          .map((doc) => Question.fromFirestore(doc))
-          .toList();
-    } catch (e) {
-      print('Error loading ${type.value} questions for topic $topicId: $e');
-      return [];
-    }
-  }
-
-  /// Load drag and drop questions specifically
-  Future<List<Question>> getDragDropQuestionsForTopic(String topicId) async {
-    return getQuestionsByType(topicId, QuestionType.dragAndDrop);
-  }
-
-  /// Load questions for practice session with mixed types
-  Future<List<Question>> getQuestionsForPractice(
-    String topicId, {
-    int? limit,
-    List<QuestionType>? types,
+  /// Submits user's answers to the 'gradeTest' Cloud Function for marking.
+  ///
+  /// Returns a map with the final score and total marks.
+  Future<Map<String, int>> gradeTest({
+    required Map<String, dynamic> userAnswers,
+    required String subject,
+    String? paper, // Paper might be optional for some test modes
   }) async {
     try {
-      Query query = _firestore
-          .collection(_collection)
-          .where('topicId', isEqualTo: topicId);
-
-      // Add type filter if specified
-      if (types != null && types.isNotEmpty) {
-        final typeValues = types.map((t) => t.value).toList();
-        query = query.where('questionType', whereIn: typeValues);
+      // Wait for auth state to be ready and check if user is authenticated
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('You must be logged in to submit test results.');
       }
 
-      // Add limit if specified
-      if (limit != null) {
-        query = query.limit(limit);
+      // Wait for the ID token to ensure it's ready for the function call
+      await user.getIdToken(true); // Force refresh the token
+
+      final callable = _functions.httpsCallable('gradeTest');
+
+      final result = await callable.call({
+        'answers': userAnswers,
+        'subject': subject,
+        'paper': paper,
+      });
+
+      // Handle the response data safely
+      final responseData = result.data;
+      if (responseData is Map) {
+        return {
+          'score': (responseData['score'] as num).toInt(),
+          'totalMarks': (responseData['totalMarks'] as num).toInt(),
+        };
+      } else {
+        throw Exception('Invalid response format from gradeTest function');
       }
-
-      final querySnapshot = await query.get();
-
-      return querySnapshot.docs
-          .map((doc) => Question.fromFirestore(doc))
-          .toList();
-    } catch (e) {
-      print('Error loading practice questions for topic $topicId: $e');
-      return [];
-    }
-  }
-
-  /// Save a question
-  Future<bool> saveQuestion(Question question) async {
-    try {
-      await _firestore
-          .collection(_collection)
-          .doc(question.id)
-          .set(question.toMap());
-      return true;
-    } catch (e) {
-      print('Error saving question ${question.id}: $e');
-      return false;
-    }
-  }
-
-  /// Update a question
-  Future<bool> updateQuestion(Question question) async {
-    try {
-      await _firestore
-          .collection(_collection)
-          .doc(question.id)
-          .update(question.toMap());
-      return true;
-    } catch (e) {
-      print('Error updating question ${question.id}: $e');
-      return false;
-    }
-  }
-
-  /// Delete a question
-  Future<bool> deleteQuestion(String questionId) async {
-    try {
-      await _firestore.collection(_collection).doc(questionId).delete();
-      return true;
-    } catch (e) {
-      print('Error deleting question $questionId: $e');
-      return false;
-    }
-  }
-
-  /// Get question statistics for a topic
-  Future<Map<String, int>> getQuestionStats(String topicId) async {
-    try {
-      final querySnapshot =
-          await _firestore
-              .collection(_collection)
-              .where('topicId', isEqualTo: topicId)
-              .get();
-
-      final questions =
-          querySnapshot.docs.map((doc) => Question.fromFirestore(doc)).toList();
-
-      Map<String, int> stats = {
-        'total': questions.length,
-        'multiple_choice': 0,
-        'true_false': 0,
-        'drag_and_drop': 0,
-      };
-
-      for (final question in questions) {
-        // Count by type
-        stats[question.questionType] = (stats[question.questionType] ?? 0) + 1;
+    } on FirebaseFunctionsException catch (e) {
+      print('FirebaseFunctionsException: ${e.code} - ${e.message}');
+      if (e.code == 'unauthenticated') {
+        throw Exception(
+          'Authentication failed. Please log out and log back in.',
+        );
       }
-
-      return stats;
+      throw Exception('Failed to submit test results.');
     } catch (e) {
-      print('Error getting question stats for topic $topicId: $e');
-      return {'total': 0};
+      print('An unexpected error occurred while grading test: $e');
+      throw Exception('An unexpected error occurred.');
     }
   }
 }

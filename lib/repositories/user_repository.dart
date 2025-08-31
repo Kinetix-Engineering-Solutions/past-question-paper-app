@@ -116,4 +116,25 @@ class UserRepository {
       );
     }
   }
+
+  /// Updates the current user's grade and subject preferences in Firestore.
+  Future<void> updateUserPreferences({
+    required int grade,
+    required List<String> subjects,
+  }) async {
+    final user = _authService.currentUser;
+    if (user == null) {
+      throw AuthException(
+        'No user is currently signed in.',
+        code: 'no-current-user',
+      );
+    }
+
+    try {
+      await _database.updateUserPreferences(user.id, grade, subjects);
+    } catch (e) {
+      // Rethrow as a more specific exception if needed
+      throw Exception('Failed to update user preferences in the repository.');
+    }
+  }
 }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_stem/model/drag_and_drop%20models/drag_and_drop_question.dart';
+import 'package:past_question_paper_stem/model/drag_and_drop models/drag_and_drop_question.dart';
 import 'package:past_question_paper_stem/providers/drag_drop_question_provider.dart';
-import 'package:past_question_paper_stem/widgets/drag-and-drop%20widgets/drag_item_widget.dart';
-import 'package:past_question_paper_stem/widgets/drag-and-drop%20widgets/drop_target_widget.dart';
+import 'package:past_question_paper_stem/widgets/drag-and-drop widgets/drag_item_widget.dart';
+import 'package:past_question_paper_stem/widgets/drag-and-drop widgets/drop_target_widget.dart';
 
 class DragDropQuestionWidget extends ConsumerWidget {
   final DragDropQuestion question;

@@ -1,3 +1,4 @@
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +16,17 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Initialize Firebase with platform-specific options
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Activate App Check
+  await FirebaseAppCheck.instance.activate(
+    // Use the debug provider for testing in debug builds.
+    // You will need to configure the reCAPTCHA v3 provider for production.
+    webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
+    // Set androidProvider to `AndroidProvider.debug`
+    androidProvider: AndroidProvider.debug,
+    // Set appleProvider to `AppleProvider.debug`
+    appleProvider: AppleProvider.debug,
+  );
 
   runApp(const ProviderScope(child: MyApp()));
 }
