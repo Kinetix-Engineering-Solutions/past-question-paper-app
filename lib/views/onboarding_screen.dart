@@ -185,23 +185,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           const SizedBox(height: 24),
           Expanded(
             child: ListView(
-              children:
-                  AppConstants.allSubjects.map((subject) {
-                    final isSelected = _selectedSubjects.contains(subject);
-                    return _buildSelectionChip(
-                      text: subject,
-                      isSelected: isSelected,
-                      onTap: () {
-                        setState(() {
-                          if (isSelected) {
-                            _selectedSubjects.remove(subject);
-                          } else {
-                            _selectedSubjects.add(subject);
-                          }
-                        });
-                      },
-                    );
-                  }).toList(),
+              children: AppConstants.allSubjects.map((subject) {
+                final isSelected = _selectedSubjects.contains(subject);
+                return _buildSelectionChip(
+                  text: subject,
+                  isSelected: isSelected,
+                  onTap: () {
+                    setState(() {
+                      if (isSelected) {
+                        _selectedSubjects.remove(subject);
+                      } else {
+                        _selectedSubjects.add(subject);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
             ),
           ),
         ],
@@ -264,10 +263,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 height: 10,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color:
-                      _currentPage == index
-                          ? AppColors.accent
-                          : AppColors.neutralBorder,
+                  color: _currentPage == index
+                      ? AppColors.accent
+                      : AppColors.neutralBorder,
                 ),
               ),
             ),
@@ -283,8 +281,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
             ),
-            onPressed:
-                _currentPage == pageCount - 1 ? _finishOnboarding : _nextPage,
+            onPressed: _currentPage == pageCount - 1
+                ? _finishOnboarding
+                : _nextPage,
             child: Text(
               _currentPage == pageCount - 1 ? 'Get Started' : 'Next',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -295,5 +294,3 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 }
-
-

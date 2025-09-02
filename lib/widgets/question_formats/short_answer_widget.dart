@@ -95,18 +95,17 @@ class _ShortAnswerWidgetState extends ConsumerState<ShortAnswerWidget> {
               horizontal: 16,
               vertical: 12,
             ),
-            suffixIcon:
-                _controller.text.isNotEmpty
-                    ? IconButton(
-                      onPressed: () {
-                        _controller.clear();
-                        ref
-                            .read(practiceViewModelProvider.notifier)
-                            .answerQuestion(widget.question.id, '');
-                      },
-                      icon: Icon(Icons.clear, color: AppColors.neutralMid),
-                    )
-                    : null,
+            suffixIcon: _controller.text.isNotEmpty
+                ? IconButton(
+                    onPressed: () {
+                      _controller.clear();
+                      ref
+                          .read(practiceViewModelProvider.notifier)
+                          .answerQuestion(widget.question.id, '');
+                    },
+                    icon: Icon(Icons.clear, color: AppColors.neutralMid),
+                  )
+                : null,
           ),
           onChanged: (value) {
             setState(() {}); // Update UI for suffix icon
@@ -132,5 +131,3 @@ class _ShortAnswerWidgetState extends ConsumerState<ShortAnswerWidget> {
     );
   }
 }
-
-

@@ -200,5 +200,3 @@ class _EssayWidgetState extends ConsumerState<EssayWidget> {
     );
   }
 }
-
-

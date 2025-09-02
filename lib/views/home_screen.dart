@@ -58,12 +58,11 @@ class HomeScreen extends ConsumerWidget {
               // --- Personalized Subject List ---
               Expanded(
                 child: _SubjectList(
-                  subjects:
-                      AppConstants.allSubjects.where((subject) {
-                        return user?.selectedSubjects?.isEmpty ?? true
-                            ? true
-                            : user!.selectedSubjects!.contains(subject);
-                      }).toList(),
+                  subjects: AppConstants.allSubjects.where((subject) {
+                    return user?.selectedSubjects?.isEmpty ?? true
+                        ? true
+                        : user!.selectedSubjects!.contains(subject);
+                  }).toList(),
                   selectedGrade: userGrade,
                 ),
               ),
@@ -132,11 +131,10 @@ class _SubjectList extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder:
-                      (context) => TestConfigurationScreen(
-                        subject: subject,
-                        grade: selectedGrade,
-                      ),
+                  builder: (context) => TestConfigurationScreen(
+                    subject: subject,
+                    grade: selectedGrade,
+                  ),
                 ),
               );
             },
@@ -146,5 +144,3 @@ class _SubjectList extends StatelessWidget {
     );
   }
 }
-
-

@@ -59,5 +59,3 @@ class FormValidators {
     return null;
   }
 }
-
-

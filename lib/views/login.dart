@@ -190,8 +190,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed:
-                        ref.watch(loadingStateProvider) ? null : _handleLogin,
+                    onPressed: ref.watch(loadingStateProvider)
+                        ? null
+                        : _handleLogin,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.chalkWhite,
                       foregroundColor: AppColors.ink,
@@ -201,26 +202,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       elevation: 4,
                     ),
-                    child:
-                        ref.watch(loadingStateProvider)
-                            ? SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.ink,
-                                ),
-                              ),
-                            )
-                            : Text(
-                              'Login',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: AppColors.ink,
+                    child: ref.watch(loadingStateProvider)
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.ink,
                               ),
                             ),
+                          )
+                        : Text(
+                            'Login',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: AppColors.ink,
+                            ),
+                          ),
                   ),
                   if (!ref.watch(loadingStateProvider)) ...[
                     const SizedBox(height: 16),
@@ -271,5 +271,3 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 }
-
-

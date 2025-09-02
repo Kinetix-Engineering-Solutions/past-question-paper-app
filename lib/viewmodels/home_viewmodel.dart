@@ -45,5 +45,3 @@ class HomeViewModel extends StateNotifier<HomeState> {
     state = state.copyWith(selectedGrade: grade);
   }
 }
-
-

@@ -78,10 +78,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         foregroundColor: AppColors.ink,
       ),
       body: userState.when(
-        loading:
-            () => const Center(
-              child: CircularProgressIndicator(color: AppColors.accent),
-            ),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: AppColors.accent),
+        ),
         error: (error, stack) => Center(child: Text('Error: $error')),
         data: (user) {
           if (user == null) {
@@ -144,13 +143,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _buildSectionHeader('My Grade'),
               DropdownButtonFormField<int>(
                 value: _selectedGrade,
-                items:
-                    AppConstants.grades.map((grade) {
-                      return DropdownMenuItem(
-                        value: grade,
-                        child: Text('Grade $grade'),
-                      );
-                    }).toList(),
+                items: AppConstants.grades.map((grade) {
+                  return DropdownMenuItem(
+                    value: grade,
+                    child: Text('Grade $grade'),
+                  );
+                }).toList(),
                 onChanged: (value) {
                   if (value != null) setState(() => _selectedGrade = value);
                 },
@@ -203,26 +201,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child:
-                    _isSaving
-                        ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(color: Colors.white),
-                        )
-                        : const Text(
-                          'Save Preferences',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                child: _isSaving
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(color: Colors.white),
+                      )
+                    : const Text(
+                        'Save Preferences',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
+                      ),
               ),
               const SizedBox(height: 16),
               TextButton(
-                onPressed:
-                    () async =>
-                        await authViewModel.signOutUserInUI(context: context),
+                onPressed: () async =>
+                    await authViewModel.signOutUserInUI(context: context),
                 child: const Text(
                   'Sign Out',
                   style: TextStyle(color: Colors.redAccent, fontSize: 16),
@@ -249,5 +245,3 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 }
-
-

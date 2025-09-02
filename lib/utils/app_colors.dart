@@ -104,5 +104,3 @@ class PQPGradients {
     colors: [AppColors.paper, AppColors.ink],
   );
 }
-
-

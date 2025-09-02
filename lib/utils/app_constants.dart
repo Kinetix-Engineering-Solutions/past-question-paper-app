@@ -47,5 +47,3 @@ class AppConstants {
     // Add topic lists for other subjects here
   };
 }
-
-

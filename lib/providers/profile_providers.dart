@@ -145,5 +145,3 @@ final profileSetupProvider =
 final firestoreDatabaseProvider = Provider<FirestoreDatabaseService>((ref) {
   return FirestoreDatabaseService();
 });
-
-

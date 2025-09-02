@@ -31,5 +31,3 @@ final authStateProvider = StreamProvider((ref) {
 final currentUserProvider = Provider((ref) {
   return ref.watch(userRepositoryProvider).currentUser;
 });
-
-

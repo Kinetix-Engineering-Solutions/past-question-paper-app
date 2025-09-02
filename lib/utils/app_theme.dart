@@ -178,38 +178,32 @@ class AppTheme {
       ),
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith(
-          (states) =>
-              states.contains(MaterialState.selected)
-                  ? AppColors.accent
-                  : AppColors.neutralSoft,
+          (states) => states.contains(MaterialState.selected)
+              ? AppColors.accent
+              : AppColors.neutralSoft,
         ),
         trackColor: MaterialStateProperty.resolveWith(
-          (states) =>
-              states.contains(MaterialState.selected)
-                  ? AppColors.accent.withOpacity(0.6)
-                  : AppColors.neutralBorder,
+          (states) => states.contains(MaterialState.selected)
+              ? AppColors.accent.withOpacity(0.6)
+              : AppColors.neutralBorder,
         ),
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: MaterialStateProperty.resolveWith(
-          (states) =>
-              states.contains(MaterialState.selected)
-                  ? AppColors.accent
-                  : AppColors.neutralBorder,
+          (states) => states.contains(MaterialState.selected)
+              ? AppColors.accent
+              : AppColors.neutralBorder,
         ),
         checkColor: MaterialStateProperty.all(AppColors.neutralCard),
         side: const BorderSide(color: AppColors.neutralMid, width: 1),
       ),
       radioTheme: RadioThemeData(
         fillColor: MaterialStateProperty.resolveWith(
-          (states) =>
-              states.contains(MaterialState.selected)
-                  ? AppColors.accent
-                  : AppColors.neutralMid,
+          (states) => states.contains(MaterialState.selected)
+              ? AppColors.accent
+              : AppColors.neutralMid,
         ),
       ),
     );
   }
 }
-
-

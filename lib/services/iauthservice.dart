@@ -26,5 +26,3 @@ abstract class IAuthService {
   /// Checks if the given link is a valid email sign-in link
   bool isSignInWithEmailLink(String emailLink);
 }
-
-
