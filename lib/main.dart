@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/firebase_options_template.dart';
+import 'package:past_question_paper_v1/firebase_options.dart';
 import 'package:past_question_paper_v1/services/deep_link_handler.dart';
 import 'package:past_question_paper_v1/services/navigation_service.dart';
 import 'package:past_question_paper_v1/utils/app_theme.dart';

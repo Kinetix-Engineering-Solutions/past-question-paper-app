@@ -90,8 +90,10 @@ class FirestoreDatabaseService {
   /// Gets a single question by ID
   Future<Question?> getQuestion(String questionId) async {
     try {
-      final doc =
-          await _firestore.collection('questions').doc(questionId).get();
+      final doc = await _firestore
+          .collection('questions')
+          .doc(questionId)
+          .get();
       if (!doc.exists) return null;
       return Question.fromFirestore(doc);
     } catch (e) {
@@ -109,12 +111,11 @@ class FirestoreDatabaseService {
       }
 
       final snapshot = await query.get();
-      final subjects =
-          snapshot.docs
-              .map((doc) => doc.data()['subject'] as String)
-              .where((subject) => subject.isNotEmpty)
-              .toSet()
-              .toList();
+      final subjects = snapshot.docs
+          .map((doc) => doc.data()['subject'] as String)
+          .where((subject) => subject.isNotEmpty)
+          .toSet()
+          .toList();
 
       subjects.sort();
       return subjects;
@@ -138,12 +139,11 @@ class FirestoreDatabaseService {
       }
 
       final snapshot = await query.get();
-      final papers =
-          snapshot.docs
-              .map((doc) => doc.data()['paper'] as String)
-              .where((paper) => paper.isNotEmpty)
-              .toSet()
-              .toList();
+      final papers = snapshot.docs
+          .map((doc) => doc.data()['paper'] as String)
+          .where((paper) => paper.isNotEmpty)
+          .toSet()
+          .toList();
 
       papers.sort();
       return papers;
@@ -171,12 +171,11 @@ class FirestoreDatabaseService {
       }
 
       final snapshot = await query.get();
-      final topics =
-          snapshot.docs
-              .map((doc) => doc.data()['topic'] as String)
-              .where((topic) => topic.isNotEmpty)
-              .toSet()
-              .toList();
+      final topics = snapshot.docs
+          .map((doc) => doc.data()['topic'] as String)
+          .where((topic) => topic.isNotEmpty)
+          .toSet()
+          .toList();
 
       topics.sort();
       return topics;
@@ -195,12 +194,11 @@ class FirestoreDatabaseService {
       }
 
       final snapshot = await query.get();
-      final grades =
-          snapshot.docs
-              .map((doc) => doc.data()['grade'] as int)
-              .where((grade) => grade > 0)
-              .toSet()
-              .toList();
+      final grades = snapshot.docs
+          .map((doc) => doc.data()['grade'] as int)
+          .where((grade) => grade > 0)
+          .toSet()
+          .toList();
 
       grades.sort();
       return grades;
@@ -294,13 +292,12 @@ class FirestoreDatabaseService {
   /// Gets user's test results from their sub-collection
   Future<List<Map<String, dynamic>>> getUserTestResults(String userId) async {
     try {
-      final snapshot =
-          await _firestore
-              .collection('users')
-              .doc(userId)
-              .collection('testResults')
-              .orderBy('testDate', descending: true)
-              .get();
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('testResults')
+          .orderBy('testDate', descending: true)
+          .get();
 
       return snapshot.docs.map((doc) {
         final data = doc.data();
@@ -333,5 +330,3 @@ class FirestoreDatabaseService {
     }
   }
 }
-
-
