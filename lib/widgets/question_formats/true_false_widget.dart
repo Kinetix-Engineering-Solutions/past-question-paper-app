@@ -79,8 +79,9 @@ class TrueFalseWidget extends ConsumerWidget {
       height: 60,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor:
-              isSelected ? AppColors.accent : AppColors.neutralCard,
+          backgroundColor: isSelected
+              ? AppColors.accent
+              : AppColors.neutralCard,
           foregroundColor: isSelected ? Colors.white : AppColors.ink,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -116,5 +117,3 @@ class TrueFalseWidget extends ConsumerWidget {
     );
   }
 }
-
-

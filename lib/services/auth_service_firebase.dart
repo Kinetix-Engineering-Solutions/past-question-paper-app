@@ -173,5 +173,3 @@ class AuthServiceFirebase implements IAuthService {
     return await authStateChanges.first;
   }
 }
-
-

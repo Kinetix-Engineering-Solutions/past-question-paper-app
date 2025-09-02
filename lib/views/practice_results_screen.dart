@@ -11,5 +11,3 @@ class PracticeResultsScreen extends StatelessWidget {
     );
   }
 }
-
-

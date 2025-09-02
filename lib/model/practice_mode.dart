@@ -87,5 +87,3 @@ enum PracticeMode {
 
   int get colorValue => _colorValues[this]!;
 }
-
-

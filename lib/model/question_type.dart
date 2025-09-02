@@ -54,5 +54,3 @@ enum QuestionType {
     return this == QuestionType.dragAndDrop || this == QuestionType.matching;
   }
 }
-
-

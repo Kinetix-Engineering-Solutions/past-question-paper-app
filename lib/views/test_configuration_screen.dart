@@ -172,12 +172,9 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
             Expanded(
               child: DropdownButtonFormField<int>(
                 value: _selectedYear,
-                items:
-                    years
-                        .map(
-                          (y) => DropdownMenuItem(value: y, child: Text('$y')),
-                        )
-                        .toList(),
+                items: years
+                    .map((y) => DropdownMenuItem(value: y, child: Text('$y')))
+                    .toList(),
                 onChanged: (value) => setState(() => _selectedYear = value!),
                 decoration: const InputDecoration(labelText: 'Year'),
               ),
@@ -186,10 +183,9 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
             Expanded(
               child: DropdownButtonFormField<String>(
                 value: _selectedSeason,
-                items:
-                    seasons
-                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                        .toList(),
+                items: seasons
+                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                    .toList(),
                 onChanged: (value) => setState(() => _selectedSeason = value!),
                 decoration: const InputDecoration(labelText: 'Season'),
               ),
@@ -359,21 +355,18 @@ Widget _buildStartCard({
       leading: Icon(icon, color: AppColors.accent, size: 32),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
       subtitle: subtitle != null ? Text(subtitle) : null,
-      trailing:
-          isLoading
-              ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(color: AppColors.accent),
-              )
-              : const Icon(
-                Icons.play_circle_fill,
-                color: AppColors.accent,
-                size: 28,
-              ),
+      trailing: isLoading
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(color: AppColors.accent),
+            )
+          : const Icon(
+              Icons.play_circle_fill,
+              color: AppColors.accent,
+              size: 28,
+            ),
       onTap: isLoading ? null : onTap,
     ),
   );
 }
-
-

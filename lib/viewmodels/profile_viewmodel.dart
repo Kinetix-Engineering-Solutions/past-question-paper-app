@@ -48,5 +48,3 @@ class ProfileViewModel extends StateNotifier<AsyncValue<AppUser?>> {
     }
   }
 }
-
-

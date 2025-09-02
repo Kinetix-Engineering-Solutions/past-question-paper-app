@@ -51,16 +51,15 @@ class MCQImageWidget extends ConsumerWidget {
                 color: isSelected ? AppColors.accent : AppColors.neutralBorder,
                 width: isSelected ? 3 : 1.5,
               ),
-              boxShadow:
-                  isSelected
-                      ? [
-                        BoxShadow(
-                          color: AppColors.accent.withOpacity(0.3),
-                          blurRadius: 8,
-                          spreadRadius: 2,
-                        ),
-                      ]
-                      : null,
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: AppColors.accent.withOpacity(0.3),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                  : null,
             ),
             child: Stack(
               children: [
@@ -76,11 +75,10 @@ class MCQImageWidget extends ConsumerWidget {
                       return Center(
                         child: CircularProgressIndicator(
                           color: AppColors.accent,
-                          value:
-                              loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                              : null,
                         ),
                       );
                     },
@@ -143,5 +141,3 @@ class MCQImageWidget extends ConsumerWidget {
     );
   }
 }
-
-

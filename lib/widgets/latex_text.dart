@@ -182,5 +182,3 @@ class LatexText extends StatelessWidget {
     );
   }
 }
-
-

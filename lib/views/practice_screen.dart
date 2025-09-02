@@ -57,11 +57,10 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder:
-              (context) => PracticeResultsScreen(
-                //score: result['score']!,
-                //totalMarks: result['totalMarks']!,
-              ),
+          builder: (context) => PracticeResultsScreen(
+            //score: result['score']!,
+            //totalMarks: result['totalMarks']!,
+          ),
         ),
       );
     } else if (mounted) {
@@ -136,15 +135,14 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
         children: [
           // --- Previous Button ---
           TextButton(
-            onPressed:
-                _currentPage == 0
-                    ? null
-                    : () {
-                      _pageController.previousPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeIn,
-                      );
-                    },
+            onPressed: _currentPage == 0
+                ? null
+                : () {
+                    _pageController.previousPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeIn,
+                    );
+                  },
             child: const Text('Previous'),
           ),
 
@@ -158,23 +156,21 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
             ),
-            onPressed:
-                isLastPage
-                    ? (practiceState.isSubmitting ? null : _submitTest)
-                    : () {
-                      _pageController.nextPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeIn,
-                      );
-                    },
-            child:
-                practiceState.isSubmitting && isLastPage
-                    ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(color: Colors.white),
-                    )
-                    : Text(isLastPage ? 'Submit Test' : 'Next'),
+            onPressed: isLastPage
+                ? (practiceState.isSubmitting ? null : _submitTest)
+                : () {
+                    _pageController.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeIn,
+                    );
+                  },
+            child: practiceState.isSubmitting && isLastPage
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(color: Colors.white),
+                  )
+                : Text(isLastPage ? 'Submit Test' : 'Next'),
           ),
         ],
       ),
@@ -274,5 +270,3 @@ class _QuestionView extends ConsumerWidget {
     return result.isNotEmpty ? result : null;
   }
 }
-
-

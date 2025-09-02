@@ -4,13 +4,11 @@ import 'package:past_question_paper_v1/model/question.dart';
 import 'package:past_question_paper_v1/repositories/question_repository.dart';
 
 // Riverpod provider for the PracticeViewModel
-final practiceViewModelProvider = StateNotifierProvider<
-  PracticeViewModel,
-  PracticeState
->((ref) {
-  // The ViewModel now depends on the QuestionRepository to communicate with the backend
-  return PracticeViewModel(ref.watch(questionRepositoryProvider));
-});
+final practiceViewModelProvider =
+    StateNotifierProvider<PracticeViewModel, PracticeState>((ref) {
+      // The ViewModel now depends on the QuestionRepository to communicate with the backend
+      return PracticeViewModel(ref.watch(questionRepositoryProvider));
+    });
 
 // A simpler state class to manage the active practice session
 class PracticeState {
@@ -83,5 +81,3 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
     }
   }
 }
-
-

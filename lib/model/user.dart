@@ -31,10 +31,9 @@ class AppUser {
       name: data['name'],
       grade: data['grade'],
       // Ensure selectedSubjects is always a List<String>
-      selectedSubjects:
-          data['selectedSubjects'] != null
-              ? List<String>.from(data['selectedSubjects'])
-              : [],
+      selectedSubjects: data['selectedSubjects'] != null
+          ? List<String>.from(data['selectedSubjects'])
+          : [],
     );
   }
 
@@ -77,5 +76,3 @@ class AppUser {
     );
   }
 }
-
-

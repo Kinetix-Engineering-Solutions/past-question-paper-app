@@ -186,8 +186,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed:
-                        ref.watch(loadingStateProvider) ? null : _handleSignUp,
+                    onPressed: ref.watch(loadingStateProvider)
+                        ? null
+                        : _handleSignUp,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.chalkWhite,
                       foregroundColor: AppColors.ink,
@@ -197,26 +198,25 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       ),
                       elevation: 4,
                     ),
-                    child:
-                        ref.watch(loadingStateProvider)
-                            ? SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.ink,
-                                ),
-                              ),
-                            )
-                            : Text(
-                              'Sign Up',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: AppColors.ink,
+                    child: ref.watch(loadingStateProvider)
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.ink,
                               ),
                             ),
+                          )
+                        : Text(
+                            'Sign Up',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: AppColors.ink,
+                            ),
+                          ),
                   ),
                   if (!ref.watch(loadingStateProvider)) ...[
                     const SizedBox(height: 16),
@@ -246,5 +246,3 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     );
   }
 }
-
-

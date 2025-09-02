@@ -93,14 +93,13 @@ class _EmailLinkSignInState extends State<EmailLinkSignIn> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child:
-                _isSending
-                    ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                    : const Text('Send Sign-in Link'),
+            child: _isSending
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Send Sign-in Link'),
           ),
         ),
         if (!_isSending) ...[
@@ -114,5 +113,3 @@ class _EmailLinkSignInState extends State<EmailLinkSignIn> {
     );
   }
 }
-
-

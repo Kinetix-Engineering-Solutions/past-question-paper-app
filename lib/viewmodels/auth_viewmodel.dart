@@ -361,5 +361,3 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
   /// Get the current authentication state as a boolean
   bool get isAuthenticated => isUserLoggedIn;
 }
-
-

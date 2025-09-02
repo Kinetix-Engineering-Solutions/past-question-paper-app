@@ -162,19 +162,17 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
     return Wrap(
       spacing: 12,
       runSpacing: 12,
-      children:
-          targets.map((target) {
-            final assignedItemId = _dragTargetAssignments[target.id];
-            final assignedItem =
-                assignedItemId != null
-                    ? widget.question.dragItems!.firstWhere(
-                      (item) => item.id == assignedItemId,
-                      orElse: () => DragItem(id: '', text: 'Unknown'),
-                    )
-                    : null;
+      children: targets.map((target) {
+        final assignedItemId = _dragTargetAssignments[target.id];
+        final assignedItem = assignedItemId != null
+            ? widget.question.dragItems!.firstWhere(
+                (item) => item.id == assignedItemId,
+                orElse: () => DragItem(id: '', text: 'Unknown'),
+              )
+            : null;
 
-            return _buildDropTarget(target, assignedItem);
-          }).toList(),
+        return _buildDropTarget(target, assignedItem);
+      }).toList(),
     );
   }
 
@@ -190,20 +188,18 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
           width: 150,
           height: 120,
           decoration: BoxDecoration(
-            color:
-                isHighlighted
-                    ? AppColors.accent.withOpacity(0.1)
-                    : hasItem
-                    ? AppColors.accentSoft
-                    : AppColors.neutralCard,
+            color: isHighlighted
+                ? AppColors.accent.withOpacity(0.1)
+                : hasItem
+                ? AppColors.accentSoft
+                : AppColors.neutralCard,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color:
-                  isHighlighted
-                      ? AppColors.accent
-                      : hasItem
-                      ? AppColors.accent.withOpacity(0.5)
-                      : AppColors.neutralBorder,
+              color: isHighlighted
+                  ? AppColors.accent
+                  : hasItem
+                  ? AppColors.accent.withOpacity(0.5)
+                  : AppColors.neutralBorder,
               width: isHighlighted ? 2 : 1.5,
             ),
           ),
@@ -280,10 +276,9 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
 
   Widget _buildDragItems() {
     final items = widget.question.dragItems!;
-    final unassignedItems =
-        items.where((item) {
-          return !_dragTargetAssignments.containsValue(item.id);
-        }).toList();
+    final unassignedItems = items.where((item) {
+      return !_dragTargetAssignments.containsValue(item.id);
+    }).toList();
 
     if (unassignedItems.isEmpty) {
       return Container(
@@ -373,12 +368,11 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
     bool isDragging = false,
     bool isInDropZone = false,
   }) {
-    final textColor =
-        isDragging
-            ? Colors.white
-            : isInDropZone
-            ? AppColors.accent
-            : AppColors.ink;
+    final textColor = isDragging
+        ? Colors.white
+        : isInDropZone
+        ? AppColors.accent
+        : AppColors.ink;
 
     if (item.image != null) {
       return Column(
@@ -471,5 +465,3 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
     );
   }
 }
-
-
