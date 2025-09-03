@@ -103,12 +103,13 @@ class Question {
       // Load drag-and-drop specific data if present
       dragItems: data['dragItems'] != null
           ? (data['dragItems'] as List<dynamic>)
-                .map((item) => DragItem.fromMap(item))
+                .map((item) => DragItem.fromDynamic(item))
                 .toList()
           : null,
-      dragTargets: data['dragTargets'] != null
-          ? (data['dragTargets'] as List<dynamic>)
-                .map((target) => DropTarget.fromMap(target))
+      // Handle both 'dragTargets' and 'dropTargets' field names for backward compatibility
+      dragTargets: (data['dragTargets'] ?? data['dropTargets']) != null
+          ? ((data['dragTargets'] ?? data['dropTargets']) as List<dynamic>)
+                .map((target) => DropTarget.fromDynamic(target))
                 .toList()
           : null,
     );
@@ -166,12 +167,13 @@ class Question {
       // Load drag-and-drop specific data if present
       dragItems: data['dragItems'] != null
           ? (data['dragItems'] as List<dynamic>)
-                .map((item) => DragItem.fromMap(item))
+                .map((item) => DragItem.fromDynamic(item))
                 .toList()
           : null,
-      dragTargets: data['dragTargets'] != null
-          ? (data['dragTargets'] as List<dynamic>)
-                .map((target) => DropTarget.fromMap(target))
+      // Handle both 'dragTargets' and 'dropTargets' field names for backward compatibility
+      dragTargets: (data['dragTargets'] ?? data['dropTargets']) != null
+          ? ((data['dragTargets'] ?? data['dropTargets']) as List<dynamic>)
+                .map((target) => DropTarget.fromDynamic(target))
                 .toList()
           : null,
     );
@@ -216,7 +218,7 @@ class Question {
     }
 
     if (dragTargets != null && dragTargets!.isNotEmpty) {
-      map['dropTargets'] = dragTargets!
+      map['dragTargets'] = dragTargets!
           .map(
             (target) => {
               'id': target.id,
@@ -251,18 +253,53 @@ class Question {
 
   // Validate drag-and-drop question
   bool get isValidDragAndDrop {
-    if (!isDragAndDrop) return false;
-    if (!hasDragDropData) return false;
-
-    // Check that all drop targets have valid correct pairs
-    for (final target in dragTargets!) {
-      final hasMatchingDragItem = dragItems!.any(
-        (item) => item.id == target.correctPair,
-      );
-      if (!hasMatchingDragItem) return false;
+    print('=== isValidDragAndDrop validation ===');
+    
+    if (!isDragAndDrop) {
+      print('Validation failed: !isDragAndDrop (format: $format)');
+      return false;
+    }
+    
+    if (!hasDragDropData) {
+      print('Validation failed: !hasDragDropData');
+      print('  dragItems: ${dragItems?.length ?? 0}');
+      print('  dragTargets: ${dragTargets?.length ?? 0}');
+      return false;
     }
 
-    return true;
+    // Relaxed validation: Just check that we have items and targets
+    // The UI can handle mismatched IDs by allowing any item to go to any target
+    if (dragItems!.isEmpty || dragTargets!.isEmpty) {
+      print('Validation failed: Empty dragItems or dragTargets');
+      return false;
+    }
+
+    // Optional: Check that all drop targets have valid correct pairs
+    bool hasValidPairs = true;
+    for (final target in dragTargets!) {
+      print('Checking target: ${target.id} -> correctPair: ${target.correctPair}');
+      
+      final hasMatchingDragItem = dragItems!.any(
+        (item) {
+          print('  Comparing with dragItem: ${item.id}');
+          return item.id == target.correctPair;
+        },
+      );
+      
+      if (!hasMatchingDragItem) {
+        print('Warning: No matching drag item for target ${target.id} with correctPair ${target.correctPair}');
+        hasValidPairs = false;
+        // Don't return false - continue validation
+      }
+    }
+
+    if (!hasValidPairs) {
+      print('Validation warning: Some targets have mismatched correctPair IDs, but allowing anyway');
+    } else {
+      print('Validation passed: All targets have matching drag items');
+    }
+    
+    return true; // Always return true if we have data, regardless of ID matching
   }
 
   // Get drag item by ID

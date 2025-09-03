@@ -15,7 +15,7 @@ import 'package:past_question_paper_v1/widgets/question_formats/drag_and_drop_wi
 class PracticeScreen extends ConsumerStatefulWidget {
   final List<Question> questions;
 
-  const PracticeScreen({Key? key, required this.questions}) : super(key: key);
+  const PracticeScreen({super.key, required this.questions});
 
   @override
   ConsumerState<PracticeScreen> createState() => _PracticeScreenState();

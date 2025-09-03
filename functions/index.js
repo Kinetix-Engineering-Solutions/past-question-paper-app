@@ -91,13 +91,54 @@ exports.generateTest = functions.https.onCall(async (data, context) => {
         console.log('Raw question data from Firestore:', questionData);
         console.log('Available fields:', Object.keys(questionData));
         
+        // Helper function to safely convert Firestore data
+        const safeArray = (data) => {
+          if (!data) return null;
+          if (Array.isArray(data)) {
+            return data.map(item => {
+              if (typeof item === 'object' && item !== null) {
+                // Convert Firestore object to plain object
+                return JSON.parse(JSON.stringify(item));
+              }
+              return item;
+            });
+          }
+          return null;
+        };
+        
         return {
           id: doc.id,
+          // Core question fields
+          subject: questionData.subject,
+          paper: questionData.paper,
+          grade: questionData.grade,
+          topic: questionData.topic || questionData.topicId,
+          cognitiveLevel: questionData.cognitiveLevel,
+          marks: questionData.marks || questionData.mark || questionData.points || 1,
+          year: questionData.year,
+          season: questionData.season,
+          
+          // Question content
+          format: questionData.format || questionData.questionType || questionData.question_type || questionData.type,
           questionText: questionData.questionText || questionData.question_text || questionData.text,
-          options: questionData.options || questionData.choices || questionData.answers,
-          questionType: questionData.questionType || questionData.question_type || questionData.type,
-          marks: questionData.marks || questionData.mark || questionData.points || 1, // Default to 1 if not found
-          // Strip sensitive data
+          imageUrl: questionData.imageUrl || questionData.questionImage,
+          
+          // Options (for MCQ, True/False, etc.)
+          options: safeArray(questionData.options || questionData.choices || questionData.answers) || [],
+          optionImages: safeArray(questionData.optionImages),
+          
+          // Drag and drop specific fields - safely convert Firestore objects
+          dragItems: safeArray(questionData.dragItems),
+          dragTargets: safeArray(questionData.dragTargets || questionData.dropTargets),
+          
+          // Legacy fields for backward compatibility
+          correctOrder: Array.isArray(questionData.correctOrder) ? questionData.correctOrder : [],
+          
+          // Other fields
+          points: questionData.points,
+          timeAllocation: questionData.timeAllocation,
+          
+          // Note: correctAnswer and explanation are stripped for security
         };
       });
 
@@ -121,12 +162,52 @@ exports.generateTest = functions.https.onCall(async (data, context) => {
         console.log('Quick practice - Raw question data from Firestore:', questionData);
         console.log('Available fields:', Object.keys(questionData));
         
+        // Helper function to safely convert Firestore data
+        const safeArray = (data) => {
+          if (!data) return null;
+          if (Array.isArray(data)) {
+            return data.map(item => {
+              if (typeof item === 'object' && item !== null) {
+                // Convert Firestore object to plain object
+                return JSON.parse(JSON.stringify(item));
+              }
+              return item;
+            });
+          }
+          return null;
+        };
+        
         return {
           id: doc.id,
-          questionText: questionData.questionText || questionData.question_text || questionData.text,
-          options: questionData.options || questionData.choices || questionData.answers,
-          questionType: questionData.questionType || questionData.question_type || questionData.type,
+          // Core question fields
+          subject: questionData.subject,
+          paper: questionData.paper,
+          grade: questionData.grade,
+          topic: questionData.topic || questionData.topicId,
+          cognitiveLevel: questionData.cognitiveLevel,
           marks: questionData.marks || questionData.mark || questionData.points || 1,
+          year: questionData.year,
+          season: questionData.season,
+          
+          // Question content
+          format: questionData.format || questionData.questionType || questionData.question_type || questionData.type,
+          questionText: questionData.questionText || questionData.question_text || questionData.text,
+          imageUrl: questionData.imageUrl || questionData.questionImage,
+          
+          // Options (for MCQ, True/False, etc.)
+          options: safeArray(questionData.options || questionData.choices || questionData.answers) || [],
+          optionImages: safeArray(questionData.optionImages),
+          
+          // Drag and drop specific fields - safely convert Firestore objects
+          dragItems: safeArray(questionData.dragItems),
+          dragTargets: safeArray(questionData.dragTargets || questionData.dropTargets),
+          
+          // Legacy fields for backward compatibility
+          correctOrder: Array.isArray(questionData.correctOrder) ? questionData.correctOrder : [],
+          
+          // Other fields
+          points: questionData.points,
+          timeAllocation: questionData.timeAllocation,
         };
       });
 
@@ -153,12 +234,52 @@ exports.generateTest = functions.https.onCall(async (data, context) => {
         console.log('By topic - Raw question data from Firestore:', questionData);
         console.log('Available fields:', Object.keys(questionData));
         
+        // Helper function to safely convert Firestore data
+        const safeArray = (data) => {
+          if (!data) return null;
+          if (Array.isArray(data)) {
+            return data.map(item => {
+              if (typeof item === 'object' && item !== null) {
+                // Convert Firestore object to plain object
+                return JSON.parse(JSON.stringify(item));
+              }
+              return item;
+            });
+          }
+          return null;
+        };
+        
         return {
           id: doc.id,
-          questionText: questionData.questionText || questionData.question_text || questionData.text,
-          options: questionData.options || questionData.choices || questionData.answers,
-          questionType: questionData.questionType || questionData.question_type || questionData.type,
+          // Core question fields
+          subject: questionData.subject,
+          paper: questionData.paper,
+          grade: questionData.grade,
+          topic: questionData.topic || questionData.topicId,
+          cognitiveLevel: questionData.cognitiveLevel,
           marks: questionData.marks || questionData.mark || questionData.points || 1,
+          year: questionData.year,
+          season: questionData.season,
+          
+          // Question content
+          format: questionData.format || questionData.questionType || questionData.question_type || questionData.type,
+          questionText: questionData.questionText || questionData.question_text || questionData.text,
+          imageUrl: questionData.imageUrl || questionData.questionImage,
+          
+          // Options (for MCQ, True/False, etc.)
+          options: safeArray(questionData.options || questionData.choices || questionData.answers) || [],
+          optionImages: safeArray(questionData.optionImages),
+          
+          // Drag and drop specific fields - safely convert Firestore objects
+          dragItems: safeArray(questionData.dragItems),
+          dragTargets: safeArray(questionData.dragTargets || questionData.dropTargets),
+          
+          // Legacy fields for backward compatibility
+          correctOrder: Array.isArray(questionData.correctOrder) ? questionData.correctOrder : [],
+          
+          // Other fields
+          points: questionData.points,
+          timeAllocation: questionData.timeAllocation,
         };
       });
 
@@ -215,7 +336,17 @@ exports.gradeTest = functions.https.onCall(async (data, context) => {
     questionsSnapshot.forEach(doc => {
       const question = doc.data();
       const userAnswer = answers[doc.id];
-      const isCorrect = userAnswer === question.correctAnswer;
+      
+      // Handle different question types for grading
+      let isCorrect = false;
+      
+      if (question.format === 'drag-and-drop' || question.questionType === 'drag-and-drop') {
+        // Handle drag-and-drop grading
+        isCorrect = gradeDragAndDropAnswer(userAnswer, question);
+      } else {
+        // Handle regular question types (MCQ, True/False, etc.)
+        isCorrect = userAnswer === question.correctAnswer;
+      }
       
       if (isCorrect) {
         totalScore += question.marks || 1;
@@ -232,6 +363,41 @@ exports.gradeTest = functions.https.onCall(async (data, context) => {
         earnedMarks: isCorrect ? question.marks || 1 : 0
       };
     });
+
+    // Helper function to grade drag-and-drop answers
+    function gradeDragAndDropAnswer(userAnswer, question) {
+      if (!userAnswer || !question.dragTargets || !question.dragItems) {
+        return false;
+      }
+      
+      try {
+        // Parse user answer format: "target1:item4,target2:item2"
+        const userPairs = {};
+        const pairs = userAnswer.split(',');
+        
+        for (const pair of pairs) {
+          const parts = pair.split(':');
+          if (parts.length === 2) {
+            userPairs[parts[0]] = parts[1];
+          }
+        }
+        
+        // Check if all targets have correct pairs
+        for (const target of question.dragTargets) {
+          const userItem = userPairs[target.id];
+          if (userItem !== target.correctPair) {
+            return false;
+          }
+        }
+        
+        // Check if user provided answers for all targets
+        return Object.keys(userPairs).length === question.dragTargets.length;
+        
+      } catch (error) {
+        console.error('Error grading drag-and-drop answer:', error);
+        return false;
+      }
+    }
 
     // Save results to user's profile (temporarily disabled during testing)
     // const userId = context.auth.uid;

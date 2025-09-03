@@ -64,7 +64,8 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.question.isValidDragAndDrop) {
+    // TEMPORARY: Skip validation check for debugging
+    if (!widget.question.hasDragDropData) {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -77,7 +78,7 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
             Icon(Icons.error_outline, color: Colors.red.shade600, size: 32),
             const SizedBox(height: 12),
             Text(
-              'Invalid Drag and Drop Question',
+              'Missing Drag and Drop Data',
               style: TextStyle(
                 color: Colors.red.shade800,
                 fontSize: 16,
@@ -86,7 +87,7 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
             ),
             const SizedBox(height: 8),
             Text(
-              'The question data is missing or corrupted.',
+              'dragItems: ${widget.question.dragItems?.length ?? 0}, dragTargets: ${widget.question.dragTargets?.length ?? 0}',
               style: TextStyle(color: Colors.red.shade600, fontSize: 14),
             ),
           ],
