@@ -1,0 +1,119 @@
+[
+  {
+    "id": "drag_ordering_example_1",
+    "subject": "Mathematics",
+    "paper": "Paper 1",
+    "grade": 12,
+    "topic": "Solving Linear Equations",
+    "cognitiveLevel": "Application",
+    "marks": 4,
+    "year": 2024,
+    "season": "June",
+    "format": "drag-and-drop",
+    "questionText": "Arrange the following steps in the correct order to solve the equation: 3x + 12 = 21",
+    "explanation": "To solve a linear equation, we isolate the variable by performing inverse operations in the correct sequence.",
+    "correctOrder": ["step1", "step2", "step3", "step4"],
+    "dragItems": [
+      {
+        "id": "step1",
+        "text": "3x + 12 = 21"
+      },
+      {
+        "id": "step2", 
+        "text": "3x = 21 - 12"
+      },
+      {
+        "id": "step3",
+        "text": "3x = 9"
+      },
+      {
+        "id": "step4",
+        "text": "x = 3"
+      }
+    ],
+    "maxMarks": 4,
+    "timeAllocation": 3
+  },
+  {
+    "id": "drag_ordering_chemistry_1",
+    "subject": "Chemistry", 
+    "paper": "Paper 2",
+    "grade": 11,
+    "topic": "Chemical Reactions",
+    "cognitiveLevel": "Understanding",
+    "marks": 5,
+    "year": 2024,
+    "season": "November", 
+    "format": "drag-and-drop",
+    "questionText": "Arrange the steps for preparing a standard solution of sodium hydroxide in the correct order:",
+    "explanation": "Standard solution preparation requires precise measurement and proper dilution techniques.",
+    "correctOrder": ["prep1", "prep2", "prep3", "prep4", "prep5"],
+    "dragItems": [
+      {
+        "id": "prep1",
+        "text": "Weigh the required amount of NaOH using an analytical balance"
+      },
+      {
+        "id": "prep2", 
+        "text": "Dissolve the NaOH in a small amount of distilled water in a beaker"
+      },
+      {
+        "id": "prep3",
+        "text": "Transfer the solution to a volumetric flask using a funnel"
+      },
+      {
+        "id": "prep4",
+        "text": "Rinse the beaker and funnel with distilled water, adding rinsings to the flask"
+      },
+      {
+        "id": "prep5",
+        "text": "Add distilled water to make up to the mark and mix thoroughly"
+      }
+    ],
+    "maxMarks": 5,
+    "timeAllocation": 4
+  },
+  {
+    "id": "drag_ordering_physics_1",
+    "subject": "Physics",
+    "paper": "Paper 1", 
+    "grade": 12,
+    "topic": "Projectile Motion",
+    "cognitiveLevel": "Application",
+    "marks": 6,
+    "year": 2024,
+    "season": "June",
+    "format": "drag-and-drop",
+    "questionText": "A ball is thrown horizontally from a height of 20m with an initial velocity of 15 m/s. Arrange the steps to find the time of flight:",
+    "explanation": "For projectile motion, vertical and horizontal components are analyzed separately. Time of flight depends only on vertical motion.",
+    "correctOrder": ["phys1", "phys2", "phys3", "phys4", "phys5", "phys6"],
+    "dragItems": [
+      {
+        "id": "phys1",
+        "text": "Identify: h = 20m, v₀ₓ = 15 m/s, v₀ᵧ = 0, g = 9.8 m/s²"
+      },
+      {
+        "id": "phys2",
+        "text": "Use kinematic equation: h = v₀ᵧt + ½gt²"
+      },
+      {
+        "id": "phys3", 
+        "text": "Substitute known values: 20 = 0(t) + ½(9.8)t²"
+      },
+      {
+        "id": "phys4",
+        "text": "Simplify: 20 = 4.9t²"
+      },
+      {
+        "id": "phys5",
+        "text": "Solve for t²: t² = 20/4.9 = 4.08"
+      },
+      {
+        "id": "phys6",
+        "text": "Calculate: t = √4.08 = 2.02 seconds"
+      }
+    ],
+    "maxMarks": 6,
+    "timeAllocation": 5
+  }
+]
