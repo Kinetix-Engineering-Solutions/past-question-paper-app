@@ -189,7 +189,7 @@ class PracticeSession {
       case 'drag-and-drop':
         // Handle new drag-and-drop ordering format (comma-separated string)
         if (question.correctOrder.isNotEmpty && userAnswer is String) {
-          final userOrderList = userAnswer.split(',');
+          final userOrderList = userAnswer.split(',').map((s) => s.trim()).toList();
           return _listsEqual(userOrderList, question.correctOrder);
         }
         // Handle new drag-and-drop format with dragItems/dragTargets

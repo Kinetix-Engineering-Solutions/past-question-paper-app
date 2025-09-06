@@ -79,8 +79,9 @@ function gradeDragAndDropOrdering(question, userAnswers) {
   // Parse user answers if they come as string
   if (typeof userAnswers === 'string') {
     try {
-      // Handle format like "item1,item2,item3" or "item1->item2->item3"
-      userOrderArray = userAnswers.split(/[,->]+/).map(s => s.trim()).filter(s => s);
+      // Handle format like "item1,item2,item3" (comma-separated)
+      // Note: Avoid using -> in the regex as it can interfere with step IDs containing numbers
+      userOrderArray = userAnswers.split(',').map(s => s.trim()).filter(s => s);
     } catch (e) {
       userOrderArray = [];
     }
