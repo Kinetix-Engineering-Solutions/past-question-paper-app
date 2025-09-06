@@ -66,9 +66,11 @@ function gradeDragAndDrop(question, userAnswers) {
 
 /**
  * Grades drag and drop questions in ordering/sequencing format
+ * Uses South African step-based marking guidelines where each correct step
+ * receives a proportional mark value (total marks / number of steps)
  * @param {Object} question - Question data
  * @param {string|Array} userAnswers - User's ordered sequence
- * @returns {Object} - Grading result
+ * @returns {Object} - Grading result with step-based marking
  */
 function gradeDragAndDropOrdering(question, userAnswers) {
   const correctOrder = safeArray(question.correctOrder);
@@ -91,28 +93,33 @@ function gradeDragAndDropOrdering(question, userAnswers) {
 
   let correctCount = 0;
   const detailedResults = [];
-  const maxSteps = Math.max(correctOrder.length, userOrderArray.length);
+  const totalSteps = correctOrder.length;
+  const maxMarks = question.maxMarks || question.marks || totalSteps;
+  
+  // Calculate marks per step following SA guidelines
+  const marksPerStep = maxMarks / totalSteps;
 
-  // Check each step position
-  for (let i = 0; i < maxSteps; i++) {
-    const correctStep = correctOrder[i];
-    const userStep = userOrderArray[i];
+  // Check each position in the correct sequence (SA step-based marking)
+  correctOrder.forEach((correctStep, index) => {
+    const userStep = userOrderArray[index];
     const isCorrect = correctStep === userStep;
+    const stepMarks = isCorrect ? marksPerStep : 0;
     
     if (isCorrect) correctCount++;
     
     detailedResults.push({
-      stepPosition: i + 1,
+      stepPosition: index + 1,
       userAnswer: userStep || 'Not provided',
-      correctAnswer: correctStep || 'N/A',
-      isCorrect: isCorrect
+      correctAnswer: correctStep,
+      isCorrect: isCorrect,
+      marksAwarded: stepMarks,
+      marksAvailable: marksPerStep
     });
-  }
+  });
 
-  const totalSteps = correctOrder.length;
+  // Direct step-based marking: each correct step gets its proportion of marks
+  const marksAwarded = correctCount * marksPerStep;
   const percentage = totalSteps > 0 ? (correctCount / totalSteps) : 0;
-  const maxMarks = question.maxMarks || totalSteps;
-  const marksAwarded = Math.round(maxMarks * percentage);
 
   return {
     questionId: question.id,
@@ -122,11 +129,14 @@ function gradeDragAndDropOrdering(question, userAnswers) {
     correctOrder: correctOrder,
     correctCount: correctCount,
     totalSteps: totalSteps,
+    marksPerStep: marksPerStep,
     percentage: percentage,
     detailedResults: detailedResults,
-    isCorrect: percentage >= 0.8, // 80% threshold for ordering questions
+    isCorrect: marksAwarded >= (maxMarks * 0.5), // 50% threshold for SA guidelines
     marksAwarded: marksAwarded,
-    maxMarks: maxMarks
+    maxMarks: maxMarks,
+    markingMethod: 'step-based', // Identifier for SA step-based marking
+    explanation: `Each correct step awards ${marksPerStep.toFixed(2)} marks. Total: ${correctCount}/${totalSteps} steps correct.`
   };
 }
 

@@ -137,11 +137,6 @@ class PracticeResultsScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Icon(
-                    Icons.analytics_outlined,
-                    size: 48,
-                    color: AppColors.accent,
-                  ),
                   const SizedBox(height: 16),
                   Text(
                     'Test Completed!',

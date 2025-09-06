@@ -324,9 +324,9 @@ class _DragAndDropOrderingWidgetState
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.green.shade50,
+          color: AppColors.neutralCard,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.green.shade200),
+          border: Border.all(color: AppColors.neutralMid),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -336,7 +336,7 @@ class _DragAndDropOrderingWidgetState
             Text(
               'All steps have been arranged!',
               style: TextStyle(
-                color: Colors.green.shade800,
+                color: AppColors.neutralMid,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -468,7 +468,7 @@ class _DragAndDropOrderingWidgetState
           LinearProgressIndicator(
             value: progress,
             backgroundColor: AppColors.neutralBorder,
-            color: progress == 1.0 ? Colors.green : AppColors.accent,
+            color: progress == 1.0 ? AppColors.accent : AppColors.accent,
             minHeight: 6,
           ),
         ],
