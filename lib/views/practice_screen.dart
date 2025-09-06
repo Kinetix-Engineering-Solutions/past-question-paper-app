@@ -60,7 +60,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       // Safely cast the grading results
       final gradingResults = result['gradingResults'];
       final questions = result['questions'];
-      
+
       // Convert to proper types with null safety
       final Map<String, dynamic> safeGradingResults = {};
       if (gradingResults != null) {
@@ -70,7 +70,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
           });
         }
       }
-      
+
       final List<Map<String, dynamic>> safeQuestions = [];
       if (questions is List) {
         for (final question in questions) {

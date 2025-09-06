@@ -106,7 +106,7 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
       if (!isActive) return null; // Check if still active after async operation
 
       state = state.copyWith(isSubmitting: false);
-      
+
       // Return both grading results and questions for detailed results screen
       return {
         'gradingResults': gradingResults,

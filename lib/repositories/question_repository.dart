@@ -59,8 +59,10 @@ class QuestionRepository {
       print('Cloud Function result: ${result.data}'); // Debug
 
       // The new modular function returns an object with questions array
-      final Map<String, dynamic> responseData = result.data as Map<String, dynamic>;
-      final List<dynamic> questionDataList = responseData['questions'] as List<dynamic>;
+      final Map<String, dynamic> responseData =
+          result.data as Map<String, dynamic>;
+      final List<dynamic> questionDataList =
+          responseData['questions'] as List<dynamic>;
 
       if (questionDataList.isEmpty) {
         return [];

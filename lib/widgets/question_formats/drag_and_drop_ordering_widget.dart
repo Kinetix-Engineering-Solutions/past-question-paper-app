@@ -17,10 +17,12 @@ class DragAndDropOrderingWidget extends ConsumerStatefulWidget {
   }) : super(key: key);
 
   @override
-  ConsumerState<DragAndDropOrderingWidget> createState() => _DragAndDropOrderingWidgetState();
+  ConsumerState<DragAndDropOrderingWidget> createState() =>
+      _DragAndDropOrderingWidgetState();
 }
 
-class _DragAndDropOrderingWidgetState extends ConsumerState<DragAndDropOrderingWidget> {
+class _DragAndDropOrderingWidgetState
+    extends ConsumerState<DragAndDropOrderingWidget> {
   List<DragItem> _orderedSteps = [];
   List<DragItem> _availableItems = [];
 
@@ -32,20 +34,25 @@ class _DragAndDropOrderingWidgetState extends ConsumerState<DragAndDropOrderingW
 
   void _initializeItems() {
     // Handle cases where dragItems might be null but correctOrder exists
-    if (widget.question.dragItems != null && widget.question.dragItems!.isNotEmpty) {
+    if (widget.question.dragItems != null &&
+        widget.question.dragItems!.isNotEmpty) {
       _availableItems = List.from(widget.question.dragItems!);
     } else if (widget.question.correctOrder.isNotEmpty) {
       // Create drag items from correctOrder if dragItems is not available
-      _availableItems = widget.question.correctOrder.map((stepId) => 
-        DragItem(id: stepId, text: stepId)
-      ).toList();
+      _availableItems = widget.question.correctOrder
+          .map((stepId) => DragItem(id: stepId, text: stepId))
+          .toList();
     } else {
       // Fallback: create from options if available
-      _availableItems = widget.question.options.asMap().entries.map((entry) => 
-        DragItem(id: 'option_${entry.key}', text: entry.value)
-      ).toList();
+      _availableItems = widget.question.options
+          .asMap()
+          .entries
+          .map(
+            (entry) => DragItem(id: 'option_${entry.key}', text: entry.value),
+          )
+          .toList();
     }
-      
+
     // Parse existing answer if available
     if (widget.currentAnswer != null && widget.currentAnswer!.isNotEmpty) {
       try {
@@ -56,13 +63,15 @@ class _DragAndDropOrderingWidgetState extends ConsumerState<DragAndDropOrderingW
             orElse: () => DragItem(id: stepId, text: stepId),
           );
           _orderedSteps.add(item);
-          _availableItems.removeWhere((available) => available.id == stepId.trim());
+          _availableItems.removeWhere(
+            (available) => available.id == stepId.trim(),
+          );
         }
       } catch (e) {
         print('Error parsing current answer: $e');
       }
     }
-    
+
     // Delay saving to avoid modifying provider during build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _saveAnswer();
@@ -106,10 +115,12 @@ class _DragAndDropOrderingWidgetState extends ConsumerState<DragAndDropOrderingW
   @override
   Widget build(BuildContext context) {
     // Check if we have any data to work with for ordering
-    final hasOrderingData = (widget.question.dragItems != null && widget.question.dragItems!.isNotEmpty) ||
-                           widget.question.correctOrder.isNotEmpty ||
-                           widget.question.options.isNotEmpty;
-                           
+    final hasOrderingData =
+        (widget.question.dragItems != null &&
+            widget.question.dragItems!.isNotEmpty) ||
+        widget.question.correctOrder.isNotEmpty ||
+        widget.question.options.isNotEmpty;
+
     if (!hasOrderingData) {
       return Container(
         padding: const EdgeInsets.all(20),
@@ -222,10 +233,7 @@ class _DragAndDropOrderingWidgetState extends ConsumerState<DragAndDropOrderingW
               const SizedBox(height: 8),
               Text(
                 'Drag steps here to arrange them in order',
-                style: TextStyle(
-                  color: AppColors.neutralMid,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: AppColors.neutralMid, fontSize: 14),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -302,11 +310,7 @@ class _DragAndDropOrderingWidgetState extends ConsumerState<DragAndDropOrderingW
                   color: Colors.red.shade100,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  Icons.close,
-                  color: Colors.red.shade600,
-                  size: 16,
-                ),
+                child: Icon(Icons.close, color: Colors.red.shade600, size: 16),
               ),
             ),
           ],
@@ -344,7 +348,9 @@ class _DragAndDropOrderingWidgetState extends ConsumerState<DragAndDropOrderingW
     return Wrap(
       spacing: 12,
       runSpacing: 12,
-      children: _availableItems.map((item) => _buildAvailableItemCard(item)).toList(),
+      children: _availableItems
+          .map((item) => _buildAvailableItemCard(item))
+          .toList(),
     );
   }
 
@@ -426,8 +432,9 @@ class _DragAndDropOrderingWidgetState extends ConsumerState<DragAndDropOrderingW
 
   Widget _buildProgressIndicator() {
     // Calculate total items from available sources
-    final totalItems = widget.question.dragItems?.length ?? 
-                      widget.question.correctOrder.length;
+    final totalItems =
+        widget.question.dragItems?.length ??
+        widget.question.correctOrder.length;
     final arrangedItems = _orderedSteps.length;
     final progress = totalItems > 0 ? arrangedItems / totalItems : 0.0;
 

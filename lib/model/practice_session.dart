@@ -200,7 +200,9 @@ class PracticeSession {
         if (userAnswer is List<int>) {
           // Convert correctOrder strings to integers for comparison if needed
           try {
-            final correctOrderInts = question.correctOrder.map((s) => int.parse(s)).toList();
+            final correctOrderInts = question.correctOrder
+                .map((s) => int.parse(s))
+                .toList();
             return _listsEqual(userAnswer, correctOrderInts);
           } catch (e) {
             // If conversion fails, it's not a legacy format

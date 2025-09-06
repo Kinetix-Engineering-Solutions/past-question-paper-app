@@ -16,7 +16,7 @@ class PracticeResultsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Safely extract statistics with type checking
     final statistics = _extractMap(gradingResults['statistics']) ?? {};
-    
+
     // Create a map for easy question lookup (used by the review screen)
     final questionMap = <String, Map<String, dynamic>>{};
     for (var q in questions) {
@@ -117,7 +117,7 @@ class PracticeResultsScreen extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Summary Info
           Padding(
             padding: const EdgeInsets.all(16),
@@ -154,15 +154,15 @@ class PracticeResultsScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     'You answered ${_extractInt(statistics['correctQuestions']) ?? 0} out of ${_extractInt(statistics['totalQuestions']) ?? 0} questions correctly.',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppColors.neutralMid,
-                    ),
+                    style: TextStyle(fontSize: 16, color: AppColors.neutralMid),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.accent.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
@@ -181,9 +181,9 @@ class PracticeResultsScreen extends StatelessWidget {
               ),
             ),
           ),
-          
+
           const Spacer(),
-          
+
           // Action Buttons
           Padding(
             padding: const EdgeInsets.all(16),
@@ -215,18 +215,17 @@ class PracticeResultsScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Bottom action buttons
                 Row(
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
-                          '/', 
-                          (route) => false,
-                        ),
+                        onPressed: () => Navigator.of(
+                          context,
+                        ).pushNamedAndRemoveUntil('/', (route) => false),
                         icon: const Icon(Icons.home),
                         label: const Text('Back to Home'),
                         style: ElevatedButton.styleFrom(
@@ -249,7 +248,9 @@ class PracticeResultsScreen extends StatelessWidget {
                         label: const Text('Try Again'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.ink,
-                          side: const BorderSide(color: AppColors.neutralBorder),
+                          side: const BorderSide(
+                            color: AppColors.neutralBorder,
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -267,7 +268,12 @@ class PracticeResultsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(String label, String value, Color bgColor, Color textColor) {
+  Widget _buildStatItem(
+    String label,
+    String value,
+    Color bgColor,
+    Color textColor,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -286,30 +292,29 @@ class PracticeResultsScreen extends StatelessWidget {
           ),
           Text(
             label,
-            style: TextStyle(
-              color: textColor.withOpacity(0.8),
-              fontSize: 12,
-            ),
+            style: TextStyle(color: textColor.withOpacity(0.8), fontSize: 12),
           ),
         ],
       ),
     );
   }
 
-  
   Color _getScoreColor(int percentage) {
     if (percentage >= 80) return AppColors.accent; // Great score - accent color
-    if (percentage >= 60) return AppColors.neutralMid; // Good score - neutral mid
+    if (percentage >= 60)
+      return AppColors.neutralMid; // Good score - neutral mid
     return AppColors.ink; // Needs improvement - primary ink color
   }
-  
+
   Color _getTextColor(int percentage) {
     // Return white for dark backgrounds, ink for light backgrounds
-    if (percentage >= 80) return AppColors.neutralCard; // White text on accent background
-    if (percentage >= 60) return AppColors.neutralCard; // White text on neutral mid background
+    if (percentage >= 80)
+      return AppColors.neutralCard; // White text on accent background
+    if (percentage >= 60)
+      return AppColors.neutralCard; // White text on neutral mid background
     return AppColors.neutralCard; // White text on ink background
   }
-  
+
   String _getGrade(int percentage) {
     if (percentage >= 90) return 'A+';
     if (percentage >= 80) return 'A';

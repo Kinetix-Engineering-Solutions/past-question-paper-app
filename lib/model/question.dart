@@ -21,7 +21,8 @@ class Question {
   final String? imageUrl; // Renamed from questionImage
   final List<String> options; // Text options (used when no option images)
   final List<String>? optionImages; // New field for option images
-  final List<String> correctOrder; // For drag-and-drop questions (changed from int to string for step IDs)
+  final List<String>
+  correctOrder; // For drag-and-drop questions (changed from int to string for step IDs)
   final String correctAnswer; // Simplified from List<String> to String
   final String explanation;
   final int? points; // Legacy field - question points

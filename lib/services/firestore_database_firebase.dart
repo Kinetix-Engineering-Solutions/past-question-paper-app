@@ -293,7 +293,7 @@ class FirestoreDatabaseService {
         // Fallback to legacy format
         return Map<String, dynamic>.from(responseData);
       }
-      
+
       return Map<String, dynamic>.from(result.data);
     } on FirebaseFunctionsException catch (e) {
       if (e.code == 'unauthenticated') {

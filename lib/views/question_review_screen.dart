@@ -18,7 +18,7 @@ class QuestionReviewScreen extends StatefulWidget {
 class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
   late PageController _pageController;
   int _currentQuestionIndex = 0;
-  
+
   @override
   void initState() {
     super.initState();
@@ -34,7 +34,7 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
   @override
   Widget build(BuildContext context) {
     final results = _extractList(widget.gradingResults['results']) ?? [];
-    
+
     // Create a map for easy question lookup
     final questionMap = <String, Map<String, dynamic>>{};
     for (var q in widget.questions) {
@@ -50,7 +50,9 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
         backgroundColor: AppColors.paper,
         elevation: 0,
         foregroundColor: AppColors.ink,
-        title: Text('Question ${_currentQuestionIndex + 1} of ${results.length}'),
+        title: Text(
+          'Question ${_currentQuestionIndex + 1} of ${results.length}',
+        ),
         centerTitle: true,
         actions: [
           TextButton(
@@ -70,7 +72,7 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
               color: AppColors.accent,
             ),
           ),
-          
+
           // Question content
           Expanded(
             child: PageView.builder(
@@ -84,13 +86,15 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
               itemBuilder: (context, index) {
                 final result = _extractMap(results[index]) ?? {};
                 final questionId = result['questionId']?.toString();
-                final question = questionId != null ? questionMap[questionId] : null;
-                
+                final question = questionId != null
+                    ? questionMap[questionId]
+                    : null;
+
                 return _buildQuestionCard(result, question);
               },
             ),
           ),
-          
+
           // Simple navigation
           Padding(
             padding: const EdgeInsets.all(16),
@@ -98,24 +102,28 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _currentQuestionIndex > 0 ? () {
-                      _pageController.previousPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    } : null,
+                    onPressed: _currentQuestionIndex > 0
+                        ? () {
+                            _pageController.previousPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        : null,
                     child: const Text('Previous'),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _currentQuestionIndex < results.length - 1 ? () {
-                      _pageController.nextPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    } : null,
+                    onPressed: _currentQuestionIndex < results.length - 1
+                        ? () {
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          }
+                        : null,
                     child: const Text('Next'),
                   ),
                 ),
@@ -127,7 +135,10 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
     );
   }
 
-  Widget _buildQuestionCard(Map<String, dynamic> result, Map<String, dynamic>? question) {
+  Widget _buildQuestionCard(
+    Map<String, dynamic> result,
+    Map<String, dynamic>? question,
+  ) {
     final isCorrect = result['isCorrect'] == true;
     final userAnswer = result['userAnswer'];
     final correctAnswer = result['correctAnswer'];
@@ -157,7 +168,9 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  isCorrect ? 'Correct! ($marksAwarded/$maxMarks pts)' : 'Incorrect ($marksAwarded/$maxMarks pts)',
+                  isCorrect
+                      ? 'Correct! ($marksAwarded/$maxMarks pts)'
+                      : 'Incorrect ($marksAwarded/$maxMarks pts)',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -167,14 +180,18 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Question text
           if (question != null && question['questionText'] != null) ...[
             Text(
               'Question:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.ink),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.ink,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -183,7 +200,7 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
             ),
             const SizedBox(height: 16),
           ],
-          
+
           // Question image
           if (question != null && question['imageUrl'] != null) ...[
             Image.network(
@@ -199,26 +216,40 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
             ),
             const SizedBox(height: 16),
           ],
-          
+
           // Options for MCQ
-          if (question != null && question['options'] != null && format.toLowerCase().contains('multiple')) ...[
-            Text('Options:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink)),
+          if (question != null &&
+              question['options'] != null &&
+              format.toLowerCase().contains('multiple')) ...[
+            Text(
+              'Options:',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+            ),
             const SizedBox(height: 8),
-            ...(_extractList(question['options']) ?? []).asMap().entries.map((entry) {
+            ...(_extractList(question['options']) ?? []).asMap().entries.map((
+              entry,
+            ) {
               final index = entry.key;
               final option = entry.value.toString();
               final optionLabel = String.fromCharCode(65 + index); // A, B, C, D
               return Padding(
                 padding: const EdgeInsets.only(bottom: 4),
-                child: Text('$optionLabel) $option', style: TextStyle(fontSize: 14, color: AppColors.ink)),
+                child: Text(
+                  '$optionLabel) $option',
+                  style: TextStyle(fontSize: 14, color: AppColors.ink),
+                ),
               );
             }).toList(),
             const SizedBox(height: 16),
           ],
-          
+
           // Answer comparison
           _buildAnswerComparison(format, userAnswer, correctAnswer, result),
-          
+
           // Explanation
           if (question != null && question['explanation'] != null) ...[
             const SizedBox(height: 16),
@@ -231,9 +262,19 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('💡 Explanation', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blue[700])),
+                  Text(
+                    '💡 Explanation',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue[700],
+                    ),
+                  ),
                   const SizedBox(height: 6),
-                  Text(question['explanation'], style: TextStyle(fontSize: 13, color: Colors.blue[800])),
+                  Text(
+                    question['explanation'],
+                    style: TextStyle(fontSize: 13, color: Colors.blue[800]),
+                  ),
                 ],
               ),
             ),
@@ -243,8 +284,14 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
     );
   }
 
-  Widget _buildAnswerComparison(String format, dynamic userAnswer, dynamic correctAnswer, Map<String, dynamic> result) {
-    if (format.toLowerCase() == 'draganddrop' || format.toLowerCase() == 'drag-and-drop') {
+  Widget _buildAnswerComparison(
+    String format,
+    dynamic userAnswer,
+    dynamic correctAnswer,
+    Map<String, dynamic> result,
+  ) {
+    if (format.toLowerCase() == 'draganddrop' ||
+        format.toLowerCase() == 'drag-and-drop') {
       final subFormat = result['subFormat']?.toString();
       if (subFormat == 'ordering') {
         return _buildOrderingComparison(result);
@@ -252,7 +299,7 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
         return _buildMatchingComparison(result);
       }
     }
-    
+
     return Column(
       children: [
         // Your answer
@@ -266,9 +313,19 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Your Answer', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blue)),
+              Text(
+                'Your Answer',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(userAnswer?.toString() ?? 'No answer', style: TextStyle(fontSize: 14, color: AppColors.ink)),
+              Text(
+                userAnswer?.toString() ?? 'No answer',
+                style: TextStyle(fontSize: 14, color: AppColors.ink),
+              ),
             ],
           ),
         ),
@@ -284,9 +341,19 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Correct Answer', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green)),
+              Text(
+                'Correct Answer',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(correctAnswer?.toString() ?? 'N/A', style: TextStyle(fontSize: 14, color: AppColors.ink)),
+              Text(
+                correctAnswer?.toString() ?? 'N/A',
+                style: TextStyle(fontSize: 14, color: AppColors.ink),
+              ),
             ],
           ),
         ),
@@ -296,11 +363,18 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
 
   Widget _buildOrderingComparison(Map<String, dynamic> result) {
     final detailedResults = _extractList(result['detailedResults']) ?? [];
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Step Ordering Results:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.ink)),
+        Text(
+          'Step Ordering Results:',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: AppColors.ink,
+          ),
+        ),
         const SizedBox(height: 8),
         ...detailedResults.map((detail) {
           final detailMap = _extractMap(detail) ?? {};
@@ -308,14 +382,20 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
           final stepPosition = detailMap['stepPosition']?.toString() ?? '';
           final userAnswer = detailMap['userAnswer']?.toString() ?? '';
           final correctAnswer = detailMap['correctAnswer']?.toString() ?? '';
-          
+
           return Container(
             margin: const EdgeInsets.only(bottom: 6),
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isCorrect ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+              color: isCorrect
+                  ? Colors.green.withOpacity(0.1)
+                  : Colors.red.withOpacity(0.1),
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: isCorrect ? Colors.green.withOpacity(0.3) : Colors.red.withOpacity(0.3)),
+              border: Border.all(
+                color: isCorrect
+                    ? Colors.green.withOpacity(0.3)
+                    : Colors.red.withOpacity(0.3),
+              ),
             ),
             child: Row(
               children: [
@@ -329,7 +409,11 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
                   child: Center(
                     child: Text(
                       stepPosition,
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -338,12 +422,26 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Your: $userAnswer', style: TextStyle(fontSize: 12, color: AppColors.ink)),
-                      if (!isCorrect) Text('Correct: $correctAnswer', style: TextStyle(fontSize: 12, color: Colors.green[700])),
+                      Text(
+                        'Your: $userAnswer',
+                        style: TextStyle(fontSize: 12, color: AppColors.ink),
+                      ),
+                      if (!isCorrect)
+                        Text(
+                          'Correct: $correctAnswer',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.green[700],
+                          ),
+                        ),
                     ],
                   ),
                 ),
-                Icon(isCorrect ? Icons.check_circle : Icons.cancel, color: isCorrect ? Colors.green : Colors.red, size: 16),
+                Icon(
+                  isCorrect ? Icons.check_circle : Icons.cancel,
+                  color: isCorrect ? Colors.green : Colors.red,
+                  size: 16,
+                ),
               ],
             ),
           );
@@ -354,11 +452,18 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
 
   Widget _buildMatchingComparison(Map<String, dynamic> result) {
     final detailedResults = _extractList(result['detailedResults']) ?? [];
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Matching Results:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.ink)),
+        Text(
+          'Matching Results:',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: AppColors.ink,
+          ),
+        ),
         const SizedBox(height: 8),
         ...detailedResults.map((detail) {
           final detailMap = _extractMap(detail) ?? {};
@@ -366,26 +471,53 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
           final targetText = detailMap['targetText']?.toString() ?? '';
           final userAnswer = detailMap['userAnswer']?.toString() ?? '';
           final correctAnswer = detailMap['correctAnswer']?.toString() ?? '';
-          
+
           return Container(
             margin: const EdgeInsets.only(bottom: 6),
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isCorrect ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+              color: isCorrect
+                  ? Colors.green.withOpacity(0.1)
+                  : Colors.red.withOpacity(0.1),
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: isCorrect ? Colors.green.withOpacity(0.3) : Colors.red.withOpacity(0.3)),
+              border: Border.all(
+                color: isCorrect
+                    ? Colors.green.withOpacity(0.3)
+                    : Colors.red.withOpacity(0.3),
+              ),
             ),
             child: Row(
               children: [
-                Icon(isCorrect ? Icons.check_circle : Icons.cancel, color: isCorrect ? Colors.green : Colors.red, size: 16),
+                Icon(
+                  isCorrect ? Icons.check_circle : Icons.cancel,
+                  color: isCorrect ? Colors.green : Colors.red,
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Target: $targetText', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.ink)),
-                      Text('Your: $userAnswer', style: TextStyle(fontSize: 12, color: AppColors.ink)),
-                      if (!isCorrect) Text('Correct: $correctAnswer', style: TextStyle(fontSize: 12, color: Colors.green[700])),
+                      Text(
+                        'Target: $targetText',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      Text(
+                        'Your: $userAnswer',
+                        style: TextStyle(fontSize: 12, color: AppColors.ink),
+                      ),
+                      if (!isCorrect)
+                        Text(
+                          'Correct: $correctAnswer',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.green[700],
+                          ),
+                        ),
                     ],
                   ),
                 ),
