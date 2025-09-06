@@ -262,7 +262,7 @@ class _QuestionView extends ConsumerWidget {
             selectedOption: selectedOption,
           );
         }
-      case 'drag-and-drop':
+      case 'draganddrop':
         // Check if this is ordering format (has correctOrder) or matching format
         if (question.correctOrder.isNotEmpty) {
           return DragAndDropOrderingWidget(
