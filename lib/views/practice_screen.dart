@@ -11,6 +11,7 @@ import 'package:past_question_paper_v1/widgets/question_formats/true_false_widge
 import 'package:past_question_paper_v1/widgets/question_formats/short_answer_widget.dart';
 import 'package:past_question_paper_v1/widgets/question_formats/essay_widget.dart';
 import 'package:past_question_paper_v1/widgets/question_formats/drag_and_drop_widget.dart';
+import 'package:past_question_paper_v1/widgets/question_formats/drag_and_drop_ordering_widget.dart';
 
 class PracticeScreen extends ConsumerStatefulWidget {
   final List<Question> questions;
@@ -40,6 +41,8 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
   @override
   void dispose() {
     _pageController.dispose();
+    // Session cleanup is now handled automatically by autoDispose provider
+    // No need to manually call clearSession() here to avoid "ref after dispose" error
     super.dispose();
   }
 
@@ -54,12 +57,44 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     final result = await viewModel.submitTest();
 
     if (result != null && mounted) {
+      // Safely cast the grading results
+      final gradingResults = result['gradingResults'];
+      final questions = result['questions'];
+      
+      // Convert to proper types with null safety
+      final Map<String, dynamic> safeGradingResults = {};
+      if (gradingResults != null) {
+        if (gradingResults is Map) {
+          gradingResults.forEach((key, value) {
+            safeGradingResults[key.toString()] = value;
+          });
+        }
+      }
+      
+      final List<Map<String, dynamic>> safeQuestions = [];
+      if (questions is List) {
+        for (final question in questions) {
+          if (question is Map) {
+            final Map<String, dynamic> safeQuestion = {};
+            question.forEach((key, value) {
+              safeQuestion[key.toString()] = value;
+            });
+            safeQuestions.add(safeQuestion);
+          }
+        }
+      }
+
+      // Clear session before navigation to prevent stale data
+      if (mounted) {
+        viewModel.clearSession();
+      }
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => PracticeResultsScreen(
-            //score: result['score']!,
-            //totalMarks: result['totalMarks']!,
+            gradingResults: safeGradingResults,
+            questions: safeQuestions,
           ),
         ),
       );
@@ -228,10 +263,18 @@ class _QuestionView extends ConsumerWidget {
           );
         }
       case 'drag-and-drop':
-        return DragAndDropWidget(
-          question: question,
-          currentAnswers: _parseDragDropAnswer(selectedOption),
-        );
+        // Check if this is ordering format (has correctOrder) or matching format
+        if (question.correctOrder.isNotEmpty) {
+          return DragAndDropOrderingWidget(
+            question: question,
+            currentAnswer: selectedOption,
+          );
+        } else {
+          return DragAndDropWidget(
+            question: question,
+            currentAnswers: _parseDragDropAnswer(selectedOption),
+          );
+        }
       case 'true_false':
       case 'true-false':
         return TrueFalseWidget(

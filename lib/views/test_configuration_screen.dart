@@ -90,7 +90,7 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
   @override
   Widget build(BuildContext context) {
     final loadingButtonId = ref.watch(testConfigurationViewModelProvider);
-    final years = List.generate(10, (index) => DateTime.now().year - index);
+    final years = List.generate(4, (index) => DateTime.now().year - index);
     const seasons = ['November', 'June', 'March'];
 
     return ListView(

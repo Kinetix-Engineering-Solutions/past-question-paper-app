@@ -1,19 +1,23 @@
 {
   "name": "functions",
-  "description": "Cloud Functions for Firebase",
+  "description": "Cloud Functions for Firebase - Past Question Paper App",
+  "version": "2.0.0",
   "scripts": {
     "build": "node --version",
     "serve": "firebase emulators:start --only functions",
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "test": "npm run test:unit",
+    "test:unit": "echo \"No unit tests specified\" && exit 0"
   },
   "engines": {
     "node": "20"
   },
   "main": "index.js",
   "dependencies": {
+    "cors": "^2.8.5",
     "firebase-admin": "^11.8.0",
     "firebase-functions": "^6.4.0"
   },

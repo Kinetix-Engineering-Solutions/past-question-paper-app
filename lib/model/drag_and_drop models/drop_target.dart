@@ -30,6 +30,8 @@ class DropTarget {
       });
       return DropTarget.fromMap(stringMap);
     }
-    throw ArgumentError('Invalid data type for DropTarget: ${data.runtimeType}');
+    throw ArgumentError(
+      'Invalid data type for DropTarget: ${data.runtimeType}',
+    );
   }
 }

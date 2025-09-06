@@ -271,11 +271,29 @@ class FirestoreDatabaseService {
 
       final callable = _functions.httpsCallable('gradeTest');
       final result = await callable.call({
-        'answers': answers,
+        'submissions': answers, // Use 'submissions' key for new format
         'subject': subject,
         'paper': paper,
       });
 
+      final responseData = result.data;
+      if (responseData is Map) {
+        // Handle new response format with statistics
+        if (responseData.containsKey('statistics')) {
+          final statistics = responseData['statistics'] as Map;
+          return {
+            'score': (statistics['marksAwarded'] as num?)?.toInt() ?? 0,
+            'totalMarks': (statistics['totalMarks'] as num?)?.toInt() ?? 0,
+            'percentage': (statistics['percentage'] as num?)?.toDouble() ?? 0.0,
+            'grade': statistics['grade']?.toString() ?? 'F',
+            'results': responseData['results'] ?? [],
+            'gradedAt': responseData['gradedAt']?.toString() ?? '',
+          };
+        }
+        // Fallback to legacy format
+        return Map<String, dynamic>.from(responseData);
+      }
+      
       return Map<String, dynamic>.from(result.data);
     } on FirebaseFunctionsException catch (e) {
       if (e.code == 'unauthenticated') {
