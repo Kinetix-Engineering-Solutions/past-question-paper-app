@@ -66,24 +66,35 @@ function gradeDragAndDrop(question, userAnswers) {
 
 /**
  * Grades drag and drop questions in ordering/sequencing format
+ * Uses South African step-based marking guidelines where each correct step
+ * receives a proportional mark value (total marks / number of steps)
  * @param {Object} question - Question data
  * @param {string|Array} userAnswers - User's ordered sequence
- * @returns {Object} - Grading result
+ * @returns {Object} - Grading result with step-based marking
  */
 function gradeDragAndDropOrdering(question, userAnswers) {
+  console.log('=== GRADING DRAG-AND-DROP ORDERING ===');
+  console.log('Question ID:', question.id);
+  console.log('Question correctOrder:', question.correctOrder);
+  console.log('User answers (raw):', userAnswers, 'Type:', typeof userAnswers);
+  
   const correctOrder = safeArray(question.correctOrder);
   let userOrderArray;
   
   // Parse user answers if they come as string
   if (typeof userAnswers === 'string') {
     try {
-      // Handle format like "item1,item2,item3" or "item1->item2->item3"
-      userOrderArray = userAnswers.split(/[,->]+/).map(s => s.trim()).filter(s => s);
+      // Handle format like "item1,item2,item3" (comma-separated)
+      // Note: Avoid using -> in the regex as it can interfere with step IDs containing numbers
+      userOrderArray = userAnswers.split(',').map(s => s.trim()).filter(s => s);
+      console.log('Parsed user answers:', userOrderArray);
     } catch (e) {
+      console.log('Error parsing user answers:', e);
       userOrderArray = [];
     }
   } else {
     userOrderArray = safeArray(userAnswers);
+    console.log('User answers as array:', userOrderArray);
   }
   
   console.log('Expected order:', correctOrder);
@@ -91,30 +102,35 @@ function gradeDragAndDropOrdering(question, userAnswers) {
 
   let correctCount = 0;
   const detailedResults = [];
-  const maxSteps = Math.max(correctOrder.length, userOrderArray.length);
+  const totalSteps = correctOrder.length;
+  const maxMarks = question.maxMarks || question.marks || totalSteps;
+  
+  // Calculate marks per step following SA guidelines
+  const marksPerStep = maxMarks / totalSteps;
 
-  // Check each step position
-  for (let i = 0; i < maxSteps; i++) {
-    const correctStep = correctOrder[i];
-    const userStep = userOrderArray[i];
+  // Check each position in the correct sequence (SA step-based marking)
+  correctOrder.forEach((correctStep, index) => {
+    const userStep = userOrderArray[index];
     const isCorrect = correctStep === userStep;
+    const stepMarks = isCorrect ? marksPerStep : 0;
     
     if (isCorrect) correctCount++;
     
     detailedResults.push({
-      stepPosition: i + 1,
+      stepPosition: index + 1,
       userAnswer: userStep || 'Not provided',
-      correctAnswer: correctStep || 'N/A',
-      isCorrect: isCorrect
+      correctAnswer: correctStep,
+      isCorrect: isCorrect,
+      marksAwarded: stepMarks,
+      marksAvailable: marksPerStep
     });
-  }
+  });
 
-  const totalSteps = correctOrder.length;
+  // Direct step-based marking: each correct step gets its proportion of marks
+  const marksAwarded = correctCount * marksPerStep;
   const percentage = totalSteps > 0 ? (correctCount / totalSteps) : 0;
-  const maxMarks = question.maxMarks || totalSteps;
-  const marksAwarded = Math.round(maxMarks * percentage);
 
-  return {
+  const result = {
     questionId: question.id,
     format: 'dragAndDrop',
     subFormat: 'ordering',
@@ -122,12 +138,25 @@ function gradeDragAndDropOrdering(question, userAnswers) {
     correctOrder: correctOrder,
     correctCount: correctCount,
     totalSteps: totalSteps,
+    marksPerStep: marksPerStep,
     percentage: percentage,
     detailedResults: detailedResults,
-    isCorrect: percentage >= 0.8, // 80% threshold for ordering questions
+    isCorrect: marksAwarded >= (maxMarks * 0.5), // 50% threshold for SA guidelines
     marksAwarded: marksAwarded,
-    maxMarks: maxMarks
+    maxMarks: maxMarks,
+    markingMethod: 'step-based', // Identifier for SA step-based marking
+    explanation: `Each correct step awards ${marksPerStep.toFixed(2)} marks. Total: ${correctCount}/${totalSteps} steps correct.`
   };
+  
+  console.log('=== GRADING RESULT ===');
+  console.log('Question:', question.id);
+  console.log('Correct count:', correctCount, 'out of', totalSteps);
+  console.log('Marks awarded:', marksAwarded, 'out of', maxMarks);
+  console.log('Is correct:', result.isCorrect);
+  console.log('Threshold check:', marksAwarded, '>=', (maxMarks * 0.5), '?', marksAwarded >= (maxMarks * 0.5));
+  console.log('=== END GRADING ===\n');
+  
+  return result;
 }
 
 /**
@@ -257,17 +286,20 @@ function gradeSingleQuestion(question, submission) {
   
   console.log(`Grading question ${question.id} with format: ${format}`);
 
-  switch (format) {
-    case 'multipleChoice':
+  // Normalize format for consistent handling
+  const normalizedFormat = format.toLowerCase().replace(/[-_]/g, '');
+
+  switch (normalizedFormat) {
+    case 'multiplechoice':
       return gradeMultipleChoice(question, submission.answer);
       
-    case 'trueFalse':
+    case 'truefalse':
       return gradeTrueFalse(question, submission.answer);
       
-    case 'dragAndDrop':
+    case 'draganddrop':
       return gradeDragAndDrop(question, submission.answers || submission.answer);
       
-    case 'fillInBlanks':
+    case 'fillinblanks':
       return gradeFillInBlanks(question, submission.answers || submission.answer);
       
     default:
@@ -334,9 +366,16 @@ async function gradeTestSubmission(params) {
   const results = [];
   for (const questionId of questionIds) {
     const question = questionsMap[questionId];
-    const submission = submissions[questionId];
+    const submissionValue = submissions[questionId];
     
-    if (question && submission) {
+    if (question && submissionValue !== undefined && submissionValue !== null) {
+      // Normalize submission format - handle both object and direct value formats
+      const submission = typeof submissionValue === 'object' && submissionValue !== null
+        ? submissionValue
+        : { answer: submissionValue };
+      
+      console.log(`Processing submission for ${questionId}:`, submission);
+      
       const result = gradeSingleQuestion(question, submission);
       results.push(result);
     } else {

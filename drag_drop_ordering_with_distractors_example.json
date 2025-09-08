@@ -1,0 +1,114 @@
+[
+  {
+    "id": "drag_ordering_with_distractors_1",
+    "subject": "Mathematics",
+    "paper": "Paper 1",
+    "grade": 12,
+    "topic": "Solving Quadratic Equations",
+    "cognitiveLevel": "Application",
+    "marks": 4,
+    "year": 2024,
+    "season": "June",
+    "format": "drag-and-drop",
+    "questionText": "Arrange the following steps in the correct order to solve the quadratic equation using the quadratic formula: x² - 5x + 6 = 0. Select only the necessary steps.",
+    "explanation": "The quadratic formula requires identifying coefficients, substituting into the formula, simplifying, and solving for x.",
+    "correctOrder": ["step1", "step3", "step5", "step7"],
+    "dragItems": [
+      {
+        "id": "step1",
+        "text": "Identify coefficients: a = 1, b = -5, c = 6"
+      },
+      {
+        "id": "step2",
+        "text": "Factor the equation: (x - 2)(x - 3) = 0"
+      },
+      {
+        "id": "step3", 
+        "text": "Apply quadratic formula: x = [-(-5) ± √((-5)² - 4(1)(6))] / 2(1)"
+      },
+      {
+        "id": "step4",
+        "text": "Complete the square: (x - 2.5)² = 0.25"
+      },
+      {
+        "id": "step5",
+        "text": "Simplify: x = [5 ± √(25 - 24)] / 2"
+      },
+      {
+        "id": "step6",
+        "text": "Use graphing to find x-intercepts"
+      },
+      {
+        "id": "step7",
+        "text": "Calculate: x = (5 ± 1) / 2, so x = 3 or x = 2"
+      },
+      {
+        "id": "step8",
+        "text": "Check by substitution in original equation"
+      }
+    ],
+    "maxMarks": 4,
+    "timeAllocation": 5,
+    "instructions": "Note: There are more steps provided than needed. Select and arrange only the 4 steps required to solve using the quadratic formula."
+  },
+  {
+    "id": "drag_ordering_chemistry_distractors",
+    "subject": "Chemistry",
+    "paper": "Paper 2", 
+    "grade": 11,
+    "topic": "Titration Procedure",
+    "cognitiveLevel": "Application",
+    "marks": 5,
+    "year": 2024,
+    "season": "November",
+    "format": "drag-and-drop",
+    "questionText": "Arrange the essential steps for performing an acid-base titration in the correct order. Some steps are not necessary for a basic titration.",
+    "explanation": "A basic acid-base titration requires preparation, careful addition of titrant, and accurate endpoint detection.",
+    "correctOrder": ["tit1", "tit3", "tit5", "tit7", "tit9"],
+    "dragItems": [
+      {
+        "id": "tit1",
+        "text": "Fill the burette with standardized NaOH solution"
+      },
+      {
+        "id": "tit2",
+        "text": "Heat the analyte solution to 60°C"
+      },
+      {
+        "id": "tit3",
+        "text": "Pipette 25.0 mL of acid solution into conical flask"
+      },
+      {
+        "id": "tit4", 
+        "text": "Add 50 mL of distilled water to dilute the solution"
+      },
+      {
+        "id": "tit5",
+        "text": "Add 2-3 drops of phenolphthalein indicator"
+      },
+      {
+        "id": "tit6",
+        "text": "Stir the solution with a glass rod for 2 minutes"
+      },
+      {
+        "id": "tit7",
+        "text": "Add NaOH dropwise until the endpoint is reached"
+      },
+      {
+        "id": "tit8",
+        "text": "Filter the final solution through filter paper"
+      },
+      {
+        "id": "tit9", 
+        "text": "Record the final burette reading"
+      },
+      {
+        "id": "tit10",
+        "text": "Centrifuge the solution at 3000 rpm"
+      }
+    ],
+    "maxMarks": 5,
+    "timeAllocation": 6,
+    "instructions": "Select and arrange the 5 essential steps from the 10 options provided."
+  }
+]

@@ -96,12 +96,49 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
       final subject = state.questions.first.subject;
       final paper = state.questions.first.paper;
 
+      // === DEBUG: Log what we're sending ===
+      print('=== SUBMITTING TEST DATA ===');
+      print('Subject: $subject');
+      print('Paper: $paper');
+      print('User Answers:');
+      state.userAnswers.forEach((questionId, answer) {
+        print('  $questionId: "$answer" (${answer.runtimeType})');
+      });
+      print('Questions with correctOrder:');
+      for (final q in state.questions) {
+        if (q.format == 'drag-and-drop' && q.correctOrder.isNotEmpty) {
+          print('  ${q.id}: correctOrder = ${q.correctOrder}');
+        }
+      }
+      print('=== END SUBMIT DATA ===\n');
+
       // Call the repository to trigger the 'gradeTest' Cloud Function
       final gradingResults = await _questionRepository.gradeTest(
         userAnswers: state.userAnswers,
         subject: subject,
         paper: paper,
       );
+
+      // === DEBUG: Log what we received ===
+      print('=== RECEIVED GRADING RESULTS ===');
+      print('Raw response: $gradingResults');
+      if (gradingResults['results'] != null) {
+        print('Individual question results:');
+        for (final result in gradingResults['results']) {
+          if (result['format'] == 'dragAndDrop' &&
+              result['subFormat'] == 'ordering') {
+            print('  Question ${result['questionId']}:');
+            print('    User answers: ${result['userAnswers']}');
+            print('    Correct order: ${result['correctOrder']}');
+            print(
+              '    Correct count: ${result['correctCount']}/${result['totalSteps']}',
+            );
+            print('    Is correct: ${result['isCorrect']}');
+            print('    Marks: ${result['marksAwarded']}/${result['maxMarks']}');
+          }
+        }
+      }
+      print('=== END GRADING RESULTS ===\n');
 
       if (!isActive) return null; // Check if still active after async operation
 

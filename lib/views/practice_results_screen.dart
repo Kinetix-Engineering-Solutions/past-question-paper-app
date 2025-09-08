@@ -66,7 +66,7 @@ class PracticeResultsScreen extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  'Your Score',
+                  'Marks Earned',
                   style: TextStyle(
                     color: _getTextColor(percentage).withOpacity(0.9),
                     fontSize: 16,
@@ -83,6 +83,14 @@ class PracticeResultsScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
+                  'marks',
+                  style: TextStyle(
+                    color: _getTextColor(percentage).withOpacity(0.7),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
                   '$percentage% (${_getGrade(percentage)})',
                   style: TextStyle(
                     color: _getTextColor(percentage),
@@ -95,20 +103,20 @@ class PracticeResultsScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _buildStatItem(
-                      'Correct',
-                      '${_extractInt(statistics['correctQuestions']) ?? 0}',
+                      'Mark %',
+                      '${percentage}%',
                       AppColors.neutralCard.withOpacity(0.9),
                       AppColors.accent,
                     ),
                     _buildStatItem(
-                      'Total',
-                      '${_extractInt(statistics['totalQuestions']) ?? 0}',
+                      'Grade',
+                      _getGrade(percentage),
                       AppColors.neutralCard.withOpacity(0.9),
                       AppColors.ink,
                     ),
                     _buildStatItem(
-                      'Accuracy',
-                      '${_extractInt(statistics['accuracy']) ?? 0}%',
+                      'Questions',
+                      '${_extractInt(statistics['totalQuestions']) ?? 0}',
                       AppColors.neutralCard.withOpacity(0.9),
                       AppColors.neutralMid,
                     ),
@@ -137,11 +145,6 @@ class PracticeResultsScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  Icon(
-                    Icons.analytics_outlined,
-                    size: 48,
-                    color: AppColors.accent,
-                  ),
                   const SizedBox(height: 16),
                   Text(
                     'Test Completed!',
@@ -153,7 +156,7 @@ class PracticeResultsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'You answered ${_extractInt(statistics['correctQuestions']) ?? 0} out of ${_extractInt(statistics['totalQuestions']) ?? 0} questions correctly.',
+                    'You earned $score out of $totalMarks marks (${percentage}% - ${_getGrade(percentage)} grade).',
                     style: TextStyle(fontSize: 16, color: AppColors.neutralMid),
                     textAlign: TextAlign.center,
                   ),
