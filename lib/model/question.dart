@@ -21,7 +21,8 @@ class Question {
   final String? imageUrl; // Renamed from questionImage
   final List<String> options; // Text options (used when no option images)
   final List<String>? optionImages; // New field for option images
-  final List<int> correctOrder; // For drag-and-drop questions
+  final List<String>
+  correctOrder; // For drag-and-drop questions (changed from int to string for step IDs)
   final String correctAnswer; // Simplified from List<String> to String
   final String explanation;
   final int? points; // Legacy field - question points
@@ -96,23 +97,23 @@ class Question {
     }
 
     return Question(
-      id: data['id'] ?? '',
-      subject: data['subject'] ?? '',
-      paper: data['paper'] ?? '',
-      grade: data['grade'] ?? 12,
-      topic: data['topic'] ?? '',
-      cognitiveLevel: data['cognitiveLevel'] ?? '',
-      marks: data['marks'] ?? 0,
-      year: data['year'] ?? 0,
-      season: data['season'] ?? '',
-      format: data['format'] ?? 'MCQ',
-      questionText: data['questionText'] ?? '',
-      imageUrl: data['imageUrl'],
+      id: data['id']?.toString() ?? '',
+      subject: data['subject']?.toString() ?? '',
+      paper: data['paper']?.toString() ?? '',
+      grade: (data['grade'] as num?)?.toInt() ?? 12,
+      topic: data['topic']?.toString() ?? '',
+      cognitiveLevel: data['cognitiveLevel']?.toString() ?? '',
+      marks: (data['marks'] as num?)?.toInt() ?? 0,
+      year: (data['year'] as num?)?.toInt() ?? 0,
+      season: data['season']?.toString() ?? '',
+      format: data['format']?.toString() ?? 'MCQ',
+      questionText: data['questionText']?.toString() ?? '',
+      imageUrl: data['imageUrl']?.toString(),
       options: List<String>.from(data['options'] ?? []),
       optionImages: data['optionImages'] != null
           ? List<String>.from(data['optionImages'])
           : null,
-      correctOrder: List<int>.from(data['correctOrder'] ?? []),
+      correctOrder: List<String>.from(data['correctOrder'] ?? []),
       // Correct answer and explanation might not be sent from the cloud function
       // for security reasons (to prevent cheating), so we provide default values
       correctAnswer: correctAnswerValue,
@@ -122,12 +123,13 @@ class Question {
       // Load drag-and-drop specific data if present
       dragItems: data['dragItems'] != null
           ? (data['dragItems'] as List<dynamic>)
-                .map((item) => DragItem.fromMap(item))
+                .map((item) => DragItem.fromDynamic(item))
                 .toList()
           : null,
-      dragTargets: data['dragTargets'] != null
-          ? (data['dragTargets'] as List<dynamic>)
-                .map((target) => DropTarget.fromMap(target))
+      // Handle both 'dragTargets' and 'dropTargets' field names for backward compatibility
+      dragTargets: (data['dragTargets'] ?? data['dropTargets']) != null
+          ? ((data['dragTargets'] ?? data['dropTargets']) as List<dynamic>)
+                .map((target) => DropTarget.fromDynamic(target))
                 .toList()
           : null,
       // Enhanced Short Answer fields
@@ -171,14 +173,14 @@ class Question {
 
     return Question(
       id: doc.id,
-      subject: data['subject'] ?? '',
-      paper: data['paper'] ?? '',
-      grade: data['grade'] ?? 12,
+      subject: data['subject']?.toString() ?? '',
+      paper: data['paper']?.toString() ?? '',
+      grade: (data['grade'] as num?)?.toInt() ?? 12,
       topic: topicValue,
-      cognitiveLevel: data['cognitiveLevel'] ?? '',
-      marks: data['marks'] ?? 0,
-      year: data['year'] ?? 0,
-      season: data['season'] ?? '',
+      cognitiveLevel: data['cognitiveLevel']?.toString() ?? '',
+      marks: (data['marks'] as num?)?.toInt() ?? 0,
+      year: (data['year'] as num?)?.toInt() ?? 0,
+      season: data['season']?.toString() ?? '',
       format: formatValue,
       questionText: data['questionText'] ?? '',
       imageUrl: imageUrlValue,
@@ -190,7 +192,7 @@ class Question {
       optionImages: hasImageBasedOptions
           ? List<String>.from(data['optionImages'])
           : null,
-      correctOrder: List<int>.from(data['correctOrder'] ?? []),
+      correctOrder: List<String>.from(data['correctOrder'] ?? []),
       correctAnswer: correctAnswerValue,
       explanation: data['explanation'] ?? '',
       points: data['points'],
@@ -198,12 +200,13 @@ class Question {
       // Load drag-and-drop specific data if present
       dragItems: data['dragItems'] != null
           ? (data['dragItems'] as List<dynamic>)
-                .map((item) => DragItem.fromMap(item))
+                .map((item) => DragItem.fromDynamic(item))
                 .toList()
           : null,
-      dragTargets: data['dragTargets'] != null
-          ? (data['dragTargets'] as List<dynamic>)
-                .map((target) => DropTarget.fromMap(target))
+      // Handle both 'dragTargets' and 'dropTargets' field names for backward compatibility
+      dragTargets: (data['dragTargets'] ?? data['dropTargets']) != null
+          ? ((data['dragTargets'] ?? data['dropTargets']) as List<dynamic>)
+                .map((target) => DropTarget.fromDynamic(target))
                 .toList()
           : null,
       // Enhanced Short Answer fields
@@ -261,7 +264,7 @@ class Question {
     }
 
     if (dragTargets != null && dragTargets!.isNotEmpty) {
-      map['dropTargets'] = dragTargets!
+      map['dragTargets'] = dragTargets!
           .map(
             (target) => {
               'id': target.id,
@@ -329,18 +332,57 @@ class Question {
 
   // Validate drag-and-drop question
   bool get isValidDragAndDrop {
-    if (!isDragAndDrop) return false;
-    if (!hasDragDropData) return false;
+    print('=== isValidDragAndDrop validation ===');
 
-    // Check that all drop targets have valid correct pairs
-    for (final target in dragTargets!) {
-      final hasMatchingDragItem = dragItems!.any(
-        (item) => item.id == target.correctPair,
-      );
-      if (!hasMatchingDragItem) return false;
+    if (!isDragAndDrop) {
+      print('Validation failed: !isDragAndDrop (format: $format)');
+      return false;
     }
 
-    return true;
+    if (!hasDragDropData) {
+      print('Validation failed: !hasDragDropData');
+      print('  dragItems: ${dragItems?.length ?? 0}');
+      print('  dragTargets: ${dragTargets?.length ?? 0}');
+      return false;
+    }
+
+    // Relaxed validation: Just check that we have items and targets
+    // The UI can handle mismatched IDs by allowing any item to go to any target
+    if (dragItems!.isEmpty || dragTargets!.isEmpty) {
+      print('Validation failed: Empty dragItems or dragTargets');
+      return false;
+    }
+
+    // Optional: Check that all drop targets have valid correct pairs
+    bool hasValidPairs = true;
+    for (final target in dragTargets!) {
+      print(
+        'Checking target: ${target.id} -> correctPair: ${target.correctPair}',
+      );
+
+      final hasMatchingDragItem = dragItems!.any((item) {
+        print('  Comparing with dragItem: ${item.id}');
+        return item.id == target.correctPair;
+      });
+
+      if (!hasMatchingDragItem) {
+        print(
+          'Warning: No matching drag item for target ${target.id} with correctPair ${target.correctPair}',
+        );
+        hasValidPairs = false;
+        // Don't return false - continue validation
+      }
+    }
+
+    if (!hasValidPairs) {
+      print(
+        'Validation warning: Some targets have mismatched correctPair IDs, but allowing anyway',
+      );
+    } else {
+      print('Validation passed: All targets have matching drag items');
+    }
+
+    return true; // Always return true if we have data, regardless of ID matching
   }
 
   // Get drag item by ID

@@ -187,13 +187,30 @@ class PracticeSession {
         return question.correctAnswer == userAnswer.toString();
 
       case 'drag-and-drop':
+        // Handle new drag-and-drop ordering format (comma-separated string)
+        if (question.correctOrder.isNotEmpty && userAnswer is String) {
+          final userOrderList = userAnswer
+              .split(',')
+              .map((s) => s.trim())
+              .toList();
+          return _listsEqual(userOrderList, question.correctOrder);
+        }
         // Handle new drag-and-drop format with dragItems/dragTargets
         if (question.hasDragDropData && userAnswer is List<String>) {
           return _validateDragAndDropPairs(question, userAnswer);
         }
-        // Legacy format fallback
+        // Legacy format fallback for old integer-based ordering
         if (userAnswer is List<int>) {
-          return _listsEqual(userAnswer, question.correctOrder);
+          // Convert correctOrder strings to integers for comparison if needed
+          try {
+            final correctOrderInts = question.correctOrder
+                .map((s) => int.parse(s))
+                .toList();
+            return _listsEqual(userAnswer, correctOrderInts);
+          } catch (e) {
+            // If conversion fails, it's not a legacy format
+            return false;
+          }
         }
         return false;
 

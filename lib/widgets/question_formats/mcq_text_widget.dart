@@ -9,8 +9,7 @@ class MCQTextWidget extends ConsumerWidget {
   final Question question;
   final String? selectedOption;
 
-  const MCQTextWidget({Key? key, required this.question, this.selectedOption})
-    : super(key: key);
+  const MCQTextWidget({super.key, required this.question, this.selectedOption});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

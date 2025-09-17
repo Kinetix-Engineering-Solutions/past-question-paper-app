@@ -1,13 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:past_question_paper_v1/utils/app_constants.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:past_question_paper_v1/repositories/question_repository.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 
-import 'package:past_question_paper_v1/views/practice_screen.dart';
+import '../repositories/question_repository.dart';
+import 'practice_screen.dart';
 
 // ViewModel to handle the logic for this screen
 final testConfigurationViewModelProvider =
@@ -110,15 +110,16 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
   }
 }
 
+
 class TestConfigurationScreen extends StatefulWidget {
   final String subject;
   final int grade;
 
   const TestConfigurationScreen({
-    Key? key,
+    super.key,
     required this.subject,
     required this.grade,
-  }) : super(key: key);
+  });
 
   @override
   State<TestConfigurationScreen> createState() =>
@@ -192,7 +193,7 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
   @override
   Widget build(BuildContext context) {
     final loadingButtonId = ref.watch(testConfigurationViewModelProvider);
-    final years = List.generate(10, (index) => DateTime.now().year - index);
+    final years = List.generate(4, (index) => DateTime.now().year - index);
     const seasons = ['November', 'June', 'March'];
 
     return ListView(

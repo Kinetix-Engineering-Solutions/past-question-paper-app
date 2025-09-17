@@ -60,8 +60,11 @@ class QuestionRepository {
       print('Cloud Function result type: ${result.data.runtimeType}'); // Debug
       print('Cloud Function result: ${result.data}'); // Debug
 
-      // The function now returns the questions array directly, not wrapped in a map
-      final List<dynamic> questionDataList = result.data as List<dynamic>;
+      // The new modular function returns an object with questions array
+      final Map<String, dynamic> responseData =
+          result.data as Map<String, dynamic>;
+      final List<dynamic> questionDataList =
+          responseData['questions'] as List<dynamic>;
 
       if (questionDataList.isEmpty) {
         return [];
@@ -101,8 +104,8 @@ class QuestionRepository {
 
   /// Submits user's answers to the 'gradeTest' Cloud Function for marking.
   ///
-  /// Returns a map with the final score and total marks.
-  Future<Map<String, int>> gradeTest({
+  /// Returns the complete grading results including statistics and detailed breakdown.
+  Future<Map<String, dynamic>> gradeTest({
     required Map<String, dynamic> userAnswers,
     required String subject,
     String? paper, // Paper might be optional for some test modes
@@ -120,7 +123,7 @@ class QuestionRepository {
       final callable = _functions.httpsCallable('gradeTest');
 
       final result = await callable.call({
-        'answers': userAnswers,
+        'submissions': userAnswers, // Use 'submissions' key for new format
         'subject': subject,
         'paper': paper,
       });
@@ -128,10 +131,8 @@ class QuestionRepository {
       // Handle the response data safely
       final responseData = result.data;
       if (responseData is Map) {
-        return {
-          'score': (responseData['score'] as num).toInt(),
-          'totalMarks': (responseData['totalMarks'] as num).toInt(),
-        };
+        // Return the full response data for detailed results
+        return Map<String, dynamic>.from(responseData);
       } else {
         throw Exception('Invalid response format from gradeTest function');
       }
