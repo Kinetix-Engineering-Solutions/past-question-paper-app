@@ -21,7 +21,14 @@ const QUESTIONS_TO_GENERATE = 100;
 const BATCH_SIZE = 250; // Firestore batch write limit is 500 operations
 
 const TOPICS = {
-  mathematics: ['Algebra', 'Functions & Graphs', 'Differential Calculus', 'Probability', 'Geometry'],
+  mathematics: [
+    'Algebra, Equations & Inequalities',
+    'Functions & Graphs', 
+    'Differential Calculus',
+    'Pattern & Sequences',
+    'Probability',
+    'Finance, Growth & Decay'
+  ],
 };
 
 const COGNITIVE_LEVELS = ['Level 1', 'Level 2', 'Level 3', 'Level 4'];

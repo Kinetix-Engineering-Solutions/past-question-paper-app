@@ -511,6 +511,7 @@ async function generateBlueprintCompliantTest(params) {
   
   // Fetch blueprint
   const blueprintId = `${params.subject}_${normalizePaperFormat(params.paper)}_gr${params.grade}`.toLowerCase();
+  console.log(`🔍 Looking for blueprint: ${blueprintId} (paper: ${params.paper} -> ${normalizePaperFormat(params.paper)})`);
   const blueprint = await fetchBlueprint(blueprintId);
   
   if (!blueprint.topics || !blueprint.cognitiveLevels) {
