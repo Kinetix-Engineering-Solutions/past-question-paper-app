@@ -1,5 +1,6 @@
 const { safeArray, mapQuestionData, normalizePaperFormat } = require('../helpers/dataHelpers');
 const { buildQuestionQuery, fetchBlueprint, executeQuestionQuery } = require('./databaseService');
+const { generateBlueprintCompliantTest } = require('./enhancedTestService');
 
 /**
  * Test generation service for creating past paper tests
@@ -96,6 +97,38 @@ async function generateQuestionsForFormat(formatConfig, params) {
 async function generateTestPaper(params) {
   console.log('Generating test with params:', params);
 
+  try {
+    // Try enhanced blueprint-compliant generation first
+    const enhancedResult = await generateBlueprintCompliantTest(params);
+    
+    if (enhancedResult && enhancedResult.questions && enhancedResult.questions.length > 0) {
+      console.log(`✅ Enhanced generation successful: ${enhancedResult.questions.length} questions`);
+      return {
+        questions: enhancedResult.questions,
+        totalQuestions: enhancedResult.totalQuestions,
+        blueprint: enhancedResult.blueprint,
+        params: params,
+        generatedAt: enhancedResult.generatedAt,
+        complianceReport: enhancedResult.complianceReport,
+        topicDistribution: enhancedResult.topicDistribution,
+        cognitiveDistribution: enhancedResult.cognitiveDistribution
+      };
+    }
+  } catch (enhancedError) {
+    console.warn('Enhanced generation failed, falling back to legacy:', enhancedError.message);
+  }
+
+  // Fallback to legacy generation if enhanced fails
+  console.log('🔄 Using legacy test generation as fallback');
+  return generateLegacyTestPaper(params);
+}
+
+/**
+ * Legacy test generation method (fallback)
+ * @param {Object} params - Test generation parameters
+ * @returns {Object} - Generated test data
+ */
+async function generateLegacyTestPaper(params) {
   // Fetch blueprint for paper format (using original format)
   const blueprintId = `${params.subject}_${normalizePaperFormat(params.paper)}_gr${params.grade}`.toLowerCase();
   console.log('Looking for blueprint with ID:', blueprintId);
@@ -169,5 +202,6 @@ module.exports = {
   selectRandomQuestions,
   processQuestionsForFormat,
   generateQuestionsForFormat,
-  generateTestPaper
+  generateTestPaper,
+  generateLegacyTestPaper
 };
