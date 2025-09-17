@@ -31,6 +31,16 @@ class Question {
   final List<DragItem>? dragItems; // For drag-and-drop questions
   final List<DropTarget>? dragTargets; // For drag-and-drop questions
 
+  // Enhanced Short Answer fields (all optional for backward compatibility)
+  final List<String>? answerVariations; // Acceptable answer variations
+  final bool? caseSensitive; // Whether answers are case-sensitive  
+  final List<String>? hints; // Hints for students
+  final List<String>? workingSteps; // Step-by-step solution
+  final String? answerType; // 'algebraic', 'numerical', 'text'
+  final double? tolerance; // Tolerance for numerical answers
+  final String? units; // Expected units for numerical answers
+  final bool? showWorking; // Whether to show working steps
+
   // Backward compatibility getters for old field names
   String get topicId => topic;
   String get questionType => format;
@@ -61,6 +71,15 @@ class Question {
     this.timeAllocation, // Legacy field - optional time allocation
     this.dragItems, // For drag-and-drop questions
     this.dragTargets, // For drag-and-drop questions
+    // Enhanced Short Answer fields
+    this.answerVariations,
+    this.caseSensitive,
+    this.hints,
+    this.workingSteps,
+    this.answerType,
+    this.tolerance,
+    this.units,
+    this.showWorking,
   });
 
   /// Factory constructor to create Question from Cloud Function data
@@ -111,6 +130,19 @@ class Question {
                 .map((target) => DropTarget.fromMap(target))
                 .toList()
           : null,
+      // Enhanced Short Answer fields
+      answerVariations: data['answerVariations'] != null 
+          ? List<String>.from(data['answerVariations']) 
+          : null,
+      caseSensitive: data['caseSensitive'],
+      hints: data['hints'] != null ? List<String>.from(data['hints']) : null,
+      workingSteps: data['workingSteps'] != null 
+          ? List<String>.from(data['workingSteps']) 
+          : null,
+      answerType: data['answerType'],
+      tolerance: data['tolerance']?.toDouble(),
+      units: data['units'],
+      showWorking: data['showWorking'],
     );
   }
 
@@ -174,6 +206,19 @@ class Question {
                 .map((target) => DropTarget.fromMap(target))
                 .toList()
           : null,
+      // Enhanced Short Answer fields
+      answerVariations: data['answerVariations'] != null 
+          ? List<String>.from(data['answerVariations']) 
+          : null,
+      caseSensitive: data['caseSensitive'],
+      hints: data['hints'] != null ? List<String>.from(data['hints']) : null,
+      workingSteps: data['workingSteps'] != null 
+          ? List<String>.from(data['workingSteps']) 
+          : null,
+      answerType: data['answerType'],
+      tolerance: data['tolerance']?.toDouble(),
+      units: data['units'],
+      showWorking: data['showWorking'],
     );
   }
   Map<String, dynamic> toMap() {
@@ -233,6 +278,39 @@ class Question {
       map['optionImages'] = optionImages;
     } else {
       map['options'] = options;
+    }
+
+    // Add enhanced short answer fields if present
+    if (answerVariations != null && answerVariations!.isNotEmpty) {
+      map['answerVariations'] = answerVariations;
+    }
+    
+    if (caseSensitive != null) {
+      map['caseSensitive'] = caseSensitive;
+    }
+    
+    if (hints != null && hints!.isNotEmpty) {
+      map['hints'] = hints;
+    }
+    
+    if (workingSteps != null && workingSteps!.isNotEmpty) {
+      map['workingSteps'] = workingSteps;
+    }
+    
+    if (answerType != null) {
+      map['answerType'] = answerType;
+    }
+    
+    if (tolerance != null) {
+      map['tolerance'] = tolerance;
+    }
+    
+    if (units != null) {
+      map['units'] = units;
+    }
+    
+    if (showWorking != null) {
+      map['showWorking'] = showWorking;
     }
 
     return map;

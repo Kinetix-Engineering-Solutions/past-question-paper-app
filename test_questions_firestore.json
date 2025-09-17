@@ -32,5 +32,98 @@
     "explanation": "2 + 2 equals 4",
     "points": 5,
     "timeAllocation": 30
+  },
+  {
+    "topicId": "math_g12_derivatives_001",
+    "questionType": "short_answer",
+    "format": "short_answer", 
+    "questionText": "Find the derivative of f(x) = 3x² + 2x - 1",
+    "correctAnswer": "6x + 2",
+    "answerVariations": [
+      "6x + 2",
+      "2 + 6x", 
+      "6x+2",
+      "2+6x"
+    ],
+    "caseSensitive": false,
+    "explanation": "Apply power rule: d/dx(3x²) = 6x, d/dx(2x) = 2, d/dx(-1) = 0. Combine: 6x + 2",
+    "hints": [
+      "Use the power rule for derivatives",
+      "d/dx(x^n) = nx^(n-1)"
+    ],
+    "workingSteps": [
+      "Apply power rule to each term",
+      "d/dx(3x²) = 6x",
+      "d/dx(2x) = 2", 
+      "d/dx(-1) = 0",
+      "Combine: 6x + 2"
+    ],
+    "points": 1,
+    "timeAllocation": 120,
+    "answerType": "algebraic",
+    "showWorking": true,
+    "options": [],
+    "correctOrder": []
+  },
+  {
+    "topicId": "math_g12_integrals_001",
+    "questionType": "short_answer",
+    "format": "short_answer",
+    "questionText": "Evaluate the integral: ∫ (2x + 3) dx",
+    "correctAnswer": "x² + 3x + C",
+    "answerVariations": [
+      "x² + 3x + C",
+      "x^2 + 3x + C",
+      "3x + x² + C",
+      "3x + x^2 + C"
+    ],
+    "caseSensitive": false,
+    "explanation": "Use the power rule for integration: ∫x^n dx = x^(n+1)/(n+1) + C",
+    "hints": [
+      "Use the power rule for integration",
+      "Don't forget the constant of integration C"
+    ],
+    "workingSteps": [
+      "Split the integral: ∫2x dx + ∫3 dx",
+      "Integrate 2x: x²",
+      "Integrate 3: 3x",
+      "Add constant of integration: x² + 3x + C"
+    ],
+    "points": 2,
+    "timeAllocation": 90,
+    "answerType": "algebraic",
+    "showWorking": true,
+    "options": [],
+    "correctOrder": []
+  },
+  {
+    "topicId": "math_g12_functions_001",
+    "questionType": "short_answer",
+    "format": "short_answer",
+    "questionText": "Find the value of x when f(x) = 2x - 5 = 7",
+    "correctAnswer": "6",
+    "answerVariations": [
+      "6",
+      "x = 6",
+      "x=6"
+    ],
+    "caseSensitive": false,
+    "explanation": "Solve the equation 2x - 5 = 7 by isolating x",
+    "hints": [
+      "Add 5 to both sides first",
+      "Then divide both sides by 2"
+    ],
+    "workingSteps": [
+      "Start with: 2x - 5 = 7",
+      "Add 5 to both sides: 2x = 12",
+      "Divide both sides by 2: x = 6"
+    ],
+    "points": 1,
+    "timeAllocation": 60,
+    "answerType": "numerical",
+    "tolerance": 0.1,
+    "showWorking": true,
+    "options": [],
+    "correctOrder": []
   }
 ]

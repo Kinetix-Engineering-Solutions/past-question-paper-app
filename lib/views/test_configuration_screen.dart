@@ -69,6 +69,45 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
       state = null; // Clear the loading state
     }
   }
+
+  /// Start a local test using questions from test_questions_firestore.json
+  /// This is for testing purposes only
+  Future<void> startLocalTest(BuildContext context, String buttonId) async {
+    if (state != null) return; // Prevent multiple taps
+    state = buttonId; // Set the specific button as loading
+    try {
+      print('🧪 Starting local test with test_questions_firestore.json');
+
+      final questions = await _questionRepository.loadLocalTestQuestions();
+      if (questions.isEmpty) {
+        throw Exception('No questions found in test_questions_firestore.json');
+      }
+
+      print('📚 Loaded ${questions.length} questions for local test');
+
+      // Navigate to practice screen with local questions
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PracticeScreen(questions: questions),
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error starting local test: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error starting local test: ${e.toString()}'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      state = null; // Clear the loading state
+    }
+  }
 }
 
 class TestConfigurationScreen extends StatefulWidget {
@@ -287,6 +326,26 @@ class _QuickPracticeView extends ConsumerWidget {
               },
               'quick30',
             );
+          },
+        ),
+        const SizedBox(height: 16),
+        Text(
+          '🧪 Local Testing',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Colors.orange,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildStartCard(
+          title: 'Test Local Questions',
+          subtitle: 'From test_questions_firestore.json',
+          icon: Icons.science_outlined,
+          isLoading: loadingButtonId == 'localtest',
+          onTap: () {
+            ref
+                .read(testConfigurationViewModelProvider.notifier)
+                .startLocalTest(context, 'localtest');
           },
         ),
       ],

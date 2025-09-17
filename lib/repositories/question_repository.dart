@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:past_question_paper_v1/model/question.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart';
 
 // Riverpod provider to make the repository available throughout the app
 final questionRepositoryProvider = Provider<QuestionRepository>((ref) {
@@ -144,6 +146,110 @@ class QuestionRepository {
     } catch (e) {
       print('An unexpected error occurred while grading test: $e');
       throw Exception('An unexpected error occurred.');
+    }
+  }
+
+  /// Load test questions from local JSON file (for testing purposes)
+  ///
+  /// This method loads questions from test_questions_firestore.json
+  /// Useful for testing new question formats before uploading to Firestore
+  Future<List<Question>> loadLocalTestQuestions() async {
+    try {
+      print(
+        'Loading questions from local test_questions_firestore.json',
+      ); // Debug
+
+      // Load the JSON file from assets
+      final String jsonString = await rootBundle.loadString(
+        'test_questions_firestore.json',
+      );
+      final List<dynamic> jsonList = json.decode(jsonString);
+
+      // Convert JSON to Question objects
+      final List<Question> questions = [];
+
+      for (final questionData in jsonList) {
+        try {
+          // Convert the JSON map to match Question.fromMap expected format
+          final Map<String, dynamic> questionMap = {
+            'id': questionData['topicId'] ?? 'local_test_${questions.length}',
+            'questionText': questionData['questionText'] ?? '',
+            'questionType': questionData['questionType'] ?? '',
+            'format':
+                questionData['questionType'] ??
+                '', // Use questionType as format
+            'options': questionData['options'] ?? [],
+            'correctAnswer': _extractCorrectAnswer(questionData),
+            'correctOrder': questionData['correctOrder'] ?? [],
+            'explanation': questionData['explanation'] ?? '',
+            'marks': questionData['points'] ?? 1, // Use 'points' as 'marks'
+            'timeAllocation': questionData['timeAllocation'] ?? 60,
+            'dragItems': questionData['dragItems'],
+            'dragTargets':
+                questionData['dropTargets'], // Map dropTargets to dragTargets
+            'imageUrl': null,
+            'optionImages': null,
+            // Enhanced Short Answer fields
+            'answerVariations': questionData['answerVariations'],
+            'caseSensitive': questionData['caseSensitive'] ?? false,
+            'hints': questionData['hints'],
+            'workingSteps': questionData['workingSteps'], 
+            'answerType': questionData['answerType'],
+            'tolerance': questionData['tolerance'],
+            'units': questionData['units'],
+            'showWorking': questionData['showWorking'] ?? true,
+          };
+
+          final question = Question.fromMap(questionMap);
+          questions.add(question);
+          print(
+            '✅ Successfully loaded ${question.format} question: ${question.questionText}',
+          );
+        } catch (e) {
+          print('❌ Error loading question: $e');
+          print('Question data: $questionData');
+        }
+      }
+
+      print('📊 Loaded ${questions.length} questions from local JSON');
+      return questions;
+    } catch (e) {
+      print('❌ Error loading local test questions: $e');
+      throw Exception('Failed to load local test questions: $e');
+    }
+  }
+
+  /// Extract correct answer from question data based on question type
+  String _extractCorrectAnswer(Map<String, dynamic> questionData) {
+    final questionType =
+        questionData['questionType']?.toString().toLowerCase() ?? '';
+
+    switch (questionType) {
+      case 'short-answer':
+      case 'short_answer':
+      case 'essay':
+        // For text-based questions, correctAnswer is already a string
+        return questionData['correctAnswer']?.toString() ?? '';
+
+      case 'multiple-choice':
+      case 'true-false':
+        // For choice questions, correctAnswer is usually an array, take first element
+        final correctAnswer = questionData['correctAnswer'];
+        if (correctAnswer is List && correctAnswer.isNotEmpty) {
+          return correctAnswer.first.toString();
+        }
+        return correctAnswer?.toString() ?? '';
+
+      case 'drag-and-drop':
+        // For drag-and-drop, correctAnswer might be an array of expected order
+        final correctAnswer = questionData['correctAnswer'];
+        if (correctAnswer is List) {
+          return correctAnswer.join(',');
+        }
+        return correctAnswer?.toString() ?? '';
+
+      default:
+        return questionData['correctAnswer']?.toString() ?? '';
     }
   }
 }

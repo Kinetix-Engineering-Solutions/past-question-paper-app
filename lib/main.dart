@@ -11,20 +11,21 @@ import 'package:past_question_paper_v1/views/login.dart';
 import 'package:past_question_paper_v1/views/main_navigation_screen.dart';
 import 'package:past_question_paper_v1/views/onboarding_screen.dart';
 import 'package:past_question_paper_v1/views/signup_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load dotenv from a specific path before anything else
+  await dotenv.load(fileName: '.env');
+
   // Initialize Firebase with platform-specific options
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Activate App Check
   await FirebaseAppCheck.instance.activate(
-    // Use the debug provider for testing in debug builds.
-    // You will need to configure the reCAPTCHA v3 provider for production.
-    webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
-    // Set androidProvider to `AndroidProvider.debug`
+    webProvider: ReCaptchaV3Provider(dotenv.env['RECAPTCHA_V3_SITE_KEY'] ?? ''),
     androidProvider: AndroidProvider.debug,
-    // Set appleProvider to `AppleProvider.debug`
     appleProvider: AppleProvider.debug,
   );
 
@@ -78,13 +79,10 @@ class _AppInitializerState extends ConsumerState<AppInitializer> {
     return authState.when(
       data: (user) {
         if (user == null) {
-          // User is not logged in
           return const LoginScreen();
         } else if (user.hasCompletedProfile) {
-          // User is logged in and has completed profile
           return const MainNavigationScreen();
         } else {
-          // User is logged in but hasn't completed profile
           return const OnboardingScreen();
         }
       },
@@ -101,7 +99,6 @@ class _AppInitializerState extends ConsumerState<AppInitializer> {
         ),
       ),
       error: (error, stack) {
-        // On error, default to login screen
         return const LoginScreen();
       },
     );

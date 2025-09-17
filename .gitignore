@@ -33,6 +33,10 @@ migrate_working_dir/
 .pub/
 /build/
 
+#CLAUDE: Exclude generated plugin registrant
+CLAUDE.md
+tasks.md
+
 # Symbolication related
 app.*.symbols
 

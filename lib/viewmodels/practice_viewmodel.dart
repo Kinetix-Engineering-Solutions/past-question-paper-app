@@ -53,6 +53,19 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
     state = state.copyWith(userAnswers: newAnswers);
   }
 
+  /// Loads local test questions from test_questions_firestore.json
+  /// This is useful for testing new question formats locally
+  Future<void> loadLocalTestQuestions() async {
+    try {
+      final questions = await _questionRepository.loadLocalTestQuestions();
+      state = PracticeState(questions: questions, userAnswers: {});
+    } catch (e) {
+      print('Error loading local test questions: $e');
+      // Keep empty state if loading fails
+      state = const PracticeState();
+    }
+  }
+
   /// Submits the user's answers to the backend for grading.
   /// Returns a map containing the score and total marks.
   Future<Map<String, int>?> submitTest() async {
