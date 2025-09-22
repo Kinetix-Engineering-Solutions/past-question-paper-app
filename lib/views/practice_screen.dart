@@ -233,9 +233,32 @@ class _QuestionView extends ConsumerWidget {
 
         // --- Question Image ---
         if (question.hasQuestionImage)
-          Image.network(
-            question.imageUrl!,
-          ), // Consider using CachedNetworkImage
+          Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                question.imageUrl!,
+                fit: BoxFit.contain,
+                width: double.infinity,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const SizedBox(
+                    height: 200,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Text(
+                      'Image failed to load',
+                      style: TextStyle(color: Colors.redAccent),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        // Consider using CachedNetworkImage
         const SizedBox(height: 24),
 
         // --- Render different question formats ---

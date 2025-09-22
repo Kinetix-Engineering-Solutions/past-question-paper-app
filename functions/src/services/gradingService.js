@@ -20,8 +20,8 @@ function gradeMultipleChoice(question, userAnswer) {
     userAnswer: userAnswer,
     correctAnswer: question.correctAnswer,
     isCorrect: isCorrect,
-    marksAwarded: isCorrect ? (question.maxMarks || 1) : 0,
-    maxMarks: question.maxMarks || 1
+    marksAwarded: isCorrect ? (question.maxMarks || 2) : 0,
+    maxMarks: question.maxMarks || 2
   };
 }
 
