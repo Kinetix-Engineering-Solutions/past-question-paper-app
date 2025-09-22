@@ -14,37 +14,54 @@ class MCQTextWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Column(
-      children: question.options.map((option) {
-        final isSelected = selectedOption == option;
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12.0),
-          child: Card(
-            color: isSelected ? AppColors.accentSoft : AppColors.neutralCard,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                color: isSelected ? AppColors.accent : AppColors.neutralBorder,
-                width: 1.5,
+      children: [
+        // [ADDED] Show question text 09-sept
+        // if (question.questionText.isNotEmpty)
+        //   Padding(
+        //     padding: const EdgeInsets.only(bottom: 12.0),
+        //     child: LatexText(question.questionText),
+        //   ),
+
+        // [ADDED] Show question image if available 09-sept
+        // if (question.hasQuestionImage)
+        //   Padding(
+        //     padding: const EdgeInsets.only(bottom: 12.0),
+        //     child: Image.network(question.imageUrl!),
+        //   ),
+
+
+        ...question.options.map((option) {
+          final isSelected = selectedOption == option;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: Card(
+              color: isSelected ? AppColors.accentSoft : AppColors.neutralCard,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: isSelected ? AppColors.accent : AppColors.neutralBorder,
+                  width: 1.5,
+                ),
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                title: LatexText(option),
+                trailing: isSelected
+                    ? Icon(Icons.check_circle, color: AppColors.accent, size: 24)
+                    : null,
+                onTap: () {
+                  ref
+                      .read(practiceViewModelProvider.notifier)
+                      .answerQuestion(question.id, option);
+                },
               ),
             ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              title: LatexText(option),
-              trailing: isSelected
-                  ? Icon(Icons.check_circle, color: AppColors.accent, size: 24)
-                  : null,
-              onTap: () {
-                ref
-                    .read(practiceViewModelProvider.notifier)
-                    .answerQuestion(question.id, option);
-              },
-            ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ],
     );
   }
 }

@@ -65,49 +65,55 @@ class MCQImageWidget extends ConsumerWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.accent,
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                              : null,
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: AppColors.neutralCard,
-                        child: const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.broken_image,
-                                color: AppColors.neutralMid,
-                                size: 32,
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'Image failed to load',
-                                style: TextStyle(
-                                  color: AppColors.neutralMid,
-                                  fontSize: 12,
+                  child: Center(
+                    child: AspectRatio(
+                      aspectRatio: 1, // Keeps images in square tiles
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          color: AppColors.neutralCard, // fallback color
+                          child: Image.network(
+                            imageUrl,
+                            fit: BoxFit
+                                .contain, // shows the whole image without cropping
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  color: AppColors.accent,
+                                  value:
+                                      loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                      : null,
                                 ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.broken_image,
+                                      color: AppColors.neutralMid,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Image failed to load',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.neutralMid,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
                           ),
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
                 if (isSelected)
