@@ -214,13 +214,6 @@ class PracticeSession {
         }
         return false;
 
-      case 'short-answer':
-      case 'short_answer':
-        return _validateShortAnswer(question, userAnswer);
-
-      case 'essay':
-        return _validateEssayAnswer(question, userAnswer);
-
       default:
         return false;
     }
@@ -244,17 +237,6 @@ class PracticeSession {
               .join(', ');
         }
         return userAnswer.toString();
-
-      case 'short-answer':
-      case 'short_answer':
-      case 'essay':
-        // For text-based answers, limit display length and preserve formatting
-        final text = userAnswer.toString();
-        if (text.length > 100) {
-          return '${text.substring(0, 100)}...';
-        }
-        return text;
-
       default:
         return userAnswer.toString();
     }
@@ -358,83 +340,6 @@ class PracticeSession {
       currentQuestionIndex: json['currentQuestionIndex'] ?? 0,
       score: json['score'],
     );
-  }
-
-  /// Validate short answer against correct answer
-  bool _validateShortAnswer(Question question, dynamic userAnswer) {
-    if (userAnswer == null || userAnswer.toString().trim().isEmpty) {
-      return false;
-    }
-
-    String userAnswerText = userAnswer.toString().trim();
-    String correctAnswerText = question.correctAnswer.trim();
-
-    // Handle case sensitivity
-    if (question.caseSensitive != true) {
-      userAnswerText = userAnswerText.toLowerCase();
-      correctAnswerText = correctAnswerText.toLowerCase();
-    }
-
-    // Clean whitespace
-    userAnswerText = userAnswerText.replaceAll(RegExp(r'\s+'), ' ');
-    correctAnswerText = correctAnswerText.replaceAll(RegExp(r'\s+'), ' ');
-
-    // Check main answer
-    if (userAnswerText == correctAnswerText) {
-      return true;
-    }
-
-    // Check answer variations if available
-    if (question.answerVariations != null) {
-      for (String variation in question.answerVariations!) {
-        String cleanVariation = question.caseSensitive == true
-            ? variation.trim().replaceAll(RegExp(r'\s+'), ' ')
-            : variation.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
-
-        if (userAnswerText == cleanVariation) {
-          return true;
-        }
-      }
-    }
-
-    // Numerical tolerance check for numerical answers
-    if (question.answerType == 'numerical' && question.tolerance != null) {
-      return _validateNumericalAnswer(
-        userAnswerText,
-        correctAnswerText,
-        question.tolerance!,
-      );
-    }
-
-    return false;
-  }
-
-  /// Validate essay answer (basic implementation)
-  bool _validateEssayAnswer(Question question, dynamic userAnswer) {
-    if (userAnswer == null || userAnswer.toString().trim().isEmpty) {
-      return false;
-    }
-
-    final userAnswerText = userAnswer.toString().toLowerCase().trim();
-    final correctAnswerText = question.correctAnswer.toLowerCase().trim();
-
-    // Simple case-insensitive string comparison for essays
-    return userAnswerText == correctAnswerText;
-  }
-
-  /// Validate numerical answer with tolerance
-  bool _validateNumericalAnswer(
-    String userAnswer,
-    String correctAnswer,
-    double tolerance,
-  ) {
-    try {
-      double userValue = double.parse(userAnswer);
-      double correctValue = double.parse(correctAnswer);
-      return (userValue - correctValue).abs() <= tolerance;
-    } catch (e) {
-      return false;
-    }
   }
 }
 
