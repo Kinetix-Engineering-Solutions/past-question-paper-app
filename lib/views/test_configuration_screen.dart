@@ -108,6 +108,91 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
       state = null; // Clear the loading state
     }
   }
+
+  /// Start PQP mode test using questions from test_questions_firestore.json
+  /// PQP mode shows question chains and dependencies
+  Future<void> startPQPTest(BuildContext context, String buttonId) async {
+    if (state != null) return; // Prevent multiple taps
+    state = buttonId; // Set the specific button as loading
+    try {
+      print('📝 Starting PQP mode test with question chains');
+
+      final questions = await _questionRepository.loadPQPQuestions();
+      if (questions.isEmpty) {
+        throw Exception('No PQP questions found in test_questions_firestore.json');
+      }
+
+      print('📚 Loaded ${questions.length} PQP questions');
+
+      // Navigate to practice screen with PQP questions
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PracticeScreen(
+              questions: questions,
+              isPQPMode: true,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error starting PQP test: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error starting PQP test: ${e.toString()}'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      state = null; // Clear the loading state
+    }
+  }
+
+  /// Start Sprint mode test using questions from test_questions_firestore.json
+  /// Sprint mode shows standalone questions with hints available
+  Future<void> startSprintTest(BuildContext context, String buttonId) async {
+    if (state != null) return; // Prevent multiple taps
+    state = buttonId; // Set the specific button as loading
+    try {
+      print('⚡ Starting Sprint mode test with hints available');
+
+      final sprintQuestions = await _questionRepository.loadSprintQuestions();
+
+      if (sprintQuestions.isEmpty) {
+        throw Exception('No Sprint questions found in test_questions_firestore.json');
+      }
+
+      print('📚 Loaded ${sprintQuestions.length} Sprint questions');
+
+      // Navigate to practice screen with Sprint questions
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PracticeScreen(
+              questions: sprintQuestions,
+              isSprintMode: true,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error starting Sprint test: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error starting Sprint test: ${e.toString()}'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      state = null; // Clear the loading state
+    }
+  }
 }
 
 
@@ -347,6 +432,37 @@ class _QuickPracticeView extends ConsumerWidget {
             ref
                 .read(testConfigurationViewModelProvider.notifier)
                 .startLocalTest(context, 'localtest');
+          },
+        ),
+        const SizedBox(height: 16),
+        Text(
+          '📝 Dual Mode Testing',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildStartCard(
+          title: 'PQP Mode',
+          subtitle: 'Past Question Papers with chains & dependencies',
+          icon: Icons.assignment_outlined,
+          isLoading: loadingButtonId == 'pqptest',
+          onTap: () {
+            ref
+                .read(testConfigurationViewModelProvider.notifier)
+                .startPQPTest(context, 'pqptest');
+          },
+        ),
+        _buildStartCard(
+          title: 'Sprint Mode',
+          subtitle: 'Standalone questions with hints available',
+          icon: Icons.flash_on_outlined,
+          isLoading: loadingButtonId == 'sprinttest',
+          onTap: () {
+            ref
+                .read(testConfigurationViewModelProvider.notifier)
+                .startSprintTest(context, 'sprinttest');
           },
         ),
       ],

@@ -3,6 +3,78 @@ import 'package:past_question_paper_v1/model/drag_and_drop%20models/drag_item.da
 import 'package:past_question_paper_v1/model/drag_and_drop%20models/drop_target.dart';
 import 'package:past_question_paper_v1/services/storage_service.dart';
 
+// PQP Mode specific data
+class PQPData {
+  final String? paper;
+  final String? season;
+  final int? year;
+  final String? questionNumber;
+  final List<String>? dependsOn;
+  final String? questionText;
+  final int? marks;
+  final bool? partOfChain;
+  final String? chainId;
+
+  PQPData({
+    this.paper,
+    this.season,
+    this.year,
+    this.questionNumber,
+    this.dependsOn,
+    this.questionText,
+    this.marks,
+    this.partOfChain,
+    this.chainId,
+  });
+
+  factory PQPData.fromMap(Map<String, dynamic> data) {
+    return PQPData(
+      paper: data['paper']?.toString(),
+      season: data['season']?.toString(),
+      year: (data['year'] as num?)?.toInt(),
+      questionNumber: data['questionNumber']?.toString(),
+      dependsOn: data['dependsOn'] != null ? List<String>.from(data['dependsOn']) : null,
+      questionText: data['questionText']?.toString(),
+      marks: (data['marks'] as num?)?.toInt(),
+      partOfChain: data['partOfChain'] as bool?,
+      chainId: data['chainId']?.toString(),
+    );
+  }
+}
+
+// Sprint Mode specific data
+class SprintData {
+  final String? questionText;
+  final Map<String, dynamic>? providedContext;
+  final int? marks;
+  final bool? canRandomize;
+  final String? difficulty;
+  final int? estimatedTime;
+  final List<String>? tags;
+
+  SprintData({
+    this.questionText,
+    this.providedContext,
+    this.marks,
+    this.canRandomize,
+    this.difficulty,
+    this.estimatedTime,
+    this.tags,
+  });
+
+  factory SprintData.fromMap(Map<String, dynamic> data) {
+    return SprintData(
+      questionText: data['questionText']?.toString(),
+      providedContext: data['providedContext'] as Map<String, dynamic>?,
+      marks: (data['marks'] as num?)?.toInt(),
+      canRandomize: data['canRandomize'] as bool?,
+      difficulty: data['difficulty']?.toString(),
+      estimatedTime: (data['estimatedTime'] as num?)?.toInt(),
+      tags: data['tags'] != null ? List<String>.from(data['tags']) : null,
+    );
+  }
+}
+
 class Question {
   final String id;
   // --- Essential Metadata ---
@@ -14,6 +86,11 @@ class Question {
   final int marks;
   final int year;
   final String season;
+
+  // --- Dual Mode Support (PQP vs Sprint) ---
+  final List<String>? availableInModes; // ["pqp", "sprint"]
+  final PQPData? pqpData; // PQP mode specific data
+  final SprintData? sprintData; // Sprint mode specific data
 
   // --- Question Content ---
   final String format; // Renamed from questionType
@@ -50,6 +127,9 @@ class Question {
     required this.marks,
     required this.year,
     required this.season,
+    this.availableInModes, // Dual mode support
+    this.pqpData, // PQP mode specific data
+    this.sprintData, // Sprint mode specific data
     required this.format,
     required this.questionText,
     this.imageUrl,
@@ -87,6 +167,16 @@ class Question {
       marks: (data['marks'] as num?)?.toInt() ?? 0,
       year: (data['year'] as num?)?.toInt() ?? 0,
       season: data['season']?.toString() ?? '',
+      // Dual mode support
+      availableInModes: data['availableInModes'] != null
+          ? List<String>.from(data['availableInModes'])
+          : null,
+      pqpData: data['pqpData'] != null
+          ? PQPData.fromMap(data['pqpData'])
+          : null,
+      sprintData: data['sprintData'] != null
+          ? SprintData.fromMap(data['sprintData'])
+          : null,
       format: data['format']?.toString() ?? 'MCQ',
       questionText: data['questionText']?.toString() ?? '',
       imageUrl: data['imageUrl']?.toString(),
@@ -445,6 +535,9 @@ class Question {
         marks: marks,
         year: year,
         season: season,
+        availableInModes: availableInModes,
+        pqpData: pqpData,
+        sprintData: sprintData,
         format: format,
         questionText: questionText,
         imageUrl: httpQuestionImage,
@@ -464,4 +557,56 @@ class Question {
       return this;
     }
   }
+
+  // --- Dual Mode Support Methods ---
+
+  /// Check if this question supports PQP mode
+  bool get supportsPQP => availableInModes?.contains('pqp') ?? false;
+
+  /// Check if this question supports Sprint mode
+  bool get supportsSprint => availableInModes?.contains('sprint') ?? false;
+
+  /// Get question text for PQP mode (uses PQP specific text or falls back to general)
+  String getPQPQuestionText() {
+    return pqpData?.questionText ?? questionText;
+  }
+
+  /// Get question text for Sprint mode (uses Sprint specific text or falls back to general)
+  String getSprintQuestionText() {
+    return sprintData?.questionText ?? questionText;
+  }
+
+  /// Get marks for PQP mode
+  int getPQPMarks() {
+    return pqpData?.marks ?? marks;
+  }
+
+  /// Get marks for Sprint mode
+  int getSprintMarks() {
+    return sprintData?.marks ?? marks;
+  }
+
+  /// Check if this question is part of a question chain (PQP mode)
+  bool get isPartOfChain => pqpData?.partOfChain ?? false;
+
+  /// Get question dependencies for PQP mode
+  List<String> get dependencies => pqpData?.dependsOn ?? [];
+
+  /// Get question chain ID
+  String? get chainId => pqpData?.chainId;
+
+  /// Check if this question can be randomized (Sprint mode)
+  bool get canRandomize => sprintData?.canRandomize ?? false;
+
+  /// Get difficulty level for Sprint mode
+  String? get difficulty => sprintData?.difficulty;
+
+  /// Get estimated time for Sprint mode
+  int? get estimatedTime => sprintData?.estimatedTime;
+
+  /// Get tags for Sprint mode
+  List<String> get tags => sprintData?.tags ?? [];
+
+  /// Get provided context for Sprint mode
+  Map<String, dynamic>? get providedContext => sprintData?.providedContext;
 }

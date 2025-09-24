@@ -15,8 +15,15 @@ import 'package:past_question_paper_v1/widgets/question_formats/drag_and_drop_or
 
 class PracticeScreen extends ConsumerStatefulWidget {
   final List<Question> questions;
+  final bool isPQPMode;
+  final bool isSprintMode;
 
-  const PracticeScreen({super.key, required this.questions});
+  const PracticeScreen({
+    super.key,
+    required this.questions,
+    this.isPQPMode = false,
+    this.isSprintMode = false,
+  });
 
   @override
   ConsumerState<PracticeScreen> createState() => _PracticeScreenState();
@@ -147,7 +154,11 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
               onPageChanged: _onPageChanged,
               itemCount: questions.length,
               itemBuilder: (context, index) {
-                return _QuestionView(question: questions[index]);
+                return _QuestionView(
+                  question: questions[index],
+                  isSprintMode: widget.isSprintMode,
+                  isPQPMode: widget.isPQPMode,
+                );
               },
             ),
           ),
@@ -214,29 +225,209 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
 }
 
 // --- Widget to Display a Single Question ---
-class _QuestionView extends ConsumerWidget {
+class _QuestionView extends ConsumerStatefulWidget {
   final Question question;
+  final bool isSprintMode;
+  final bool isPQPMode;
 
-  const _QuestionView({required this.question});
+  const _QuestionView({
+    required this.question,
+    this.isSprintMode = false,
+    this.isPQPMode = false,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_QuestionView> createState() => _QuestionViewState();
+}
+
+class _QuestionViewState extends ConsumerState<_QuestionView> {
+  bool _showHints = false;
+
+  @override
+  Widget build(BuildContext context) {
     final practiceState = ref.watch(practiceViewModelProvider);
-    final selectedOption = practiceState.userAnswers[question.id];
+    final selectedOption = practiceState.userAnswers[widget.question.id];
 
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
+        // --- Mode Indicator ---
+        if (widget.isPQPMode || widget.isSprintMode)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: widget.isPQPMode ? Colors.blue.shade50 : Colors.orange.shade50,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: widget.isPQPMode ? Colors.blue : Colors.orange,
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  widget.isPQPMode ? Icons.assignment_outlined : Icons.flash_on_outlined,
+                  size: 16,
+                  color: widget.isPQPMode ? Colors.blue : Colors.orange,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  widget.isPQPMode ? 'PQP Mode' : 'Sprint Mode',
+                  style: TextStyle(
+                    color: widget.isPQPMode ? Colors.blue : Colors.orange,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        if (widget.isPQPMode || widget.isSprintMode) const SizedBox(height: 12),
+
+        // --- PQP Mode Chain Info ---
+        if (widget.isPQPMode && widget.question.isPartOfChain)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Question Chain: ${widget.question.pqpData?.questionNumber ?? ''}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                if (widget.question.dependencies.isNotEmpty)
+                  Text(
+                    'Depends on: ${widget.question.dependencies.join(', ')}',
+                    style: TextStyle(color: Colors.blue.shade700, fontSize: 12),
+                  ),
+                Text(
+                  'Marks: ${widget.question.getPQPMarks()}',
+                  style: TextStyle(color: Colors.blue.shade700, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+
+        // --- Sprint Mode Context ---
+        if (widget.isSprintMode && widget.question.providedContext != null)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.orange.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.orange.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Provided Context:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                ...widget.question.providedContext!.entries.map(
+                  (entry) => Text(
+                    '${entry.key}: ${entry.value}',
+                    style: TextStyle(color: Colors.orange.shade700, fontSize: 12),
+                  ),
+                ),
+                Text(
+                  'Marks: ${widget.question.getSprintMarks()} | Difficulty: ${widget.question.difficulty ?? 'N/A'}',
+                  style: TextStyle(color: Colors.orange.shade700, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+
+        if ((widget.isPQPMode && widget.question.isPartOfChain) ||
+            (widget.isSprintMode && widget.question.providedContext != null))
+          const SizedBox(height: 16),
+
         // --- Question Text with LaTeX ---
-        LatexText(question.questionText),
+        LatexText(widget.isPQPMode
+            ? widget.question.getPQPQuestionText()
+            : widget.isSprintMode
+                ? widget.question.getSprintQuestionText()
+                : widget.question.questionText),
         const SizedBox(height: 16),
 
         // --- Question Image ---
-        if (question.hasQuestionImage)
+        if (widget.question.hasQuestionImage)
           Image.network(
-            question.imageUrl!,
+            widget.question.imageUrl!,
           ), // Consider using CachedNetworkImage
         const SizedBox(height: 24),
+
+        // --- Sprint Mode Hint Button ---
+        if (widget.isSprintMode)
+          Row(
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _showHints = !_showHints;
+                  });
+                },
+                icon: Icon(_showHints ? Icons.visibility_off : Icons.lightbulb_outline),
+                label: Text(_showHints ? 'Hide Hints' : 'Show Hints'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange.shade100,
+                  foregroundColor: Colors.orange.shade700,
+                ),
+              ),
+            ],
+          ),
+
+        // --- Hints Display (Sprint Mode) ---
+        if (widget.isSprintMode && _showHints)
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.yellow.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.yellow.shade300),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.lightbulb, color: Colors.orange),
+                    SizedBox(width: 8),
+                    Text(
+                      'Hints:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                if (_getHintsForQuestion().isNotEmpty)
+                  ...(_getHintsForQuestion().asMap().entries.map(
+                    (entry) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        '${entry.key + 1}. ${entry.value}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ),
+                  ))
+                else
+                  const Text(
+                    'No hints available for this question.',
+                    style: TextStyle(fontStyle: FontStyle.italic),
+                  ),
+              ],
+            ),
+          ),
+
+        const SizedBox(height: 16),
 
         // --- Render different question formats ---
         _buildQuestionContent(context, ref, selectedOption),
@@ -244,54 +435,112 @@ class _QuestionView extends ConsumerWidget {
     );
   }
 
+  List<String> _getHintsForQuestion() {
+    final hints = <String>[];
+
+    // Try to get hints from the test_questions_firestore.json data
+    // We'll need to enhance the Question model to support hints
+    // For now, provide meaningful hints based on question content and type
+
+    if (widget.question.format.toLowerCase().contains('short')) {
+      // Enhanced hints for short answer questions
+      if (widget.question.questionText.toLowerCase().contains('equation')) {
+        hints.addAll([
+          'Substitute the given function into the transformation equation',
+          'Simplify by combining like terms',
+          'Write your final answer in the form g(x) = ...',
+        ]);
+      } else if (widget.question.questionText.toLowerCase().contains('domain')) {
+        hints.addAll([
+          'Remember: Domain of inverse = Range of original function',
+          'Consider what values the exponential function can produce',
+          'Use interval notation (0; ∞) for your answer',
+        ]);
+      } else if (widget.question.questionText.toLowerCase().contains('derivative')) {
+        hints.addAll([
+          'Identify the outer and inner functions',
+          'Apply the chain rule: d/dx[g(h(x))] = g\'(h(x)) × h\'(x)',
+          'Don\'t forget to differentiate the inner function',
+        ]);
+      } else {
+        hints.addAll([
+          'Read the question carefully and identify what is being asked',
+          'Look for key mathematical terms and operations',
+          'Show your working step by step',
+        ]);
+      }
+    } else if (widget.question.format.toLowerCase() == 'mcq') {
+      hints.addAll([
+        'Eliminate obviously wrong answers first',
+        'Look for clues in the question wording',
+        'Consider each option carefully',
+        'Check your answer by substituting back into the original',
+      ]);
+    } else if (widget.question.format.toLowerCase().contains('true')) {
+      hints.addAll([
+        'Consider trigonometric identities you know',
+        'Think about fundamental mathematical relationships',
+        'Remember basic properties of the functions involved',
+      ]);
+    } else {
+      hints.addAll([
+        'Take your time to understand the question',
+        'Use the provided context to guide your answer',
+        'Break the problem down into smaller steps',
+      ]);
+    }
+
+    return hints;
+  }
+
   Widget _buildQuestionContent(
     BuildContext context,
     WidgetRef ref,
     String? selectedOption,
   ) {
-    switch (question.format.toLowerCase()) {
+    switch (widget.question.format.toLowerCase()) {
       case 'mcq':
-        if (question.hasImageOptions) {
+        if (widget.question.hasImageOptions) {
           return MCQImageWidget(
-            question: question,
+            question: widget.question,
             selectedOption: selectedOption,
           );
         } else {
           return MCQTextWidget(
-            question: question,
+            question: widget.question,
             selectedOption: selectedOption,
           );
         }
       case 'draganddrop':
         // Check if this is ordering format (has correctOrder) or matching format
-        if (question.correctOrder.isNotEmpty) {
+        if (widget.question.correctOrder.isNotEmpty) {
           return DragAndDropOrderingWidget(
-            question: question,
+            question: widget.question,
             currentAnswer: selectedOption,
           );
         } else {
           return DragAndDropWidget(
-            question: question,
+            question: widget.question,
             currentAnswers: _parseDragDropAnswer(selectedOption),
           );
         }
       case 'true_false':
       case 'true-false':
         return TrueFalseWidget(
-          question: question,
+          question: widget.question,
           selectedOption: selectedOption,
         );
       case 'short_answer':
       case 'short-answer':
         return ShortAnswerWidget(
-          question: question,
+          question: widget.question,
           initialAnswer: selectedOption,
         );
       case 'essay':
-        return EssayWidget(question: question, initialAnswer: selectedOption);
+        return EssayWidget(question: widget.question, initialAnswer: selectedOption);
       default:
         return MCQTextWidget(
-          question: question,
+          question: widget.question,
           selectedOption: selectedOption,
         );
     }

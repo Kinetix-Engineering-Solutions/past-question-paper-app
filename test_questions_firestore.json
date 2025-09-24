@@ -1,129 +1,303 @@
-
 [
   {
-    "topicId": "YOUR_TOPIC_ID_HERE",
-    "questionType": "drag-and-drop",
-    "questionText": "Arrange these numbers in ascending order:",
-    "dragItems": [
-      {"id": "item1", "text": "5", "image": null},
-      {"id": "item2", "text": "2", "image": null},
-      {"id": "item3", "text": "8", "image": null},
-      {"id": "item4", "text": "1", "image": null}
-    ],
-    "dropTargets": [
-      {"id": "target1", "text": "First", "image": null, "correctPair": "item4"},
-      {"id": "target2", "text": "Second", "image": null, "correctPair": "item2"},
-      {"id": "target3", "text": "Third", "image": null, "correctPair": "item1"},
-      {"id": "target4", "text": "Fourth", "image": null, "correctPair": "item3"}
-    ],
-    "correctOrder": [3, 1, 0, 2],
-    "correctAnswer": ["1", "2", "5", "8"],
-    "explanation": "Numbers in ascending order: 1, 2, 5, 8",
-    "points": 10,
-    "timeAllocation": 60
-  },
-  {
-    "topicId": "YOUR_TOPIC_ID_HERE",
-    "questionType": "multiple-choice",
-    "questionText": "What is 2 + 2?",
-    "options": ["2", "3", "4", "5"],
-    "correctOrder": [],
-    "correctAnswer": ["4"],
-    "explanation": "2 + 2 equals 4",
-    "points": 5,
-    "timeAllocation": 30
-  },
-  {
-    "topicId": "math_g12_derivatives_001",
-    "questionType": "short_answer",
-    "format": "short_answer", 
-    "questionText": "Find the derivative of f(x) = 3x² + 2x - 1",
-    "correctAnswer": "6x + 2",
-    "answerVariations": [
-      "6x + 2",
-      "2 + 6x", 
-      "6x+2",
-      "2+6x"
-    ],
-    "caseSensitive": false,
-    "explanation": "Apply power rule: d/dx(3x²) = 6x, d/dx(2x) = 2, d/dx(-1) = 0. Combine: 6x + 2",
-    "hints": [
-      "Use the power rule for derivatives",
-      "d/dx(x^n) = nx^(n-1)"
-    ],
-    "workingSteps": [
-      "Apply power rule to each term",
-      "d/dx(3x²) = 6x",
-      "d/dx(2x) = 2", 
-      "d/dx(-1) = 0",
-      "Combine: 6x + 2"
-    ],
-    "points": 1,
-    "timeAllocation": 120,
-    "answerType": "algebraic",
-    "showWorking": true,
-    "options": [],
-    "correctOrder": []
-  },
-  {
-    "topicId": "math_g12_integrals_001",
+    "questionId": "math_g12_func_transform_001",
+    "topicId": "exponential_functions",
     "questionType": "short_answer",
     "format": "short_answer",
-    "questionText": "Evaluate the integral: ∫ (2x + 3) dx",
-    "correctAnswer": "x² + 3x + C",
+    "availableInModes": ["pqp", "sprint"],
+    "pqpData": {
+      "paper": "p1",
+      "season": "November",
+      "year": 2023,
+      "questionNumber": "4.5",
+      "dependsOn": ["math_g12_asymptote_exp_001"],
+      "questionText": "Write down the equation of g if it is given that g(x) = f(x) + 4",
+      "marks": 1,
+      "partOfChain": true,
+      "chainId": "exponential_functions_nov_2023_p1"
+    },
+    "sprintData": {
+      "questionText": "Given that f(x) = 2^x - 4, write down the equation of g if it is given that g(x) = f(x) + 4",
+      "providedContext": {
+        "f(x)": "2^x - 4",
+        "transformation": "g(x) = f(x) + 4",
+        "context": "Function transformation - vertical shift"
+      },
+      "marks": 2,
+      "canRandomize": true,
+      "difficulty": "easy",
+      "estimatedTime": 2,
+      "tags": ["function_transformations", "exponential_functions", "vertical_shifts"]
+    },
+    "correctAnswer": "g(x) = 2^x",
     "answerVariations": [
-      "x² + 3x + C",
-      "x^2 + 3x + C",
-      "3x + x² + C",
-      "3x + x^2 + C"
+      "g(x) = 2^x",
+      "g(x)=2^x",
+      "y = 2^x",
+      "g(x) = 2^x",
+      "2^x"
     ],
     "caseSensitive": false,
-    "explanation": "Use the power rule for integration: ∫x^n dx = x^(n+1)/(n+1) + C",
-    "hints": [
-      "Use the power rule for integration",
-      "Don't forget the constant of integration C"
-    ],
+    "answerType": "equation",
+    "grade": 12,
+    "subject": "mathematics",
+    "topic": "exponential_functions",
+    "cognitiveLevel": "Level 1",
     "workingSteps": [
-      "Split the integral: ∫2x dx + ∫3 dx",
-      "Integrate 2x: x²",
-      "Integrate 3: 3x",
-      "Add constant of integration: x² + 3x + C"
+      "Given: g(x) = f(x) + 4",
+      "Given: f(x) = 2^x - 4",
+      "Substitute: g(x) = (2^x - 4) + 4",
+      "Simplify: g(x) = 2^x - 4 + 4",
+      "Therefore: g(x) = 2^x"
     ],
+    "hints": [
+      "Substitute f(x) = 2^x - 4 into g(x) = f(x) + 4",
+      "Simplify the expression by combining like terms"
+    ],
+    "explanation": "By substituting f(x) = 2^x - 4 into g(x) = f(x) + 4, we get g(x) = (2^x - 4) + 4 = 2^x",
     "points": 2,
-    "timeAllocation": 90,
-    "answerType": "algebraic",
-    "showWorking": true,
-    "options": [],
-    "correctOrder": []
+    "timeAllocation": 120,
+    "showWorking": true
   },
   {
-    "topicId": "math_g12_functions_001",
+    "questionId": "math_g12_inverse_domain_002",
+    "topicId": "inverse_functions",
     "questionType": "short_answer",
     "format": "short_answer",
-    "questionText": "Find the value of x when f(x) = 2x - 5 = 7",
-    "correctAnswer": "6",
+    "availableInModes": ["pqp", "sprint"],
+    "pqpData": {
+      "paper": "p1",
+      "season": "November",
+      "year": 2023,
+      "questionNumber": "4.6",
+      "dependsOn": ["math_g12_func_transform_001"],
+      "questionText": "Write down the domain of g^(-1).",
+      "marks": 2,
+      "partOfChain": true,
+      "chainId": "exponential_functions_nov_2023_p1"
+    },
+    "sprintData": {
+      "questionText": "Given that g(x) = 2^x, write down the domain of g^(-1).",
+      "providedContext": {
+        "g(x)": "2^x",
+        "derivedFrom": "g(x) = f(x) + 4 where f(x) = 2^x - 4",
+        "concept": "Domain of inverse = Range of original function"
+      },
+      "marks": 3,
+      "canRandomize": true,
+      "difficulty": "medium",
+      "estimatedTime": 3,
+      "tags": ["inverse_functions", "exponential_functions", "domain_range"]
+    },
+    "correctAnswer": "x ∈ (0; ∞)",
     "answerVariations": [
-      "6",
-      "x = 6",
-      "x=6"
+      "x ∈ (0; ∞)",
+      "(0; ∞)",
+      "x > 0",
+      "(0, ∞)",
+      "0 < x < ∞",
+      "x ∈ (0, ∞)",
+      "{x | x > 0}"
     ],
     "caseSensitive": false,
-    "explanation": "Solve the equation 2x - 5 = 7 by isolating x",
-    "hints": [
-      "Add 5 to both sides first",
-      "Then divide both sides by 2"
-    ],
+    "answerType": "domain_range",
+    "grade": 12,
+    "subject": "mathematics",
+    "topic": "inverse_functions",
+    "cognitiveLevel": "Level 2",
     "workingSteps": [
-      "Start with: 2x - 5 = 7",
-      "Add 5 to both sides: 2x = 12",
-      "Divide both sides by 2: x = 6"
+      "From 4.5: g(x) = 2^x",
+      "Domain of g^(-1) = Range of g",
+      "Range of g(x) = 2^x is all positive real numbers",
+      "Therefore: Domain of g^(-1) is x ∈ (0; ∞)"
     ],
-    "points": 1,
-    "timeAllocation": 60,
+    "hints": [
+      "Domain of inverse function = Range of original function",
+      "What values can g(x) = 2^x produce?",
+      "Exponential functions with positive base have range (0; ∞)"
+    ],
+    "explanation": "The domain of the inverse function equals the range of the original function. Since g(x) = 2^x has range (0; ∞), the domain of g^(-1) is x ∈ (0; ∞)",
+    "points": 3,
+    "timeAllocation": 180,
+    "showWorking": true
+  },
+  {
+    "questionId": "math_g12_quadratic_vertex_001",
+    "topicId": "quadratic_functions",
+    "questionType": "short_answer",
+    "format": "short_answer",
+    "availableInModes": ["pqp", "sprint"],
+    "pqpData": {
+      "paper": "p2",
+      "season": "June",
+      "year": 2023,
+      "questionNumber": "3.2",
+      "dependsOn": ["math_g12_quadratic_form_001"],
+      "questionText": "Determine the coordinates of the vertex of the parabola.",
+      "marks": 2,
+      "partOfChain": true,
+      "chainId": "quadratic_functions_june_2023_p2"
+    },
+    "sprintData": {
+      "questionText": "Given the function h(x) = -2(x - 3)² + 8, determine the coordinates of the vertex of the parabola.",
+      "providedContext": {
+        "h(x)": "-2(x - 3)² + 8",
+        "form": "vertex form",
+        "concept": "Vertex form is h(x) = a(x - h)² + k where vertex is (h, k)"
+      },
+      "marks": 3,
+      "canRandomize": true,
+      "difficulty": "easy",
+      "estimatedTime": 2,
+      "tags": ["quadratic_functions", "vertex_form", "coordinates"]
+    },
+    "correctAnswer": "(3; 8)",
+    "answerVariations": [
+      "(3; 8)",
+      "(3, 8)",
+      "3; 8",
+      "3, 8",
+      "x = 3, y = 8",
+      "h = 3, k = 8"
+    ],
+    "caseSensitive": false,
+    "answerType": "coordinates",
+    "grade": 12,
+    "subject": "mathematics",
+    "topic": "quadratic_functions",
+    "cognitiveLevel": "Level 1",
+    "workingSteps": [
+      "Given: h(x) = -2(x - 3)² + 8",
+      "This is in vertex form: h(x) = a(x - h)² + k",
+      "Compare: a = -2, h = 3, k = 8",
+      "Vertex coordinates: (h, k) = (3, 8)"
+    ],
+    "hints": [
+      "Identify the vertex form: h(x) = a(x - h)² + k",
+      "The vertex is at point (h, k)"
+    ],
+    "explanation": "In vertex form h(x) = a(x - h)² + k, the vertex is at (h, k). From h(x) = -2(x - 3)² + 8, we get vertex (3, 8)",
+    "points": 3,
+    "timeAllocation": 120,
+    "showWorking": true
+  },
+  {
+    "questionId": "math_g12_trig_identity_001",
+    "topicId": "trigonometry",
+    "questionType": "short_answer",
+    "format": "short_answer",
+    "availableInModes": ["pqp", "sprint"],
+    "pqpData": {
+      "paper": "p1",
+      "season": "February",
+      "year": 2024,
+      "questionNumber": "2.3",
+      "dependsOn": ["math_g12_trig_angle_001"],
+      "questionText": "Simplify sin²θ + cos²θ.",
+      "marks": 1,
+      "partOfChain": true,
+      "chainId": "trigonometry_feb_2024_p1"
+    },
+    "sprintData": {
+      "questionText": "Use the Pythagorean identity to simplify sin²θ + cos²θ.",
+      "providedContext": {
+        "identity": "Pythagorean identity",
+        "formula": "sin²θ + cos²θ = 1",
+        "concept": "Fundamental trigonometric identity"
+      },
+      "marks": 2,
+      "canRandomize": true,
+      "difficulty": "easy",
+      "estimatedTime": 1,
+      "tags": ["trigonometry", "identities", "pythagorean"]
+    },
+    "correctAnswer": "1",
+    "answerVariations": [
+      "1",
+      "= 1",
+      "equals 1",
+      "sin²θ + cos²θ = 1"
+    ],
+    "caseSensitive": false,
     "answerType": "numerical",
-    "tolerance": 0.1,
-    "showWorking": true,
-    "options": [],
-    "correctOrder": []
+    "tolerance": 0,
+    "grade": 12,
+    "subject": "mathematics",
+    "topic": "trigonometry",
+    "cognitiveLevel": "Level 1",
+    "workingSteps": [
+      "Apply Pythagorean identity",
+      "sin²θ + cos²θ = 1"
+    ],
+    "hints": [
+      "This is a fundamental trigonometric identity",
+      "The Pythagorean identity states sin²θ + cos²θ = 1"
+    ],
+    "explanation": "The Pythagorean identity is one of the fundamental trigonometric identities: sin²θ + cos²θ = 1",
+    "points": 2,
+    "timeAllocation": 60,
+    "showWorking": false
+  },
+  {
+    "questionId": "math_g12_derivative_chain_001",
+    "topicId": "calculus_derivatives",
+    "questionType": "short_answer",
+    "format": "short_answer",
+    "availableInModes": ["pqp", "sprint"],
+    "pqpData": {
+      "paper": "p2",
+      "season": "November",
+      "year": 2023,
+      "questionNumber": "5.4",
+      "dependsOn": ["math_g12_chain_rule_001"],
+      "questionText": "Find f'(x) using the chain rule.",
+      "marks": 3,
+      "partOfChain": true,
+      "chainId": "calculus_derivatives_nov_2023_p2"
+    },
+    "sprintData": {
+      "questionText": "Given f(x) = (3x² + 2x - 1)⁴, find f'(x) using the chain rule.",
+      "providedContext": {
+        "f(x)": "(3x² + 2x - 1)⁴",
+        "rule": "Chain rule: d/dx[g(h(x))] = g'(h(x)) × h'(x)",
+        "concept": "Composite function differentiation"
+      },
+      "marks": 4,
+      "canRandomize": true,
+      "difficulty": "medium",
+      "estimatedTime": 5,
+      "tags": ["calculus", "derivatives", "chain_rule"]
+    },
+    "correctAnswer": "f'(x) = 4(3x² + 2x - 1)³(6x + 2)",
+    "answerVariations": [
+      "f'(x) = 4(3x² + 2x - 1)³(6x + 2)",
+      "4(3x² + 2x - 1)³(6x + 2)",
+      "f'(x) = 4(6x + 2)(3x² + 2x - 1)³",
+      "4(6x + 2)(3x² + 2x - 1)³",
+      "f'(x) = (6x + 2) × 4(3x² + 2x - 1)³"
+    ],
+    "caseSensitive": false,
+    "answerType": "algebraic",
+    "grade": 12,
+    "subject": "mathematics",
+    "topic": "calculus_derivatives",
+    "cognitiveLevel": "Level 3",
+    "workingSteps": [
+      "Given: f(x) = (3x² + 2x - 1)⁴",
+      "Let u = 3x² + 2x - 1, so f(x) = u⁴",
+      "Apply chain rule: f'(x) = d/dx(u⁴) × du/dx",
+      "d/dx(u⁴) = 4u³",
+      "du/dx = d/dx(3x² + 2x - 1) = 6x + 2",
+      "Therefore: f'(x) = 4u³ × (6x + 2) = 4(3x² + 2x - 1)³(6x + 2)"
+    ],
+    "hints": [
+      "Identify the outer and inner functions",
+      "Apply the chain rule: d/dx[g(h(x))] = g'(h(x)) × h'(x)",
+      "The derivative of (3x² + 2x - 1) is 6x + 2"
+    ],
+    "explanation": "Using the chain rule for f(x) = (3x² + 2x - 1)⁴, we get f'(x) = 4(3x² + 2x - 1)³ × (6x + 2)",
+    "points": 4,
+    "timeAllocation": 300,
+    "showWorking": true
   }
 ]
