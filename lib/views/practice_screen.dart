@@ -359,9 +359,31 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
 
         // --- Question Image ---
         if (widget.question.hasQuestionImage)
-          Image.network(
-            widget.question.imageUrl!,
-          ), // Consider using CachedNetworkImage
+          Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                widget.question.imageUrl!,
+                fit: BoxFit.contain,
+                width: double.infinity,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const SizedBox(
+                    height: 200,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                    child: Text(
+                      'Image failed to load',
+                      style: TextStyle(color: Colors.redAccent),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
         const SizedBox(height: 24),
 
         // --- Sprint Mode Hint Button ---

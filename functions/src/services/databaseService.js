@@ -35,6 +35,39 @@ function buildQuestionQuery(params) {
 }
 
 /**
+ * Builds enhanced Firestore query with cognitive level filtering
+ * @param {Object} params - Query parameters including cognitiveLevel
+ * @returns {Query} - Enhanced Firestore query
+ */
+function buildEnhancedQuestionQuery(params) {
+  const { grade, subject, paper, year, season, topic, cognitiveLevel, limit = 50 } = params;
+  
+  let query = admin.firestore().collection('questions')
+    .where('grade', '==', grade)
+    .where('subject', '==', subject);
+
+  if (paper) {
+    query = query.where('paper', '==', paper);
+  }
+  if (year) {
+    query = query.where('year', '==', year);
+  }
+  if (season) {
+    query = query.where('season', '==', season);
+  }
+  if (topic) {
+    query = query.where('topic', '==', topic);
+  }
+  if (cognitiveLevel) {
+    query = query.where('cognitiveLevel', '==', cognitiveLevel);
+  }
+
+  query = query.limit(limit);
+  
+  return query;
+}
+
+/**
  * Fetches blueprint document from Firestore
  * @param {string} blueprintId - Blueprint document ID
  * @returns {Object} - Blueprint data
@@ -128,6 +161,7 @@ async function saveUserTestResults(userId, resultData) {
 
 module.exports = {
   buildQuestionQuery,
+  buildEnhancedQuestionQuery,
   fetchBlueprint,
   executeQuestionQuery,
   fetchQuestionsForGrading,
