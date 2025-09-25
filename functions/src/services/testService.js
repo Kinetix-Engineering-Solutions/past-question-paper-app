@@ -1,6 +1,7 @@
 const { safeArray, mapQuestionData, normalizePaperFormat } = require('../helpers/dataHelpers');
 const { buildQuestionQuery, fetchBlueprint, executeQuestionQuery } = require('./databaseService');
 const { generateBlueprintCompliantTest } = require('./enhancedTestService');
+const { generateShortAnswerTest } = require('./shortAnswerTestService');
 
 /**
  * Test generation service for creating past paper tests
@@ -70,10 +71,29 @@ function processQuestionsForFormat(questions, format) {
       processedQuestion.dragItems = safeArray(question.dragItems);
       processedQuestion.dragTargets = safeArray(question.dragTargets);
       processedQuestion.dropTargets = safeArray(question.dropTargets || question.dragTargets);
-      
+
       console.log(`Processed drag-and-drop question ${question.id}:`, {
         dragItems: processedQuestion.dragItems.length,
         dropTargets: processedQuestion.dropTargets.length
+      });
+    }
+
+    // Ensure short answer questions have complete data
+    if (format === 'shortAnswer' || format === 'short_answer') {
+      processedQuestion.answerType = question.answerType || 'text';
+      processedQuestion.caseSensitive = question.caseSensitive || false;
+      processedQuestion.tolerance = question.tolerance || 0;
+
+      // Handle answer variations
+      if (question.correctAnswer && typeof question.correctAnswer === 'object') {
+        processedQuestion.answerVariations = question.correctAnswer.variations || [];
+      } else {
+        processedQuestion.answerVariations = question.answerVariations || [];
+      }
+
+      console.log(`Processed short-answer question ${question.id}:`, {
+        answerType: processedQuestion.answerType,
+        variations: processedQuestion.answerVariations.length
       });
     }
 
@@ -124,6 +144,12 @@ async function generateQuestionsForFormat(formatConfig, params) {
  */
 async function generateTestPaper(params) {
   console.log('Generating test with params:', params);
+
+  // Special handling for short answer tests with PQP/Sprint modes
+  if (params.format === 'short_answer' || params.questionType === 'short_answer') {
+    console.log(`📝 Generating short answer test in ${params.mode || 'pqp'} mode`);
+    return generateShortAnswerTest(params);
+  }
 
   // Special handling for topic-based tests (no blueprint needed)
   if (params.mode === 'by_topic' && params.topic) {

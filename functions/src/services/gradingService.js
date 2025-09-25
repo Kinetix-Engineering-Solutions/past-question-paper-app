@@ -1,5 +1,6 @@
 const { safeArray } = require('../helpers/dataHelpers');
 const { fetchQuestionsForGrading, saveUserTestResults } = require('./databaseService');
+const { gradeShortAnswer, gradeShortAnswerSubmissions } = require('./shortAnswerGradingService');
 
 /**
  * Grading service for evaluating test submissions
@@ -301,7 +302,11 @@ function gradeSingleQuestion(question, submission) {
       
     case 'fillinblanks':
       return gradeFillInBlanks(question, submission.answers || submission.answer);
-      
+
+    case 'shortanswer':
+    case 'short_answer':
+      return gradeShortAnswer(question, submission.answer);
+
     default:
       console.warn(`Unknown question format: ${format}. Defaulting to multiple choice.`);
       return gradeMultipleChoice(question, submission.answer);
@@ -347,13 +352,19 @@ function calculateTestStatistics(results) {
  */
 async function gradeTestSubmission(params) {
   const { submissions, userId } = params;
-  
+
   console.log('Grading test submission:', { submissionCount: Object.keys(submissions).length });
 
   // Get question IDs from submissions
   const questionIds = Object.keys(submissions);
-  
-  // Fetch questions from database
+
+  // Check if this is a short answer submission (single document structure)
+  if (questionIds.includes('short answer')) {
+    console.log('📝 Routing to short answer grading service');
+    return await gradeShortAnswerSubmissions(submissions);
+  }
+
+  // Fetch questions from database (for MCQ and other formats)
   const questionDocs = await fetchQuestionsForGrading(questionIds);
   
   // Create question lookup map

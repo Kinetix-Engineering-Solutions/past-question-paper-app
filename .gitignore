@@ -36,7 +36,7 @@ migrate_working_dir/
 #CLAUDE: Exclude generated plugin registrant
 CLAUDE.md
 TASKS.md 
-FUNCTIONS.md
+
 
 # Symbolication related
 app.*.symbols
