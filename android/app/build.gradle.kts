@@ -27,7 +27,7 @@ android {
         applicationId = "com.example.past_question_paper_v1"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion  // Increased from flutter.minSdkVersion to 23 for better Firebase compatibility
+        minSdk = 23 // Set to at least 23 for modern compatibility
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
