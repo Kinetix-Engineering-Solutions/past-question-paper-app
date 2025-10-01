@@ -349,12 +349,39 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
             (widget.isSprintMode && widget.question.providedContext != null))
           const SizedBox(height: 16),
 
-        // --- Question Text with LaTeX ---
-        LatexText(widget.isPQPMode
-            ? widget.question.getPQPQuestionText()
-            : widget.isSprintMode
-                ? widget.question.getSprintQuestionText()
-                : widget.question.questionText),
+        // --- Question Text with LaTeX and Marks ---
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: LatexText(widget.isPQPMode
+                  ? widget.question.getPQPQuestionText()
+                  : widget.isSprintMode
+                      ? widget.question.getSprintQuestionText()
+                      : widget.question.questionText),
+            ),
+            Container(
+              margin: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppColors.accent,
+                  width: 1.5,
+                ),
+              ),
+              child: Text(
+                '${widget.isPQPMode ? widget.question.getPQPMarks() : widget.isSprintMode ? widget.question.getSprintMarks() : widget.question.marks} marks',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: AppColors.accent,
+                ),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
 
         // --- Question Image ---

@@ -112,6 +112,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       labelStyle: TextStyle(
                         color: AppColors.chalkWhite.withOpacity(0.7),
                       ),
+                      errorStyle: TextStyle(
+                        color: Colors.red.shade300,
+                        fontWeight: FontWeight.w500,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
@@ -128,6 +132,20 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
                           color: AppColors.chalkWhite,
+                          width: 2,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Colors.red.shade300,
+                          width: 2,
+                        ),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Colors.red.shade300,
                           width: 2,
                         ),
                       ),
@@ -152,6 +170,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       labelStyle: TextStyle(
                         color: AppColors.chalkWhite.withOpacity(0.7),
                       ),
+                      errorStyle: TextStyle(
+                        color: Colors.red.shade300,
+                        fontWeight: FontWeight.w500,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
@@ -168,6 +190,20 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
                           color: AppColors.chalkWhite,
+                          width: 2,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Colors.red.shade300,
+                          width: 2,
+                        ),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Colors.red.shade300,
                           width: 2,
                         ),
                       ),

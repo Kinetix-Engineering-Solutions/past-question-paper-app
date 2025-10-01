@@ -17,7 +17,7 @@ class AppConstants {
   static const Map<String, List<String>> topicsBySubject = {
     'mathematics': [
       'Algebra, Equations & Inequalities',
-      'Patterns & Sequences',
+      'Pattern & Sequences',
       'Functions & Graphs',
       'Finance, Growth & Decay',
       'Differential Calculus',
