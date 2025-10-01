@@ -256,7 +256,9 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: widget.isPQPMode ? Colors.blue.shade50 : Colors.orange.shade50,
+              color: widget.isPQPMode
+                  ? Colors.blue.shade50
+                  : Colors.orange.shade50,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: widget.isPQPMode ? Colors.blue : Colors.orange,
@@ -267,7 +269,9 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  widget.isPQPMode ? Icons.assignment_outlined : Icons.flash_on_outlined,
+                  widget.isPQPMode
+                      ? Icons.assignment_outlined
+                      : Icons.flash_on_outlined,
                   size: 16,
                   color: widget.isPQPMode ? Colors.blue : Colors.orange,
                 ),
@@ -334,7 +338,10 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
                 ...widget.question.providedContext!.entries.map(
                   (entry) => Text(
                     '${entry.key}: ${entry.value}',
-                    style: TextStyle(color: Colors.orange.shade700, fontSize: 12),
+                    style: TextStyle(
+                      color: Colors.orange.shade700,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
                 Text(
@@ -354,11 +361,13 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: LatexText(widget.isPQPMode
-                  ? widget.question.getPQPQuestionText()
-                  : widget.isSprintMode
-                      ? widget.question.getSprintQuestionText()
-                      : widget.question.questionText),
+              child: LatexText(
+                widget.isPQPMode
+                    ? widget.question.getPQPQuestionText()
+                    : widget.isSprintMode
+                    ? widget.question.getSprintQuestionText()
+                    : widget.question.questionText,
+              ),
             ),
             Container(
               margin: const EdgeInsets.only(left: 8),
@@ -366,13 +375,14 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
               decoration: BoxDecoration(
                 color: AppColors.accent.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: AppColors.accent,
-                  width: 1.5,
-                ),
+                border: Border.all(color: AppColors.accent, width: 1.5),
               ),
               child: Text(
-                '${widget.isPQPMode ? widget.question.getPQPMarks() : widget.isSprintMode ? widget.question.getSprintMarks() : widget.question.marks} marks',
+                '${widget.isPQPMode
+                    ? widget.question.getPQPMarks()
+                    : widget.isSprintMode
+                    ? widget.question.getSprintMarks()
+                    : widget.question.marks} marks',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
@@ -423,7 +433,9 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
                     _showHints = !_showHints;
                   });
                 },
-                icon: Icon(_showHints ? Icons.visibility_off : Icons.lightbulb_outline),
+                icon: Icon(
+                  _showHints ? Icons.visibility_off : Icons.lightbulb_outline,
+                ),
                 label: Text(_showHints ? 'Hide Hints' : 'Show Hints'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange.shade100,
@@ -499,13 +511,17 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
           'Simplify by combining like terms',
           'Write your final answer in the form g(x) = ...',
         ]);
-      } else if (widget.question.questionText.toLowerCase().contains('domain')) {
+      } else if (widget.question.questionText.toLowerCase().contains(
+        'domain',
+      )) {
         hints.addAll([
           'Remember: Domain of inverse = Range of original function',
           'Consider what values the exponential function can produce',
           'Use interval notation (0; ∞) for your answer',
         ]);
-      } else if (widget.question.questionText.toLowerCase().contains('derivative')) {
+      } else if (widget.question.questionText.toLowerCase().contains(
+        'derivative',
+      )) {
         hints.addAll([
           'Identify the outer and inner functions',
           'Apply the chain rule: d/dx[g(h(x))] = g\'(h(x)) × h\'(x)',
@@ -586,7 +602,10 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
           initialAnswer: selectedOption,
         );
       case 'essay':
-        return EssayWidget(question: widget.question, initialAnswer: selectedOption);
+        return EssayWidget(
+          question: widget.question,
+          initialAnswer: selectedOption,
+        );
       default:
         return MCQTextWidget(
           question: widget.question,
