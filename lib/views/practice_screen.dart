@@ -5,6 +5,7 @@ import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
 import 'package:past_question_paper_v1/views/practice_results_screen.dart';
 import 'package:past_question_paper_v1/widgets/latex_text.dart';
+import 'package:past_question_paper_v1/widgets/parent_question_context_card.dart';
 import 'package:past_question_paper_v1/widgets/question_formats/mcq_text_widget.dart';
 import 'package:past_question_paper_v1/widgets/question_formats/mcq_image_widget.dart';
 import 'package:past_question_paper_v1/widgets/question_formats/true_false_widget.dart';
@@ -118,14 +119,16 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
   /// Gets the appropriate question title based on mode and question data
   String _getQuestionTitle(List<Question> questions) {
     if (questions.isEmpty) return 'Question';
-    
+
     final question = questions[_currentPage];
-    
+
     // PQP Mode: Show actual exam question number if available
-    if (widget.isPQPMode && question.pqpData?.questionNumber != null && question.pqpData!.questionNumber!.isNotEmpty) {
+    if (widget.isPQPMode &&
+        question.pqpData?.questionNumber != null &&
+        question.pqpData!.questionNumber!.isNotEmpty) {
       return 'Question ${question.pqpData!.questionNumber}';
     }
-    
+
     // Sprint/Regular Mode: Show sequential numbering with total count
     return 'Question ${_currentPage + 1} of ${questions.length}';
   }
@@ -271,7 +274,9 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: widget.isPQPMode ? Colors.blue.shade50 : Colors.orange.shade50,
+              color: widget.isPQPMode
+                  ? Colors.blue.shade50
+                  : Colors.orange.shade50,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: widget.isPQPMode ? Colors.blue : Colors.orange,
@@ -282,7 +287,9 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  widget.isPQPMode ? Icons.assignment_outlined : Icons.flash_on_outlined,
+                  widget.isPQPMode
+                      ? Icons.assignment_outlined
+                      : Icons.flash_on_outlined,
                   size: 16,
                   color: widget.isPQPMode ? Colors.blue : Colors.orange,
                 ),
@@ -300,34 +307,8 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
           ),
         if (widget.isPQPMode || widget.isSprintMode) const SizedBox(height: 12),
 
-        // --- PQP Mode Chain Info ---
-        if (widget.isPQPMode && widget.question.isPartOfChain)
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Question Chain: ${widget.question.pqpData?.questionNumber ?? ''}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                if (widget.question.dependencies.isNotEmpty)
-                  Text(
-                    'Depends on: ${widget.question.dependencies.join(', ')}',
-                    style: TextStyle(color: Colors.blue.shade700, fontSize: 12),
-                  ),
-                Text(
-                  'Marks: ${widget.question.getPQPMarks()}',
-                  style: TextStyle(color: Colors.blue.shade700, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
+        // --- Option 3: Parent Question Context (NEW) ---
+        ParentQuestionContextCard(question: widget.question),
 
         // --- Sprint Mode Context ---
         if (widget.isSprintMode && widget.question.providedContext != null)
@@ -349,7 +330,10 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
                 ...widget.question.providedContext!.entries.map(
                   (entry) => Text(
                     '${entry.key}: ${entry.value}',
-                    style: TextStyle(color: Colors.orange.shade700, fontSize: 12),
+                    style: TextStyle(
+                      color: Colors.orange.shade700,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
                 Text(
@@ -360,7 +344,7 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
             ),
           ),
 
-        if ((widget.isPQPMode && widget.question.isPartOfChain) ||
+        if ((widget.isPQPMode && widget.question.hasParent) ||
             (widget.isSprintMode && widget.question.providedContext != null))
           const SizedBox(height: 16),
 
@@ -369,11 +353,13 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: LatexText(widget.isPQPMode
-                  ? widget.question.getPQPQuestionText()
-                  : widget.isSprintMode
-                      ? widget.question.getSprintQuestionText()
-                      : widget.question.questionText),
+              child: LatexText(
+                widget.isPQPMode
+                    ? widget.question.getPQPQuestionText()
+                    : widget.isSprintMode
+                    ? widget.question.getSprintQuestionText()
+                    : widget.question.questionText,
+              ),
             ),
             Container(
               margin: const EdgeInsets.only(left: 8),
@@ -381,13 +367,14 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
               decoration: BoxDecoration(
                 color: AppColors.accent.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: AppColors.accent,
-                  width: 1.5,
-                ),
+                border: Border.all(color: AppColors.accent, width: 1.5),
               ),
               child: Text(
-                '${widget.isPQPMode ? widget.question.getPQPMarks() : widget.isSprintMode ? widget.question.getSprintMarks() : widget.question.marks} marks',
+                '${widget.isPQPMode
+                    ? widget.question.getPQPMarks()
+                    : widget.isSprintMode
+                    ? widget.question.getSprintMarks()
+                    : widget.question.marks} marks',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
@@ -399,13 +386,19 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
         ),
         const SizedBox(height: 16),
 
-        // --- Question Image ---
-        if (widget.question.hasQuestionImage)
+        // --- Question Image (Option 3: supports inherited images) ---
+        // Only show image if:
+        // 1. Question has its own unique image (not inherited from parent), OR
+        // 2. Question has no parent (standalone question with image)
+        if ((widget.question.hasQuestionImage &&
+                !widget.question.usesParentImage) ||
+            (widget.question.displayImageUrl != null &&
+                !widget.question.hasParent))
           Center(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
-                widget.question.imageUrl!,
+                widget.question.displayImageUrl ?? widget.question.imageUrl!,
                 fit: BoxFit.contain,
                 width: double.infinity,
                 loadingBuilder: (context, child, loadingProgress) {
@@ -438,7 +431,9 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
                     _showHints = !_showHints;
                   });
                 },
-                icon: Icon(_showHints ? Icons.visibility_off : Icons.lightbulb_outline),
+                icon: Icon(
+                  _showHints ? Icons.visibility_off : Icons.lightbulb_outline,
+                ),
                 label: Text(_showHints ? 'Hide Hints' : 'Show Hints'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange.shade100,
@@ -502,7 +497,7 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
   List<String> _getHintsForQuestion() {
     final hints = <String>[];
 
-    // Try to get hints from the test_questions_firestore.json data
+    // Try to get hints from the question data
     // We'll need to enhance the Question model to support hints
     // For now, provide meaningful hints based on question content and type
 
@@ -514,13 +509,17 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
           'Simplify by combining like terms',
           'Write your final answer in the form g(x) = ...',
         ]);
-      } else if (widget.question.questionText.toLowerCase().contains('domain')) {
+      } else if (widget.question.questionText.toLowerCase().contains(
+        'domain',
+      )) {
         hints.addAll([
           'Remember: Domain of inverse = Range of original function',
           'Consider what values the exponential function can produce',
           'Use interval notation (0; ∞) for your answer',
         ]);
-      } else if (widget.question.questionText.toLowerCase().contains('derivative')) {
+      } else if (widget.question.questionText.toLowerCase().contains(
+        'derivative',
+      )) {
         hints.addAll([
           'Identify the outer and inner functions',
           'Apply the chain rule: d/dx[g(h(x))] = g\'(h(x)) × h\'(x)',
@@ -601,7 +600,10 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
           initialAnswer: selectedOption,
         );
       case 'essay':
-        return EssayWidget(question: widget.question, initialAnswer: selectedOption);
+        return EssayWidget(
+          question: widget.question,
+          initialAnswer: selectedOption,
+        );
       default:
         return MCQTextWidget(
           question: widget.question,

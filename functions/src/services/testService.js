@@ -1,7 +1,14 @@
 const { safeArray, mapQuestionData, normalizePaperFormat } = require('../helpers/dataHelpers');
-const { buildQuestionQuery, fetchBlueprint, executeQuestionQuery } = require('./databaseService');
+const { 
+  buildQuestionQuery, 
+  fetchBlueprint, 
+  executeQuestionQuery,
+  enrichQuestionWithParent,
+  hasParent 
+} = require('./databaseService');
 const { generateBlueprintCompliantTest } = require('./enhancedTestService');
-const { generateShortAnswerTest } = require('./shortAnswerTestService');
+// ✅ SHORT ANSWER FIX: Removed unused import - short answers now use standard generation
+// const { generateShortAnswerTest } = require('./shortAnswerTestService');
 
 /**
  * Test generation service for creating past paper tests
@@ -58,13 +65,21 @@ function selectRandomQuestions(questionDocs, requiredCount, options = {}) {
 
 /**
  * Processes questions for specific format requirements
+ * Option 3: Enriches questions with parent context if applicable
  * @param {Array} questions - Array of question data
  * @param {string} format - Question format type
- * @returns {Array} - Processed questions
+ * @returns {Promise<Array>} - Processed questions with parent context
  */
-function processQuestionsForFormat(questions, format) {
-  return questions.map(question => {
-    const processedQuestion = { ...question };
+async function processQuestionsForFormat(questions, format) {
+  const processedQuestions = [];
+  
+  for (const question of questions) {
+    let processedQuestion = { ...question };
+
+    // OPTION 3: Enrich with parent context if question has parent
+    if (hasParent(question)) {
+      processedQuestion = await enrichQuestionWithParent(processedQuestion);
+    }
 
     // Ensure drag and drop questions have complete data
     if (format === 'dragAndDrop') {
@@ -97,8 +112,10 @@ function processQuestionsForFormat(questions, format) {
       });
     }
 
-    return processedQuestion;
-  });
+    processedQuestions.push(processedQuestion);
+  }
+  
+  return processedQuestions;
 }
 
 /**
@@ -121,18 +138,26 @@ async function generateQuestionsForFormat(formatConfig, params) {
   // Map document data
   const questionData = questionDocs.map(doc => mapQuestionData(doc));
 
+  // IMPORTANT: Filter out parent questions (they're context providers, not answerable questions)
+  // Parents have isParent: true and should NEVER appear as standalone questions in tests
+  const answerableQuestions = questionData.filter(q => !q.isParent);
+  
+  if (answerableQuestions.length < questionData.length) {
+    console.log(`🚫 Filtered out ${questionData.length - answerableQuestions.length} parent questions (context documents)`);
+  }
+
   // Filter by format if specified
   const filteredQuestions = formatConfig.format 
-    ? questionData.filter(q => q.format === formatConfig.format)
-    : questionData;
+    ? answerableQuestions.filter(q => q.format === formatConfig.format)
+    : answerableQuestions;
 
   console.log(`Found ${filteredQuestions.length} questions for format ${formatConfig.format}`);
 
   // Select required number of questions
   const selectedQuestions = selectRandomQuestions(filteredQuestions, formatConfig.questionCount);
 
-  // Process questions for format-specific requirements
-  const processedQuestions = processQuestionsForFormat(selectedQuestions, formatConfig.format);
+  // Process questions for format-specific requirements (now async)
+  const processedQuestions = await processQuestionsForFormat(selectedQuestions, formatConfig.format);
 
   return processedQuestions;
 }
@@ -145,11 +170,12 @@ async function generateQuestionsForFormat(formatConfig, params) {
 async function generateTestPaper(params) {
   console.log('Generating test with params:', params);
 
-  // Special handling for short answer tests with PQP/Sprint modes
-  if (params.format === 'short_answer' || params.questionType === 'short_answer') {
-    console.log(`📝 Generating short answer test in ${params.mode || 'pqp'} mode`);
-    return generateShortAnswerTest(params);
-  }
+  // ✅ SHORT ANSWER FIX: Removed special routing - now treated like MCQs (individual documents)
+  // Short answers are now fetched using standard query below, same as MCQ/True-False/Drag-Drop
+  // if (params.format === 'short_answer' || params.questionType === 'short_answer') {
+  //   console.log(`📝 Generating short answer test in ${params.mode || 'pqp'} mode`);
+  //   return generateShortAnswerTest(params);
+  // }
 
   // Special handling for topic-based tests (no blueprint needed)
   if (params.mode === 'by_topic' && params.topic) {
@@ -234,8 +260,15 @@ async function generateLegacyTestPaper(params) {
     // Map document data
     const questionData = questionDocs.map(doc => mapQuestionData(doc));
 
+    // IMPORTANT: Filter out parent questions (they're context providers, not answerable questions)
+    const answerableQuestions = questionData.filter(q => !q.isParent);
+    
+    if (answerableQuestions.length < questionData.length) {
+      console.log(`🚫 Filtered out ${questionData.length - answerableQuestions.length} parent questions from legacy test`);
+    }
+
     // Select required number of questions
-    const selectedQuestions = selectRandomQuestions(questionData, totalQuestions);
+    const selectedQuestions = selectRandomQuestions(answerableQuestions, totalQuestions);
 
     // Add question numbers
     const numberedQuestions = selectedQuestions.map(question => ({
@@ -299,6 +332,13 @@ async function generateTopicBasedTest(params) {
 
     // Map document data to question format
     let questionData = questionDocs.map(doc => mapQuestionData(doc));
+
+    // IMPORTANT: Filter out parent questions (they're context providers, not answerable questions)
+    questionData = questionData.filter(q => !q.isParent);
+    
+    if (questionDocs.length > questionData.length) {
+      console.log(`🚫 Filtered out ${questionDocs.length - questionData.length} parent questions from topic test`);
+    }
 
     // Exclude previously seen question IDs if provided
     if (excludeIds && excludeIds.size > 0) {

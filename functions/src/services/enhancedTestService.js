@@ -1,5 +1,11 @@
 const { safeArray, mapQuestionData, normalizePaperFormat } = require('../helpers/dataHelpers');
-const { buildEnhancedQuestionQuery, fetchBlueprint, executeQuestionQuery } = require('./databaseService');
+const { 
+  buildEnhancedQuestionQuery, 
+  fetchBlueprint, 
+  executeQuestionQuery,
+  enrichQuestionWithParent,
+  hasParent 
+} = require('./databaseService');
 const admin = require('firebase-admin');
 
 /**
@@ -37,8 +43,15 @@ async function selectQuestionsForTopic(topicName, marksNeeded, params, tolerance
     const questionDocs = await executeQuestionQuery(query, params);
     const questionData = questionDocs.map(doc => mapQuestionData(doc));
     
+    // IMPORTANT: Filter out parent questions (they're context providers, not answerable questions)
+    const answerableQuestions = questionData.filter(q => !q.isParent);
+    
+    if (answerableQuestions.length < questionData.length) {
+      console.log(`🚫 Filtered out ${questionData.length - answerableQuestions.length} parent questions from ${topicName}`);
+    }
+    
     // Use knapsack-style selection for precise marks fitting
-    const selectedQuestions = selectQuestionsKnapsackStyle(questionData, marksNeeded, tolerance);
+    const selectedQuestions = selectQuestionsKnapsackStyle(answerableQuestions, marksNeeded, tolerance);
     
     console.log(`Selected ${selectedQuestions.length} questions for ${topicName} (${selectedQuestions.reduce((sum, q) => sum + Number(q.maxMarks || q.marks || 0), 0)} marks)`);
     return selectedQuestions;
@@ -337,6 +350,7 @@ async function balanceCognitiveLevels(selectedQuestions, requiredLevels, params,
           const docs = await executeQuestionQuery(query, { ...params, topic: currentTopic, cognitiveLevel: targetLevel });
           const candidates = docs
             .map(doc => mapQuestionData(doc))
+            .filter(c => !c.isParent) // Filter out parent questions
             .filter(c => !currentQuestions.some(q => q.id === c.id));
 
           // Test each candidate
@@ -524,7 +538,7 @@ async function generateBlueprintCompliantTest(params) {
 
   // Quick practice / scaled mode detection (duration or explicit quick flag)
   let effectiveBlueprint = { ...blueprint, topics: { ...blueprint.topics } };
-  if (params.mode === 'quick_practice' || params.quick || params.duration) {
+  if (params.mode === 'sprint' || params.quick || params.duration) {
     const duration = params.duration || 15; // minutes
     // Simple scaling: assume full blueprint ~150 marks ~ 180 minutes (example), scale proportionally
     const baseTotal = blueprint.totalMarks || 150;
@@ -613,11 +627,23 @@ async function generateBlueprintCompliantTest(params) {
 
   const totalSelectedMarks = balancedQuestions.reduce((s, q) => s + Number(q.maxMarks || q.marks || 0), 0);
 
+  // OPTION 3: Enrich questions with parent context before returning
+  console.log('🔗 Enriching questions with parent context...');
+  const enrichedQuestions = [];
+  for (const question of balancedQuestions) {
+    if (hasParent(question)) {
+      const enriched = await enrichQuestionWithParent(question);
+      enrichedQuestions.push(enriched);
+    } else {
+      enrichedQuestions.push(question);
+    }
+  }
+
   return {
-    questions: balancedQuestions,
-    totalQuestions: balancedQuestions.length,
+    questions: enrichedQuestions,
+    totalQuestions: enrichedQuestions.length,
     totalMarks: totalSelectedMarks,
-  blueprint: effectiveBlueprint,
+    blueprint: effectiveBlueprint,
     topicDistribution,
     cognitiveDistribution,
     topicMarksDistribution,

@@ -16,24 +16,28 @@ void main() {
           'season': 'November',
           'year': 2023,
           'questionNumber': '4.5',
-          'dependsOn': ['math_g12_asymptote_exp_001'],
-          'questionText': 'Write down the equation of g if it is given that g(x) = f(x) + 4',
+          'parentQuestionId': 'math_g12_asymptote_exp_001',
+          'questionText':
+              'Write down the equation of g if it is given that g(x) = f(x) + 4',
           'marks': 1,
-          'partOfChain': true,
-          'chainId': 'exponential_functions_nov_2023_p1'
         },
         'sprintData': {
-          'questionText': 'Given that f(x) = 2^x - 4, write down the equation of g if it is given that g(x) = f(x) + 4',
+          'questionText':
+              'Given that f(x) = 2^x - 4, write down the equation of g if it is given that g(x) = f(x) + 4',
           'providedContext': {
             'f(x)': '2^x - 4',
             'transformation': 'g(x) = f(x) + 4',
-            'context': 'Function transformation - vertical shift'
+            'context': 'Function transformation - vertical shift',
           },
           'marks': 2,
           'canRandomize': true,
           'difficulty': 'easy',
           'estimatedTime': 2,
-          'tags': ['function_transformations', 'exponential_functions', 'vertical_shifts']
+          'tags': [
+            'function_transformations',
+            'exponential_functions',
+            'vertical_shifts',
+          ],
         },
         'correctAnswer': 'g(x) = 2^x',
         'answerVariations': ['g(x) = 2^x', 'g(x)=2^x', 'y = 2^x', '2^x'],
@@ -48,18 +52,19 @@ void main() {
           'Given: f(x) = 2^x - 4',
           'Substitute: g(x) = (2^x - 4) + 4',
           'Simplify: g(x) = 2^x - 4 + 4',
-          'Therefore: g(x) = 2^x'
+          'Therefore: g(x) = 2^x',
         ],
         'hints': [
           'Substitute f(x) = 2^x - 4 into g(x) = f(x) + 4',
-          'Simplify the expression by combining like terms'
+          'Simplify the expression by combining like terms',
         ],
-        'explanation': 'By substituting f(x) = 2^x - 4 into g(x) = f(x) + 4, we get g(x) = (2^x - 4) + 4 = 2^x',
+        'explanation':
+            'By substituting f(x) = 2^x - 4 into g(x) = f(x) + 4, we get g(x) = (2^x - 4) + 4 = 2^x',
         'points': 2,
         'timeAllocation': 120,
         'showWorking': true,
         'options': [],
-        'correctOrder': []
+        'correctOrder': [],
       };
 
       // Convert test data to Question.fromMap format
@@ -108,8 +113,10 @@ void main() {
       expect(question.pqpData?.year, equals(2023));
       expect(question.pqpData?.questionNumber, equals('4.5'));
       expect(question.pqpData?.marks, equals(1));
-      expect(question.pqpData?.partOfChain, isTrue);
-      expect(question.pqpData?.chainId, equals('exponential_functions_nov_2023_p1'));
+
+      // Test parent relationship (Option 3 structure)
+      expect(question.hasParent, isTrue);
+      expect(question.parentQuestionId, equals('math_g12_asymptote_exp_001'));
 
       // Test Sprint specific data
       expect(question.sprintData, isNotNull);
@@ -119,13 +126,20 @@ void main() {
       expect(question.sprintData?.estimatedTime, equals(2));
 
       // Test utility methods
-      expect(question.getPQPQuestionText(), equals('Write down the equation of g if it is given that g(x) = f(x) + 4'));
-      expect(question.getSprintQuestionText(), contains('Given that f(x) = 2^x - 4'));
+      expect(
+        question.getPQPQuestionText(),
+        equals(
+          'Write down the equation of g if it is given that g(x) = f(x) + 4',
+        ),
+      );
+      expect(
+        question.getSprintQuestionText(),
+        contains('Given that f(x) = 2^x - 4'),
+      );
       expect(question.getPQPMarks(), equals(1));
       expect(question.getSprintMarks(), equals(2));
-      expect(question.isPartOfChain, isTrue);
-      expect(question.dependencies, contains('math_g12_asymptote_exp_001'));
-      expect(question.chainId, equals('exponential_functions_nov_2023_p1'));
+
+      // Test Sprint utility methods
       expect(question.canRandomize, isTrue);
       expect(question.difficulty, equals('easy'));
       expect(question.estimatedTime, equals(2));
@@ -171,9 +185,10 @@ void main() {
       expect(question.getSprintQuestionText(), equals('What is 2 + 2?'));
       expect(question.getPQPMarks(), equals(1));
       expect(question.getSprintMarks(), equals(1));
-      expect(question.isPartOfChain, isFalse);
-      expect(question.dependencies, isEmpty);
-      expect(question.chainId, isNull);
+
+      // Test that question has no parent (standalone question)
+      expect(question.hasParent, isFalse);
+      expect(question.parentQuestionId, isNull);
 
       print('✅ Legacy question handling works correctly');
     });
