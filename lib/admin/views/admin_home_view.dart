@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:past_question_paper_v1/admin/views/question_create_view.dart';
 import 'package:past_question_paper_v1/admin/views/parent_question_create_view.dart';
 import 'package:past_question_paper_v1/admin/views/question_list_view.dart';
+import 'package:past_question_paper_v1/admin/views/parent_child_browser_view.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 
 /// Admin Home View - Simple landing page with quick actions
@@ -92,6 +93,25 @@ class AdminHomeView extends StatelessWidget {
                     PageRouteBuilder(
                       pageBuilder: (context, animation, secondaryAnimation) =>
                           const QuestionListView(),
+                      transitionDuration: Duration.zero,
+                      reverseTransitionDuration: Duration.zero,
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildActionCard(
+                context,
+                title: 'Parent-Child Browser',
+                subtitle: 'View and manage parent-child question sets',
+                icon: Icons.account_tree,
+                color: Colors.purple,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          const ParentChildBrowserView(),
                       transitionDuration: Duration.zero,
                       reverseTransitionDuration: Duration.zero,
                     ),
