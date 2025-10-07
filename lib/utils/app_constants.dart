@@ -9,6 +9,9 @@ class AppConstants {
     // Add more subjects here as needed
   ];
 
+  // Alias for subjects (for admin portal consistency)
+  static const List<String> subjects = allSubjects;
+
   // This is the hardcoded list of grades.
   static const List<int> grades = [10, 11, 12];
 
@@ -22,13 +25,12 @@ class AppConstants {
       'Finance, Growth & Decay',
       'Differential Calculus',
       'Probability',
-      // Add Paper 2 topics if needed
       'Statistics',
       'Analytical Geometry',
       'Trigonometry',
       'Euclidean Geometry',
     ],
-    'Physical Sciences': [
+    'physical sciences': [
       'Mechanics',
       'Waves, Sound & Light',
       'Electricity & Magnetism',
@@ -36,13 +38,12 @@ class AppConstants {
       'Chemical Change',
       'Chemical Systems',
     ],
-    'Life Sciences': [
+    'life sciences': [
       'The Chemistry of Life',
       'Cells - The basic units of life',
       'Cell division: mitosis',
       'Plant and animal tissues',
       'Plant organs',
-      // Add more topics as needed
     ],
     // Add topic lists for other subjects here
   };

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
 
 class LatexText extends StatelessWidget {
   final String text;
@@ -22,7 +21,7 @@ class LatexText extends StatelessWidget {
   Widget build(BuildContext context) {
     final defaultStyle = TextStyle(
       fontSize: fontSize ?? 16,
-      color: textColor ?? AppColors.ink,
+      color: textColor ?? const Color(0xFF262626),
     );
 
     final style = textStyle?.merge(defaultStyle) ?? defaultStyle;
@@ -73,10 +72,18 @@ class LatexText extends StatelessWidget {
           // Try to render as LaTeX
           spans.add(
             WidgetSpan(
-              child: Math.tex(
-                word,
-                mathStyle: MathStyle.text,
-                textStyle: style,
+              alignment: PlaceholderAlignment.middle,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Math.tex(
+                    word,
+                    mathStyle: MathStyle.text,
+                    textStyle: style,
+                  ),
+                ),
               ),
             ),
           );
@@ -147,10 +154,18 @@ class LatexText extends StatelessWidget {
       try {
         spans.add(
           WidgetSpan(
-            child: Math.tex(
-              latexContent,
-              mathStyle: isDisplayMode ? MathStyle.display : MathStyle.text,
-              textStyle: style,
+            alignment: PlaceholderAlignment.middle,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Math.tex(
+                  latexContent,
+                  mathStyle: isDisplayMode ? MathStyle.display : MathStyle.text,
+                  textStyle: style,
+                ),
+              ),
             ),
           ),
         );
