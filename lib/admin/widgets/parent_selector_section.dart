@@ -9,7 +9,8 @@ class ParentSelectorSection extends ConsumerStatefulWidget {
   const ParentSelectorSection({super.key});
 
   @override
-  ConsumerState<ParentSelectorSection> createState() => _ParentSelectorSectionState();
+  ConsumerState<ParentSelectorSection> createState() =>
+      _ParentSelectorSectionState();
 }
 
 class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
@@ -24,7 +25,7 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
 
   Future<void> _loadParentQuestions() async {
     setState(() => _isLoading = true);
-    
+
     try {
       // Query without orderBy to avoid composite index requirement
       final snapshot = await FirebaseFirestore.instance
@@ -36,7 +37,7 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
       final parentsList = snapshot.docs.map((doc) {
         final data = doc.data();
         String displayText = doc.id.substring(0, 8);
-        
+
         // Try to get PQP number
         if (data['pqpData'] != null && data['pqpData'] is Map) {
           final pqpData = data['pqpData'] as Map<String, dynamic>;
@@ -45,11 +46,11 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
             displayText = pqpNumber.toString();
           }
         }
-        
+
         // Add subject and topic for context
         final subject = data['subject'] ?? '';
         final topic = data['topic'] ?? '';
-        
+
         return {
           'id': doc.id,
           'displayText': '$displayText - $subject - $topic',
@@ -58,7 +59,7 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
           'topic': topic,
         };
       }).toList();
-      
+
       // Sort by PQP number in memory (avoids Firestore composite index)
       parentsList.sort((a, b) {
         final aNumber = a['pqpNumber'] as String? ?? '';
@@ -105,23 +106,24 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
           const SizedBox(height: 16),
           const Divider(),
           const SizedBox(height: 16),
-          
+
           // Parent selector
           _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _parentQuestions.isEmpty
-                  ? _buildNoParentsMessage()
-                  : _buildParentDropdown(state, notifier),
+              ? _buildNoParentsMessage()
+              : _buildParentDropdown(state, notifier),
 
           // Parent context preview (shown when parent is selected)
           if (state.parentQuestionId != null) ...[
             const SizedBox(height: 16),
             _buildParentPreview(state),
-            
+
             const SizedBox(height: 16),
-            
+
             // Use parent image checkbox
-            if (state.parentImageUrl != null && state.parentImageUrl!.isNotEmpty)
+            if (state.parentImageUrl != null &&
+                state.parentImageUrl!.isNotEmpty)
               CheckboxListTile(
                 title: const Text('Use parent\'s image'),
                 subtitle: const Text(
@@ -133,7 +135,7 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
                 dense: true,
                 contentPadding: EdgeInsets.zero,
               ),
-            
+
             // Suggested PQP number
             if (state.suggestedPQPNumber != null) ...[
               const SizedBox(height: 8),
@@ -146,7 +148,11 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.blue.shade700,
+                      size: 20,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -162,7 +168,7 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
               ),
             ],
           ],
-          
+
           const SizedBox(height: 16),
           const Divider(),
         ],
@@ -170,7 +176,10 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
     );
   }
 
-  Widget _buildParentDropdown(QuestionCreateState state, QuestionCreateViewModel notifier) {
+  Widget _buildParentDropdown(
+    QuestionCreateState state,
+    QuestionCreateViewModel notifier,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -236,10 +245,7 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
                 const SizedBox(height: 4),
                 Text(
                   'Create a parent question first before creating child questions.',
-                  style: TextStyle(
-                    color: Colors.orange.shade700,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.orange.shade700, fontSize: 12),
                 ),
               ],
             ),
@@ -266,37 +272,30 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
               const SizedBox(width: 8),
               const Text(
                 'Parent Context Preview',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          
+
           // Parent context text
-          if (state.parentContextText != null && state.parentContextText!.isNotEmpty) ...[
+          if (state.parentContextText != null &&
+              state.parentContextText!.isNotEmpty) ...[
             Text(
               state.parentContextText!,
-              style: TextStyle(
-                color: AppColors.neutralMid,
-                fontSize: 13,
-              ),
+              style: TextStyle(color: AppColors.neutralMid, fontSize: 13),
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 12),
           ],
-          
+
           // Parent image
-          if (state.parentImageUrl != null && state.parentImageUrl!.isNotEmpty) ...[
+          if (state.parentImageUrl != null &&
+              state.parentImageUrl!.isNotEmpty) ...[
             const Text(
               'Parent Image:',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
             ),
             const SizedBox(height: 8),
             ClipRRect(

@@ -23,9 +23,7 @@ class StorageService {
         imageBytes,
         SettableMetadata(
           contentType: 'image/jpeg',
-          customMetadata: {
-            'uploaded': DateTime.now().toIso8601String(),
-          },
+          customMetadata: {'uploaded': DateTime.now().toIso8601String()},
         ),
       );
 
@@ -34,7 +32,7 @@ class StorageService {
 
       // Get download URL
       final downloadUrl = await snapshot.ref.getDownloadURL();
-      
+
       debugPrint('✅ Image uploaded: $downloadUrl');
       return downloadUrl;
     } catch (e) {

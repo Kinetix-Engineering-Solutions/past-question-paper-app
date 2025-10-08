@@ -26,7 +26,7 @@ class ImageUploadWidget extends StatefulWidget {
 class _ImageUploadWidgetState extends State<ImageUploadWidget> {
   final ImagePicker _picker = ImagePicker();
   final StorageService _storageService = StorageService();
-  
+
   String? _imageUrl;
   bool _isUploading = false;
   String? _errorMessage;
@@ -94,10 +94,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('❌ Error: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -138,11 +135,9 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Image removed'),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Image removed')));
       }
     }
   }
@@ -164,10 +159,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               _errorMessage!,
-              style: const TextStyle(
-                color: Colors.red,
-                fontSize: 12,
-              ),
+              style: const TextStyle(color: Colors.red, fontSize: 12),
             ),
           ),
       ],
@@ -204,11 +196,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.cloud_upload,
-                      size: 48,
-                      color: AppColors.accent,
-                    ),
+                    Icon(Icons.cloud_upload, size: 48, color: AppColors.accent),
                     const SizedBox(height: 16),
                     Text(
                       'Click to upload image',
@@ -264,7 +252,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
                       child: CircularProgressIndicator(
                         value: loadingProgress.expectedTotalBytes != null
                             ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
+                                  loadingProgress.expectedTotalBytes!
                             : null,
                       ),
                     ),
@@ -280,8 +268,11 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.error_outline,
-                              size: 48, color: Colors.red.shade300),
+                          Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: Colors.red.shade300,
+                          ),
                           const SizedBox(height: 8),
                           Text(
                             'Failed to load image',
@@ -315,9 +306,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: Colors.grey.shade50,
-              border: Border(
-                top: BorderSide(color: Colors.grey.shade300),
-              ),
+              border: Border(top: BorderSide(color: Colors.grey.shade300)),
             ),
             child: Row(
               children: [
@@ -327,10 +316,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
                     _imageUrl!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -347,9 +333,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
                   onPressed: _removeImage,
                   icon: const Icon(Icons.delete, size: 16),
                   label: const Text('Remove'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.red,
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
                 ),
               ],
             ),

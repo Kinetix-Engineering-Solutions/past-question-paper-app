@@ -332,12 +332,12 @@ class ParentQuestionCreateViewModel
         return;
       }
 
-        final pqpData = (data['pqpData'] as Map<String, dynamic>?) ?? {};
-        final List<String> modes = (data['availableInModes'] is Iterable)
-            ? (data['availableInModes'] as Iterable)
+      final pqpData = (data['pqpData'] as Map<String, dynamic>?) ?? {};
+      final List<String> modes = (data['availableInModes'] is Iterable)
+          ? (data['availableInModes'] as Iterable)
                 .map((e) => e.toString())
                 .toList()
-            : <String>[];
+          : <String>[];
 
       int safeInt(dynamic value, int fallback) {
         if (value == null) return fallback;
@@ -351,22 +351,22 @@ class ParentQuestionCreateViewModel
         isEditMode: true,
         parentId: parentId,
         subject: (data['subject'] ?? '').toString(),
-  grade: safeInt(data['grade'], 12),
+        grade: safeInt(data['grade'], 12),
         topic: (data['topic'] ?? '').toString(),
         paper: (data['paper'] ?? 'p1').toString(),
-  year: safeInt(data['year'], 2024),
+        year: safeInt(data['year'], 2024),
         season: (data['season'] ?? 'November').toString(),
         contextText: (data['questionText'] ?? '').toString(),
         imageUrl: data['imageUrl']?.toString(),
         pqpNumber: pqpData['questionNumber']?.toString() ?? '',
-          availableInPQP: modes.contains('pqp'),
-          availableInSprint: modes.contains('sprint'),
-    childQuestionIds: (data['childQuestionIds'] is Iterable)
-      ? (data['childQuestionIds'] as Iterable)
-        .map((e) => e.toString())
-        .toList()
-      : <String>[],
-  totalMarks: safeInt(data['totalMarks'], 0),
+        availableInPQP: modes.contains('pqp'),
+        availableInSprint: modes.contains('sprint'),
+        childQuestionIds: (data['childQuestionIds'] is Iterable)
+            ? (data['childQuestionIds'] as Iterable)
+                  .map((e) => e.toString())
+                  .toList()
+            : <String>[],
+        totalMarks: safeInt(data['totalMarks'], 0),
       );
     } catch (e) {
       debugPrint('❌ Error loading parent question: $e');

@@ -33,7 +33,9 @@ class QuestionTreeItem extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(
-          color: isParent ? AppColors.accent.withOpacity(0.3) : Colors.grey.shade300,
+          color: isParent
+              ? AppColors.accent.withOpacity(0.3)
+              : Colors.grey.shade300,
           width: isParent ? 2 : 1,
         ),
       ),
@@ -55,7 +57,7 @@ class QuestionTreeItem extends StatelessWidget {
                     )
                   else
                     const SizedBox(width: 24),
-                  
+
                   const SizedBox(width: 12),
 
                   // Type Icon
@@ -144,7 +146,8 @@ class QuestionTreeItem extends StatelessWidget {
                         icon: const Icon(Icons.edit, size: 20),
                         color: Colors.blue.shade700,
                         tooltip: 'Edit',
-                        onPressed: onEditParent ??
+                        onPressed:
+                            onEditParent ??
                             () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -172,9 +175,7 @@ class QuestionTreeItem extends StatelessWidget {
             Container(
               decoration: BoxDecoration(
                 color: Colors.grey.shade50,
-                border: Border(
-                  top: BorderSide(color: Colors.grey.shade300),
-                ),
+                border: Border(top: BorderSide(color: Colors.grey.shade300)),
               ),
               child: Column(
                 children: question.children.map((child) {
@@ -191,7 +192,9 @@ class QuestionTreeItem extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: isParent ? AppColors.accent.withOpacity(0.1) : Colors.grey.shade200,
+        color: isParent
+            ? AppColors.accent.withOpacity(0.1)
+            : Colors.grey.shade200,
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
@@ -209,9 +212,7 @@ class QuestionTreeItem extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.grey.shade200),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
       ),
       child: Row(
         children: [
@@ -219,11 +220,7 @@ class QuestionTreeItem extends StatelessWidget {
           const SizedBox(width: 48),
 
           // Child Icon
-          Icon(
-            Icons.description,
-            color: Colors.grey.shade600,
-            size: 18,
-          ),
+          Icon(Icons.description, color: Colors.grey.shade600, size: 18),
 
           const SizedBox(width: 12),
 
@@ -277,10 +274,7 @@ class QuestionTreeItem extends StatelessWidget {
                   child.questionText,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.grey.shade700,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
                 ),
               ],
             ),

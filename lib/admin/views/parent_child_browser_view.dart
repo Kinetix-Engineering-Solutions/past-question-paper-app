@@ -11,10 +11,12 @@ class ParentChildBrowserView extends ConsumerStatefulWidget {
   const ParentChildBrowserView({super.key});
 
   @override
-  ConsumerState<ParentChildBrowserView> createState() => _ParentChildBrowserViewState();
+  ConsumerState<ParentChildBrowserView> createState() =>
+      _ParentChildBrowserViewState();
 }
 
-class _ParentChildBrowserViewState extends ConsumerState<ParentChildBrowserView> {
+class _ParentChildBrowserViewState
+    extends ConsumerState<ParentChildBrowserView> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -63,9 +65,7 @@ class _ParentChildBrowserViewState extends ConsumerState<ParentChildBrowserView>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppColors.paper,
-              border: Border(
-                bottom: BorderSide(color: Colors.grey.shade300),
-              ),
+              border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
             ),
             child: Column(
               children: [
@@ -73,7 +73,8 @@ class _ParentChildBrowserViewState extends ConsumerState<ParentChildBrowserView>
                 TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Search by PQP number, subject, topic, or question text...',
+                    hintText:
+                        'Search by PQP number, subject, topic, or question text...',
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
@@ -139,9 +140,7 @@ class _ParentChildBrowserViewState extends ConsumerState<ParentChildBrowserView>
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.blue.shade50,
-              border: Border(
-                bottom: BorderSide(color: Colors.grey.shade300),
-              ),
+              border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
             ),
             child: Row(
               children: [
@@ -149,10 +148,7 @@ class _ParentChildBrowserViewState extends ConsumerState<ParentChildBrowserView>
                 const SizedBox(width: 8),
                 Text(
                   '${filteredQuestions.length} question(s) found',
-                  style: TextStyle(
-                    color: Colors.blue.shade700,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: Colors.blue.shade700, fontSize: 13),
                 ),
                 const Spacer(),
                 if (state.filterMode == FilterMode.all) ...[
@@ -164,9 +160,7 @@ class _ParentChildBrowserViewState extends ConsumerState<ParentChildBrowserView>
                   const SizedBox(width: 12),
                   _buildStatChip(
                     Icons.description,
-                    state.questions
-                        .expand((q) => q.children)
-                        .length,
+                    state.questions.expand((q) => q.children).length,
                     'Children',
                   ),
                   const SizedBox(width: 12),
@@ -185,78 +179,84 @@ class _ParentChildBrowserViewState extends ConsumerState<ParentChildBrowserView>
             child: state.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : state.errorMessage != null
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.error_outline,
-                                size: 48, color: Colors.red.shade300),
-                            const SizedBox(height: 16),
-                            Text(
-                              state.errorMessage!,
-                              style: TextStyle(color: Colors.red.shade700),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              onPressed: notifier.loadQuestions,
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Retry'),
-                            ),
-                          ],
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red.shade300,
                         ),
-                      )
-                    : filteredQuestions.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.search_off,
-                                    size: 48, color: Colors.grey.shade400),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No questions found',
-                                  style: TextStyle(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Try adjusting your search or filter',
-                                  style: TextStyle(
-                                    color: Colors.grey.shade500,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.all(16),
-                            itemCount: filteredQuestions.length,
-                            itemBuilder: (context, index) {
-                              final question = filteredQuestions[index];
-                              final isExpanded = state.expandedParentIds
-                                  .contains(question.id);
-
-                              return QuestionTreeItem(
-                                question: question,
-                                isExpanded: isExpanded,
-                                onToggleExpansion: () =>
-                                    notifier.toggleParentExpansion(question.id),
-                                onDeleteParent: () =>
-                                    _confirmDeleteParent(question.id, notifier),
-                                onDeleteChild: (childId) =>
-                                    _confirmDeleteChild(
-                                        childId, question.id, notifier),
-                                onEditParent: () =>
-                                    _navigateToParentOrStandalone(question),
-                                onEditChild: (childId) =>
-                                    _navigateToChildQuestion(childId),
-                              );
-                            },
+                        const SizedBox(height: 16),
+                        Text(
+                          state.errorMessage!,
+                          style: TextStyle(color: Colors.red.shade700),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: notifier.loadQuestions,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  )
+                : filteredQuestions.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.search_off,
+                          size: 48,
+                          color: Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No questions found',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 16,
                           ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Try adjusting your search or filter',
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: filteredQuestions.length,
+                    itemBuilder: (context, index) {
+                      final question = filteredQuestions[index];
+                      final isExpanded = state.expandedParentIds.contains(
+                        question.id,
+                      );
+
+                      return QuestionTreeItem(
+                        question: question,
+                        isExpanded: isExpanded,
+                        onToggleExpansion: () =>
+                            notifier.toggleParentExpansion(question.id),
+                        onDeleteParent: () =>
+                            _confirmDeleteParent(question.id, notifier),
+                        onDeleteChild: (childId) =>
+                            _confirmDeleteChild(childId, question.id, notifier),
+                        onEditParent: () =>
+                            _navigateToParentOrStandalone(question),
+                        onEditChild: (childId) =>
+                            _navigateToChildQuestion(childId),
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -328,10 +328,7 @@ class _ParentChildBrowserViewState extends ConsumerState<ParentChildBrowserView>
         const SizedBox(width: 2),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
         ),
       ],
     );
@@ -409,9 +406,9 @@ class _ParentChildBrowserViewState extends ConsumerState<ParentChildBrowserView>
     if (confirmed == true && mounted) {
       final success = await notifier.deleteChild(childId, parentId);
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Child question deleted')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Child question deleted')));
       }
     }
   }

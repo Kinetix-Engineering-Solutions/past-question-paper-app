@@ -19,13 +19,12 @@ class QuestionCreateView extends ConsumerStatefulWidget {
   const QuestionCreateView({super.key, this.questionId});
 
   @override
-  ConsumerState<QuestionCreateView> createState() =>
-      _QuestionCreateViewState();
+  ConsumerState<QuestionCreateView> createState() => _QuestionCreateViewState();
 }
 
 class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Controllers
   final _questionTextController = TextEditingController();
   final _correctAnswerController = TextEditingController();
@@ -33,16 +32,16 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
   final _marksController = TextEditingController(text: '1');
   final _pqpNumberController = TextEditingController();
   final _correctOrderController = TextEditingController();
-  
+
   // MCQ options controllers
   final _optionAController = TextEditingController();
   final _optionBController = TextEditingController();
   final _optionCController = TextEditingController();
   final _optionDController = TextEditingController();
-  
+
   // Answer variations for short answer
   final List<TextEditingController> _variationControllers = [];
-  
+
   // Drag items for drag-and-drop ordering
   final List<TextEditingController> _dragItemControllers = [];
 
@@ -76,7 +75,8 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
           return;
         }
 
-        final resetAfterCreate = previous?.isSubmitting == true &&
+        final resetAfterCreate =
+            previous?.isSubmitting == true &&
             !next.isSubmitting &&
             next.successMessage != null &&
             !next.isEditMode;
@@ -129,9 +129,7 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          state.isEditMode ? 'Edit Question' : 'Create Question',
-        ),
+        title: Text(state.isEditMode ? 'Edit Question' : 'Create Question'),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
@@ -264,15 +262,10 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
       _optionCController.text = options[2];
       _optionDController.text = options[3];
 
-      _syncControllerList(
-        _variationControllers,
-        state.answerVariations,
-      );
+      _syncControllerList(_variationControllers, state.answerVariations);
       _syncControllerList(
         _dragItemControllers,
-        state.dragItems
-            .map((item) => item['text']?.toString() ?? '')
-            .toList(),
+        state.dragItems.map((item) => item['text']?.toString() ?? '').toList(),
       );
     }
 
@@ -315,10 +308,7 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
       padding: const EdgeInsets.only(bottom: 16),
       child: Text(
         title,
-        style: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -408,10 +398,7 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
           Icon(Icons.error_outline, color: Colors.red.shade700),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              message,
-              style: TextStyle(color: Colors.red.shade700),
-            ),
+            child: Text(message, style: TextStyle(color: Colors.red.shade700)),
           ),
         ],
       ),
@@ -479,36 +466,39 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
         _optionCController.text,
         _optionDController.text,
       ];
-      
+
       // Collect answer variations
       final variations = _variationControllers
           .map((c) => c.text)
           .where((t) => t.isNotEmpty)
           .toList();
-      
+
       // Collect drag items
       final dragItems = _dragItemControllers
           .asMap()
           .entries
-          .map((entry) => {
-                'id': 'step_${entry.key + 1}',
-                'text': entry.value.text,
-              })
+          .map(
+            (entry) => {
+              'id': 'step_${entry.key + 1}',
+              'text': entry.value.text,
+            },
+          )
           .where((item) => (item['text'] as String).isNotEmpty)
           .toList();
-      
+
       // Update correct order in state before submitting
       if (_correctOrderController.text.isNotEmpty) {
         _viewModel.updateCorrectOrder(_correctOrderController.text);
       }
-      
+
       _viewModel.submitQuestion(
         options: options,
         answerVariations: variations,
         dragItems: dragItems,
         explanation: _explanationController.text,
-        pqpNumber:
-            _pqpNumberController.text.isEmpty ? null : _pqpNumberController.text,
+        pqpNumber: _pqpNumberController.text.isEmpty
+            ? null
+            : _pqpNumberController.text,
       );
     }
   }

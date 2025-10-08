@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// Provider for Question Create ViewModel
 final questionCreateViewModelProvider =
     StateNotifierProvider<QuestionCreateViewModel, QuestionCreateState>(
-  (ref) => QuestionCreateViewModel(),
-);
+      (ref) => QuestionCreateViewModel(),
+    );
 
 /// State for Question Creation Form
 class QuestionCreateState {
@@ -194,9 +194,9 @@ class QuestionCreateState {
       originalParentQuestionId: originalParentQuestionId == _unset
           ? this.originalParentQuestionId
           : originalParentQuestionId as String?,
-    originalMarks: originalMarks == _unset
-      ? this.originalMarks
-      : originalMarks as int?,
+      originalMarks: originalMarks == _unset
+          ? this.originalMarks
+          : originalMarks as int?,
       errorMessage: errorMessage == _unset
           ? this.errorMessage
           : errorMessage as String?,
@@ -214,7 +214,10 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   void updateSubject(String value) {
-    state = state.copyWith(subject: value, topic: ''); // Reset topic when subject changes
+    state = state.copyWith(
+      subject: value,
+      topic: '',
+    ); // Reset topic when subject changes
   }
 
   void updateGrade(int value) {
@@ -310,17 +313,19 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
     try {
       // Fetch parent document from Firestore
       final doc = await _firestore.collection('questions').doc(parentId).get();
-      
+
       if (!doc.exists) {
         state = state.copyWith(errorMessage: 'Parent question not found');
         return;
       }
 
       final data = doc.data()!;
-      
+
       // Verify it's actually a parent
       if (data['isParent'] != true) {
-        state = state.copyWith(errorMessage: 'Selected question is not a parent');
+        state = state.copyWith(
+          errorMessage: 'Selected question is not a parent',
+        );
         return;
       }
 
@@ -333,7 +338,7 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
       final parentPaper = data['paper'] as String?;
       final parentYear = data['year'] as int?;
       final parentSeason = data['season'] as String?;
-      
+
       // Get parent PQP number for suggestion
       String? parentPQPNumber;
       if (data['pqpData'] != null && data['pqpData'] is Map) {
@@ -349,7 +354,7 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
             .collection('questions')
             .where('parentQuestionId', isEqualTo: parentId)
             .get();
-        
+
         final childCount = childrenSnapshot.docs.length;
         suggestedNumber = '$parentPQPNumber.${childCount + 1}';
       }
@@ -370,7 +375,9 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
       );
     } catch (e) {
       debugPrint('❌ Error loading parent: $e');
-      state = state.copyWith(errorMessage: 'Failed to load parent: ${e.toString()}');
+      state = state.copyWith(
+        errorMessage: 'Failed to load parent: ${e.toString()}',
+      );
     }
   }
 
@@ -399,7 +406,10 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
     );
 
     try {
-      final doc = await _firestore.collection('questions').doc(questionId).get();
+      final doc = await _firestore
+          .collection('questions')
+          .doc(questionId)
+          .get();
 
       if (!doc.exists) {
         state = state.copyWith(
@@ -434,8 +444,8 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
       final year = _safeInt(data['year'], state.year);
       final season = (data['season'] ?? state.season).toString();
       final marks = _safeInt(data['marks'], state.marks);
-      final cognitiveLevel =
-          (data['cognitiveLevel'] ?? state.cognitiveLevel).toString();
+      final cognitiveLevel = (data['cognitiveLevel'] ?? state.cognitiveLevel)
+          .toString();
       final difficulty = (data['difficulty'] ?? state.difficulty).toString();
       final questionText = (data['questionText'] ?? '').toString();
       final correctAnswer = _stringifyCorrectAnswer(data['correctAnswer']);
@@ -451,24 +461,25 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
       // Availability modes
       final modes = (data['availableInModes'] is Iterable)
           ? (data['availableInModes'] as Iterable)
-              .map((mode) => mode.toString())
-              .toList()
+                .map((mode) => mode.toString())
+                .toList()
           : <String>[];
       final availableInPQP = modes.contains('pqp');
       final availableInSprint = modes.contains('sprint');
 
       // Parent linkage
       final rawParentId = data['parentQuestionId'];
-      String? parentId =
-          rawParentId == null || rawParentId.toString().isEmpty
-              ? null
-              : rawParentId.toString();
+      String? parentId = rawParentId == null || rawParentId.toString().isEmpty
+          ? null
+          : rawParentId.toString();
       String? parentContextText;
       String? parentImageUrl;
 
       if (parentId != null) {
-        final parentDoc =
-            await _firestore.collection('questions').doc(parentId).get();
+        final parentDoc = await _firestore
+            .collection('questions')
+            .doc(parentId)
+            .get();
         if (parentDoc.exists) {
           final parentData = parentDoc.data() as Map<String, dynamic>;
           parentContextText = parentData['questionText']?.toString();
@@ -489,26 +500,24 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
       }
 
       // Short answer variations
-    final answerVariations = data['answerVariations'] is Iterable
-      ? (data['answerVariations'] as Iterable)
-        .map((variation) => variation?.toString() ?? '')
-        .where((variation) => variation.isNotEmpty)
-        .toList()
-      : <String>[];
+      final answerVariations = data['answerVariations'] is Iterable
+          ? (data['answerVariations'] as Iterable)
+                .map((variation) => variation?.toString() ?? '')
+                .where((variation) => variation.isNotEmpty)
+                .toList()
+          : <String>[];
 
       // Drag & drop items
       List<Map<String, dynamic>> dragItems = [];
       if (data['dragItems'] is Iterable) {
         dragItems = (data['dragItems'] as Iterable)
             .whereType<Map>()
-            .map((item) => item.map(
-                  (key, value) => MapEntry(key.toString(), value),
-                ))
-    .map((item) => Map<String, dynamic>.from(item))
-    .where(
-      (item) =>
-      (item['text']?.toString().trim() ?? '').isNotEmpty,
-    )
+            .map(
+              (item) =>
+                  item.map((key, value) => MapEntry(key.toString(), value)),
+            )
+            .map((item) => Map<String, dynamic>.from(item))
+            .where((item) => (item['text']?.toString().trim() ?? '').isNotEmpty)
             .toList();
       }
 
@@ -518,8 +527,7 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
       if (rawOrder is Iterable) {
         final orderList = rawOrder
             .map((step) => step?.toString() ?? '')
-            .map((step) =>
-                step.startsWith('step_') ? step.substring(5) : step)
+            .map((step) => step.startsWith('step_') ? step.substring(5) : step)
             .where((step) => step.isNotEmpty)
             .toList();
         correctOrder = orderList.join(',');
@@ -604,7 +612,7 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
     }
 
     // Validate correctAnswer for MCQ and short_answer formats
-    if ((state.format == 'MCQ' || state.format == 'short_answer') && 
+    if ((state.format == 'MCQ' || state.format == 'short_answer') &&
         state.correctAnswer.isEmpty) {
       state = state.copyWith(errorMessage: 'Correct answer is required');
       return;
@@ -612,18 +620,23 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
 
     // Validate correctOrder for drag_drop format
     if (state.format == 'drag_drop' && state.correctOrder.isEmpty) {
-      state = state.copyWith(errorMessage: 'Correct order is required for drag & drop questions');
+      state = state.copyWith(
+        errorMessage: 'Correct order is required for drag & drop questions',
+      );
       return;
     }
 
     // Validate dragItems for drag_drop format
     if (state.format == 'drag_drop' && dragItems.isEmpty) {
-      state = state.copyWith(errorMessage: 'At least one drag item is required');
+      state = state.copyWith(
+        errorMessage: 'At least one drag item is required',
+      );
       return;
     }
 
     // Validate child question has parent selected
-    if (state.isChildQuestion && (state.parentQuestionId == null || state.parentQuestionId!.isEmpty)) {
+    if (state.isChildQuestion &&
+        (state.parentQuestionId == null || state.parentQuestionId!.isEmpty)) {
       state = state.copyWith(errorMessage: 'Please select a parent question');
       return;
     }
@@ -635,8 +648,9 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
     );
 
     try {
-      final effectivePqpNumber =
-          (pqpNumber ?? state.pqpNumber).isEmpty ? null : pqpNumber ?? state.pqpNumber;
+      final effectivePqpNumber = (pqpNumber ?? state.pqpNumber).isEmpty
+          ? null
+          : pqpNumber ?? state.pqpNumber;
 
       final questionData = _buildQuestionDocument(
         options: options,
@@ -649,19 +663,20 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
 
       final normalizedNewParentId = state.isChildQuestion
           ? state.parentQuestionId?.trim().isEmpty ?? true
-              ? null
-              : state.parentQuestionId!.trim()
+                ? null
+                : state.parentQuestionId!.trim()
           : null;
       final normalizedOriginalParentId =
           state.originalParentQuestionId?.trim().isEmpty ?? true
-              ? null
-              : state.originalParentQuestionId?.trim();
+          ? null
+          : state.originalParentQuestionId?.trim();
       final int previousMarks = state.originalMarks ?? state.marks;
       final int currentMarks = state.marks;
 
       if (state.isEditMode && state.questionId != null) {
-        final questionRef =
-            _firestore.collection('questions').doc(state.questionId);
+        final questionRef = _firestore
+            .collection('questions')
+            .doc(state.questionId);
 
         await questionRef.update(questionData);
 
@@ -695,8 +710,7 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
           'createdAt': FieldValue.serverTimestamp(),
         };
 
-        final docRef =
-            await _firestore.collection('questions').add(createData);
+        final docRef = await _firestore.collection('questions').add(createData);
 
         debugPrint('✅ Question created successfully: ${docRef.id}');
 
@@ -736,8 +750,8 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
     final data = <String, dynamic>{
       // Core fields
       'questionText': state.questionText,
-      'format': state.format,              // Primary field name
-      'questionType': state.format,        // Backward compatibility
+      'format': state.format, // Primary field name
+      'questionType': state.format, // Backward compatibility
       'correctAnswer': state.correctAnswer,
       'subject': state.subject,
       'grade': state.grade,
@@ -748,15 +762,16 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
       'marks': state.marks,
       'cognitiveLevel': state.cognitiveLevel,
       'difficulty': state.difficulty,
-      
+
       // Parent-child fields
       'isParent': false,
       'parentQuestionId': state.isChildQuestion ? state.parentQuestionId : null,
       'usesParentImage': state.isChildQuestion ? state.usesParentImage : false,
-      
+
       // Timestamps
       'updatedAt': FieldValue.serverTimestamp(),
-      'createdBy': 'admin', // TODO: Replace with actual user ID when auth is added
+      'createdBy':
+          'admin', // TODO: Replace with actual user ID when auth is added
     };
 
     // Build availableInModes array from boolean flags
@@ -767,7 +782,7 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
     data['availableInModes'] = modesArray;
 
     // Format-specific fields
-  if (state.format == 'MCQ') {
+    if (state.format == 'MCQ') {
       data['options'] = options;
       data['hasImageOptions'] = false;
     } else if (isUpdate) {
@@ -785,7 +800,7 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
           .split(',')
           .map((s) => 'step_${s.trim()}')
           .toList();
-      
+
       data['dragItems'] = dragItems;
       data['correctOrder'] = orderList;
     } else if (isUpdate) {
@@ -814,12 +829,14 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
     // Sprint-specific data
     if (state.availableInSprint) {
       data['sprintData'] = {
-        'questionText': state.questionText,  // Use same as base (can override in future)
-        'marks': state.marks,                // Use same as base
+        'questionText':
+            state.questionText, // Use same as base (can override in future)
+        'marks': state.marks, // Use same as base
         'difficulty': state.difficulty,
-        'canRandomize': state.format == 'MCQ', // Allow randomization for MCQ only
-        'estimatedTime': state.marks * 60,   // Estimate 1 minute per mark
-        'tags': [],                          // Empty for now, can add tag field later
+        'canRandomize':
+            state.format == 'MCQ', // Allow randomization for MCQ only
+        'estimatedTime': state.marks * 60, // Estimate 1 minute per mark
+        'tags': [], // Empty for now, can add tag field later
         // 'providedContext' (hints/formulas) - Requires new UI field
       };
     } else if (isUpdate) {

@@ -59,7 +59,8 @@ class _ParentQuestionCreateViewState
         // Reset controllers when leaving edit mode or after create reset
         final bool transitionedOutOfEdit =
             (previous?.isEditMode == true && !next.isEditMode);
-        final bool finishedCreateSuccess = previous?.isSubmitting == true &&
+        final bool finishedCreateSuccess =
+            previous?.isSubmitting == true &&
             !next.isSubmitting &&
             next.successMessage != null &&
             !next.isEditMode;
@@ -72,9 +73,7 @@ class _ParentQuestionCreateViewState
     );
 
     // Apply defaults immediately
-    _applyStateToControllers(
-      ref.read(parentQuestionCreateViewModelProvider),
-    );
+    _applyStateToControllers(ref.read(parentQuestionCreateViewModelProvider));
 
     // Load parent data if editing
     if (widget.parentId != null) {
@@ -162,8 +161,7 @@ class _ParentQuestionCreateViewState
                           if (viewModel.isEditMode)
                             _buildEditSummary(viewModel),
 
-                          if (viewModel.isEditMode)
-                            const SizedBox(height: 16),
+                          if (viewModel.isEditMode) const SizedBox(height: 16),
 
                           // Error/Success Messages
                           if (viewModel.errorMessage != null)
@@ -233,10 +231,7 @@ class _ParentQuestionCreateViewState
                   childCount == 0
                       ? 'No child questions are currently linked to this parent.'
                       : '$childCount child question${childCount == 1 ? ' is' : 's are'} linked. Updates to the context will apply to all of them.',
-                  style: TextStyle(
-                    color: Colors.orange.shade700,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.orange.shade700, fontSize: 12),
                 ),
               ],
             ),
