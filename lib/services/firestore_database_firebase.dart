@@ -347,4 +347,183 @@ class FirestoreDatabaseService {
       rethrow;
     }
   }
+
+  // ===== Option 3: Parent-Child Question Methods =====
+
+  /// Fetches a parent question by ID
+  /// Used when displaying questions that reference a parent
+  Future<Question?> getParentQuestion(String parentId) async {
+    try {
+      final doc = await _firestore.collection('questions').doc(parentId).get();
+
+      if (!doc.exists) {
+        print('⚠️ Parent question not found: $parentId');
+        return null;
+      }
+
+      return Question.fromFirestore(doc);
+    } catch (e) {
+      print('❌ Error fetching parent question $parentId: $e');
+      rethrow;
+    }
+  }
+
+  /// Fetches all child questions of a parent question
+  /// Returns list of questions that have parentQuestionId == parentId
+  Future<List<Question>> getChildQuestions(String parentId) async {
+    try {
+      // First get the parent to retrieve childQuestionIds
+      final parent = await getParentQuestion(parentId);
+
+      if (parent == null) {
+        print('⚠️ Parent question not found, cannot fetch children');
+        return [];
+      }
+
+      // Get childQuestionIds from parent's data
+      final parentDoc = await _firestore
+          .collection('questions')
+          .doc(parentId)
+          .get();
+
+      final parentData = parentDoc.data();
+      if (parentData == null || !parentData.containsKey('childQuestionIds')) {
+        print('⚠️ Parent question has no childQuestionIds field');
+        return [];
+      }
+
+      final childIds = List<String>.from(parentData['childQuestionIds']);
+
+      if (childIds.isEmpty) {
+        return [];
+      }
+
+      // Fetch children in batches (Firestore 'in' query limit is 10)
+      final List<Question> children = [];
+
+      for (int i = 0; i < childIds.length; i += 10) {
+        final batch = childIds.skip(i).take(10).toList();
+
+        final snapshot = await _firestore
+            .collection('questions')
+            .where(FieldPath.documentId, whereIn: batch)
+            .get();
+
+        children.addAll(
+          snapshot.docs.map((doc) => Question.fromFirestore(doc)).toList(),
+        );
+      }
+
+      // Sort by question number if available
+      children.sort((a, b) {
+        final aNum = a.pqpData?.questionNumber ?? '';
+        final bNum = b.pqpData?.questionNumber ?? '';
+        return aNum.compareTo(bNum);
+      });
+
+      return children;
+    } catch (e) {
+      print('❌ Error fetching child questions for parent $parentId: $e');
+      rethrow;
+    }
+  }
+
+  /// Fetches complete question family (parent + all children)
+  /// Returns a map with parent question and list of child questions
+  Future<Map<String, dynamic>> getQuestionFamily(String parentId) async {
+    try {
+      final parent = await getParentQuestion(parentId);
+
+      if (parent == null) {
+        throw Exception('Parent question not found: $parentId');
+      }
+
+      final children = await getChildQuestions(parentId);
+
+      // Calculate total marks from parent data or sum of children
+      int totalMarks = parent.marks;
+      if (totalMarks == 0 && children.isNotEmpty) {
+        totalMarks = children.fold(0, (sum, child) => sum + child.marks);
+      }
+
+      return {
+        'parent': parent,
+        'children': children,
+        'imageUrl': parent.imageUrl,
+        'totalMarks': totalMarks,
+        'childCount': children.length,
+      };
+    } catch (e) {
+      print('❌ Error fetching question family for parent $parentId: $e');
+      rethrow;
+    }
+  }
+
+  /// Enriches a question with its parent context
+  /// Called when displaying a child question to show parent information
+  Future<Question> enrichQuestionWithParent(Question question) async {
+    if (!question.hasParent) {
+      return question; // No parent, return as-is
+    }
+
+    try {
+      // Check if already has parent context from backend
+      if (question.parentContext != null) {
+        return question; // Already enriched by Cloud Function
+      }
+
+      // Fetch parent and add context
+      final parent = await getParentQuestion(question.parentQuestionId!);
+
+      if (parent == null) {
+        print('⚠️ Could not enrich question ${question.id} - parent not found');
+        return question;
+      }
+
+      // Create enriched parent context
+      final parentContextMap = {
+        'id': parent.id,
+        'questionText': parent.questionText,
+        'imageUrl': parent.imageUrl,
+        'pqpData': parent.pqpData != null
+            ? {'questionNumber': parent.pqpData!.questionNumber}
+            : null,
+        'marks': parent.marks,
+      };
+
+      // Return new question instance with parent context
+      return Question(
+        id: question.id,
+        subject: question.subject,
+        paper: question.paper,
+        grade: question.grade,
+        topic: question.topic,
+        cognitiveLevel: question.cognitiveLevel,
+        marks: question.marks,
+        year: question.year,
+        season: question.season,
+        availableInModes: question.availableInModes,
+        pqpData: question.pqpData,
+        sprintData: question.sprintData,
+        parentQuestionId: question.parentQuestionId,
+        usesParentImage: question.usesParentImage,
+        parentContext: parentContextMap, // Add enriched context
+        format: question.format,
+        questionText: question.questionText,
+        imageUrl: question.imageUrl,
+        options: question.options,
+        optionImages: question.optionImages,
+        correctOrder: question.correctOrder,
+        correctAnswer: question.correctAnswer,
+        explanation: question.explanation,
+        points: question.points,
+        timeAllocation: question.timeAllocation,
+        dragItems: question.dragItems,
+        dragTargets: question.dragTargets,
+      );
+    } catch (e) {
+      print('❌ Error enriching question with parent: $e');
+      return question; // Return original on error
+    }
+  }
 }

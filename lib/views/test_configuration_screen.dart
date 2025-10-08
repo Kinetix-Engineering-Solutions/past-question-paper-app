@@ -27,8 +27,10 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
   Future<void> startTest(
     BuildContext context,
     Map<String, dynamic> options,
-    String buttonId, // Unique identifier for the button being pressed
-  ) async {
+    String buttonId, { // Unique identifier for the button being pressed
+    bool isPQPMode = false,
+    bool isSprintMode = false,
+  }) async {
     if (state != null)
       return; // Prevent multiple taps while any button is loading
     state = buttonId; // Set the specific button as loading
@@ -52,7 +54,11 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PracticeScreen(questions: questions),
+            builder: (context) => PracticeScreen(
+              questions: questions,
+              isPQPMode: isPQPMode,
+              isSprintMode: isSprintMode,
+            ),
           ),
         );
       }
@@ -69,132 +75,7 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
       state = null; // Clear the loading state
     }
   }
-
-  /// Start a local test using questions from test_questions_firestore.json
-  /// This is for testing purposes only
-  Future<void> startLocalTest(BuildContext context, String buttonId) async {
-    if (state != null) return; // Prevent multiple taps
-    state = buttonId; // Set the specific button as loading
-    try {
-      print('🧪 Starting local test with test_questions_firestore.json');
-
-      final questions = await _questionRepository.loadLocalTestQuestions();
-      if (questions.isEmpty) {
-        throw Exception('No questions found in test_questions_firestore.json');
-      }
-
-      print('📚 Loaded ${questions.length} questions for local test');
-
-      // Navigate to practice screen with local questions
-      if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PracticeScreen(questions: questions),
-          ),
-        );
-      }
-    } catch (e) {
-      print('❌ Error starting local test: $e');
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error starting local test: ${e.toString()}'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    } finally {
-      state = null; // Clear the loading state
-    }
-  }
-
-  /// Start PQP mode test using questions from test_questions_firestore.json
-  /// PQP mode shows question chains and dependencies
-  Future<void> startPQPTest(BuildContext context, String buttonId) async {
-    if (state != null) return; // Prevent multiple taps
-    state = buttonId; // Set the specific button as loading
-    try {
-      print('📝 Starting PQP mode test with question chains');
-
-      final questions = await _questionRepository.loadPQPQuestions();
-      if (questions.isEmpty) {
-        throw Exception('No PQP questions found in test_questions_firestore.json');
-      }
-
-      print('📚 Loaded ${questions.length} PQP questions');
-
-      // Navigate to practice screen with PQP questions
-      if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PracticeScreen(
-              questions: questions,
-              isPQPMode: true,
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      print('❌ Error starting PQP test: $e');
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error starting PQP test: ${e.toString()}'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    } finally {
-      state = null; // Clear the loading state
-    }
-  }
-
-  /// Start Sprint mode test using questions from test_questions_firestore.json
-  /// Sprint mode shows standalone questions with hints available
-  Future<void> startSprintTest(BuildContext context, String buttonId) async {
-    if (state != null) return; // Prevent multiple taps
-    state = buttonId; // Set the specific button as loading
-    try {
-      print('⚡ Starting Sprint mode test with hints available');
-
-      final sprintQuestions = await _questionRepository.loadSprintQuestions();
-
-      if (sprintQuestions.isEmpty) {
-        throw Exception('No Sprint questions found in test_questions_firestore.json');
-      }
-
-      print('📚 Loaded ${sprintQuestions.length} Sprint questions');
-
-      // Navigate to practice screen with Sprint questions
-      if (context.mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PracticeScreen(
-              questions: sprintQuestions,
-              isSprintMode: true,
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      print('❌ Error starting Sprint test: $e');
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error starting Sprint test: ${e.toString()}'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    } finally {
-      state = null; // Clear the loading state
-    }
-  }
 }
-
 
 class TestConfigurationScreen extends StatefulWidget {
   final String subject;
@@ -285,10 +166,24 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
       padding: const EdgeInsets.all(16),
       children: [
         Text(
-          'Find a Past Paper',
+          'Full Exam Mode',
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Practice with authentic past exam papers. Questions appear exactly as they did in the original exam, with proper numbering and question chains.',
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.neutralMid),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'Find a Past Paper',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 16),
         // --- Dropdowns for year and season ---
@@ -325,14 +220,19 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
           onTap: () {
             ref
                 .read(testConfigurationViewModelProvider.notifier)
-                .startTest(context, {
-                  'grade': widget.grade,
-                  'subject': widget.subject,
-                  'paper': 'p1',
-                  'mode': 'full_exam',
-                  'year': _selectedYear,
-                  'season': _selectedSeason,
-                }, 'paper1');
+                .startTest(
+                  context,
+                  {
+                    'grade': widget.grade,
+                    'subject': widget.subject,
+                    'paper': 'p1',
+                    'mode': 'full_exam',
+                    'year': _selectedYear,
+                    'season': _selectedSeason,
+                  },
+                  'paper1',
+                  isPQPMode: true,
+                );
           },
         ),
         _buildStartCard(
@@ -342,14 +242,19 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
           onTap: () {
             ref
                 .read(testConfigurationViewModelProvider.notifier)
-                .startTest(context, {
-                  'grade': widget.grade,
-                  'subject': widget.subject,
-                  'paper': 'Paper 2',
-                  'mode': 'full_exam',
-                  'year': _selectedYear,
-                  'season': _selectedSeason,
-                }, 'paper2');
+                .startTest(
+                  context,
+                  {
+                    'grade': widget.grade,
+                    'subject': widget.subject,
+                    'paper': 'Paper 2',
+                    'mode': 'full_exam',
+                    'year': _selectedYear,
+                    'season': _selectedSeason,
+                  },
+                  'paper2',
+                  isPQPMode: true,
+                );
           },
         ),
       ],
@@ -370,10 +275,24 @@ class _QuickPracticeView extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       children: [
         Text(
-          'Start a Quick, Mixed-Topic Test',
+          'Quick Practice Mode',
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Fast-paced practice with mixed topics. Questions are simplified for learning, with hints available to help you understand concepts better.',
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: AppColors.neutralMid),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'Start a Quick, Mixed-Topic Test',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 16),
         _buildStartCard(
@@ -382,17 +301,20 @@ class _QuickPracticeView extends ConsumerWidget {
           icon: Icons.timer_outlined,
           isLoading: loadingButtonId == 'quick15',
           onTap: () {
-            ref.read(testConfigurationViewModelProvider.notifier).startTest(
-              context,
-              {
-                'grade': grade,
-                'subject': subject,
-                'mode': 'quick_practice',
-                'paper': 'p1', // Default to paper 1 for quick practice
-                'duration': 15,
-              },
-              'quick15',
-            );
+            ref
+                .read(testConfigurationViewModelProvider.notifier)
+                .startTest(
+                  context,
+                  {
+                    'grade': grade,
+                    'subject': subject,
+                    'mode': 'quick_practice',
+                    'paper': 'p1', // Default to paper 1 for quick practice
+                    'duration': 15,
+                  },
+                  'quick15',
+                  isSprintMode: true,
+                );
           },
         ),
         _buildStartCard(
@@ -401,68 +323,20 @@ class _QuickPracticeView extends ConsumerWidget {
           icon: Icons.timer,
           isLoading: loadingButtonId == 'quick30',
           onTap: () {
-            ref.read(testConfigurationViewModelProvider.notifier).startTest(
-              context,
-              {
-                'grade': grade,
-                'subject': subject,
-                'mode': 'quick_practice',
-                'paper': 'p1', // Default to paper 1 for quick practice
-                'duration': 30,
-              },
-              'quick30',
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-        Text(
-          '🧪 Local Testing',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Colors.orange,
-          ),
-        ),
-        const SizedBox(height: 8),
-        _buildStartCard(
-          title: 'Test Local Questions',
-          subtitle: 'From test_questions_firestore.json',
-          icon: Icons.science_outlined,
-          isLoading: loadingButtonId == 'localtest',
-          onTap: () {
             ref
                 .read(testConfigurationViewModelProvider.notifier)
-                .startLocalTest(context, 'localtest');
-          },
-        ),
-        const SizedBox(height: 16),
-        Text(
-          '📝 Dual Mode Testing',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
-          ),
-        ),
-        const SizedBox(height: 8),
-        _buildStartCard(
-          title: 'PQP Mode',
-          subtitle: 'Past Question Papers with chains & dependencies',
-          icon: Icons.assignment_outlined,
-          isLoading: loadingButtonId == 'pqptest',
-          onTap: () {
-            ref
-                .read(testConfigurationViewModelProvider.notifier)
-                .startPQPTest(context, 'pqptest');
-          },
-        ),
-        _buildStartCard(
-          title: 'Sprint Mode',
-          subtitle: 'Standalone questions with hints available',
-          icon: Icons.flash_on_outlined,
-          isLoading: loadingButtonId == 'sprinttest',
-          onTap: () {
-            ref
-                .read(testConfigurationViewModelProvider.notifier)
-                .startSprintTest(context, 'sprinttest');
+                .startTest(
+                  context,
+                  {
+                    'grade': grade,
+                    'subject': subject,
+                    'mode': 'quick_practice',
+                    'paper': 'p1', // Default to paper 1 for quick practice
+                    'duration': 30,
+                  },
+                  'quick30',
+                  isSprintMode: true,
+                );
           },
         ),
       ],
@@ -484,10 +358,44 @@ class _ByTopicView extends ConsumerWidget {
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: topics.length,
+      itemCount: topics.length + 1, // +1 for header
       itemBuilder: (context, index) {
-        final topic = topics[index];
-        final buttonId = 'topic_$index';
+        // Header section
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'By Topic Mode',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Focus on specific topics to strengthen weak areas. Select a topic below to practice questions only from that section.',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppColors.neutralMid),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Select a Topic',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Topic cards
+        final topicIndex = index - 1;
+        final topic = topics[topicIndex];
+        final buttonId = 'topic_$topicIndex';
         return _buildStartCard(
           title: topic,
           icon: Icons.bookmark_border,

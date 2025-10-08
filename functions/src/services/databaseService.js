@@ -31,6 +31,10 @@ function buildQuestionQuery(params) {
     query = query.where('topic', '==', topic);
   }
 
+  // IMPORTANT: Exclude parent questions (they're context documents, not answerable questions)
+  // Parents have isParent: true and should never appear as standalone questions
+  // Note: Firestore doesn't support != operator, so we filter in memory after fetching
+
   return query;
 }
 
@@ -61,6 +65,9 @@ function buildEnhancedQuestionQuery(params) {
   if (cognitiveLevel) {
     query = query.where('cognitiveLevel', '==', cognitiveLevel);
   }
+
+  // IMPORTANT: Exclude parent questions (they're context documents, not answerable questions)
+  // Note: Firestore doesn't support != operator, so we filter in memory after fetching
 
   query = query.limit(limit);
   
@@ -159,11 +166,180 @@ async function saveUserTestResults(userId, resultData) {
   }
 }
 
+// ============================================================================
+// OPTION 3: Parent-Child Relationship Functions
+// ============================================================================
+
+/**
+ * Fetches a parent question by ID
+ * @param {string} parentId - Parent question ID
+ * @returns {Object|null} - Parent question data or null if not found
+ */
+async function getParentQuestion(parentId) {
+  try {
+    const doc = await admin.firestore()
+      .collection('questions')
+      .doc(parentId)
+      .get();
+    
+    if (!doc.exists) {
+      console.warn(`Parent question not found: ${parentId}`);
+      return null;
+    }
+    
+    return { id: doc.id, ...doc.data() };
+  } catch (error) {
+    console.error(`Error fetching parent question ${parentId}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetches all child questions of a parent
+ * @param {string} parentId - Parent question ID
+ * @returns {Array} - Array of child question documents
+ */
+async function getChildQuestions(parentId) {
+  try {
+    const parent = await getParentQuestion(parentId);
+    if (!parent || !parent.childQuestionIds || parent.childQuestionIds.length === 0) {
+      return [];
+    }
+    
+    // Fetch children in batches (Firestore 'in' limit is 10)
+    const childIds = parent.childQuestionIds;
+    const batches = [];
+    
+    for (let i = 0; i < childIds.length; i += 10) {
+      const batch = childIds.slice(i, i + 10);
+      batches.push(batch);
+    }
+    
+    const childDocs = [];
+    for (const batch of batches) {
+      const snapshot = await admin.firestore()
+        .collection('questions')
+        .where(admin.firestore.FieldPath.documentId(), 'in', batch)
+        .get();
+      
+      childDocs.push(...snapshot.docs);
+    }
+    
+    return childDocs
+      .filter(doc => doc.exists)
+      .map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error(`Error fetching child questions for parent ${parentId}:`, error);
+    return [];
+  }
+}
+
+/**
+ * Fetches a question family (parent + all children)
+ * @param {string} parentId - Parent question ID
+ * @returns {Object|null} - Question family with parent and children, or null
+ */
+async function getQuestionFamily(parentId) {
+  try {
+    const parent = await getParentQuestion(parentId);
+    if (!parent) {
+      return null;
+    }
+    
+    const children = await getChildQuestions(parentId);
+    
+    return {
+      parent,
+      children,
+      imageUrl: parent.imageUrl,
+      mainQuestionText: parent.mainQuestionText,
+      totalMarks: parent.totalMarks,
+      questionCount: parent.questionCount || children.length
+    };
+  } catch (error) {
+    console.error(`Error fetching question family ${parentId}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Checks if a question has a parent
+ * @param {Object} question - Question document
+ * @returns {boolean} - True if question has parent
+ */
+function hasParent(question) {
+  return !!question.parentQuestionId;
+}
+
+/**
+ * Gets the image URL for a question (handles parent inheritance)
+ * @param {Object} question - Question document
+ * @returns {string|null} - Image URL or null
+ */
+async function getQuestionImageUrl(question) {
+  // Direct image URL
+  if (question.imageUrl && !question.usesParentImage) {
+    return question.imageUrl;
+  }
+  
+  // Inherited from parent
+  if (question.usesParentImage && question.parentQuestionId) {
+    const parent = await getParentQuestion(question.parentQuestionId);
+    return parent?.imageUrl || null;
+  }
+  
+  return null;
+}
+
+/**
+ * Enriches a question with parent context (if applicable)
+ * @param {Object} question - Question document
+ * @returns {Object} - Enriched question with parent data
+ */
+async function enrichQuestionWithParent(question) {
+  if (!hasParent(question)) {
+    return question;
+  }
+  
+  const parent = await getParentQuestion(question.parentQuestionId);
+  if (!parent) {
+    return question;
+  }
+  
+  // Return proper parent context object with all needed fields
+  return {
+    ...question,
+    parentContext: {
+      questionText: parent.questionText || parent.mainQuestionText,
+      imageUrl: parent.imageUrl,
+      pqpData: parent.pqpData
+    },
+    imageUrl: question.usesParentImage ? parent.imageUrl : question.imageUrl
+  };
+}
+
+/**
+ * Fetches questions by parent ID (alias for getChildQuestions)
+ * @param {string} parentId - Parent question ID
+ * @returns {Array} - Array of child questions
+ */
+async function fetchQuestionsByParentId(parentId) {
+  return getChildQuestions(parentId);
+}
+
 module.exports = {
   buildQuestionQuery,
   buildEnhancedQuestionQuery,
   fetchBlueprint,
   executeQuestionQuery,
   fetchQuestionsForGrading,
-  saveUserTestResults
+  saveUserTestResults,
+  // Option 3: Parent-child functions
+  getParentQuestion,
+  getChildQuestions,
+  getQuestionFamily,
+  hasParent,
+  getQuestionImageUrl,
+  enrichQuestionWithParent,
+  fetchQuestionsByParentId
 };

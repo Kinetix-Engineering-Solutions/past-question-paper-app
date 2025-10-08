@@ -358,13 +358,15 @@ async function gradeTestSubmission(params) {
   // Get question IDs from submissions
   const questionIds = Object.keys(submissions);
 
-  // Check if this is a short answer submission (single document structure)
-  if (questionIds.includes('short answer')) {
-    console.log('📝 Routing to short answer grading service');
-    return await gradeShortAnswerSubmissions(submissions);
-  }
+  // ✅ SHORT ANSWER FIX: Removed mega-document check
+  // Short answers now use individual documents (sa_math_001, sa_math_002, etc.)
+  // They're graded using the standard flow below, just like MCQs
+  // if (questionIds.includes('short answer')) {
+  //   console.log('📝 Routing to short answer grading service');
+  //   return await gradeShortAnswerSubmissions(submissions);
+  // }
 
-  // Fetch questions from database (for MCQ and other formats)
+  // Fetch questions from database (for MCQ, True/False, Drag-Drop, and Short Answer)
   const questionDocs = await fetchQuestionsForGrading(questionIds);
   
   // Create question lookup map

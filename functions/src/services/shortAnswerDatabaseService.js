@@ -7,6 +7,7 @@ const functions = require('firebase-functions');
 
 /**
  * Builds query for short answer questions with PQP mode support
+ * Option 3: Uses parentQuestionId instead of chainId
  * @param {Object} params - Query parameters
  * @param {number} params.grade - Grade level
  * @param {string} params.subject - Subject name
@@ -14,7 +15,7 @@ const functions = require('firebase-functions');
  * @param {number} [params.year] - Exam year
  * @param {string} [params.season] - Exam season
  * @param {string} [params.topic] - Specific topic
- * @param {string} [params.chainId] - Question chain identifier
+ * @param {string} [params.parentId] - Parent question identifier (replaces chainId)
  * @param {number} [params.limit=50] - Query limit
  * @returns {Query} - Firestore query
  */
@@ -49,8 +50,8 @@ function buildShortAnswerPQPQuery(params) {
   if (topic) {
     query = query.where('topic', '==', topic);
   }
-  if (chainId) {
-    query = query.where('pqpData.chainId', '==', chainId);
+  if (parentId) {
+    query = query.where('parentQuestionId', '==', parentId);
   }
 
   return query;

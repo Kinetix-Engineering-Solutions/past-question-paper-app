@@ -9,22 +9,16 @@ class PQPData {
   final String? season;
   final int? year;
   final String? questionNumber;
-  final List<String>? dependsOn;
   final String? questionText;
   final int? marks;
-  final bool? partOfChain;
-  final String? chainId;
 
   PQPData({
     this.paper,
     this.season,
     this.year,
     this.questionNumber,
-    this.dependsOn,
     this.questionText,
     this.marks,
-    this.partOfChain,
-    this.chainId,
   });
 
   factory PQPData.fromMap(Map<String, dynamic> data) {
@@ -33,11 +27,8 @@ class PQPData {
       season: data['season']?.toString(),
       year: (data['year'] as num?)?.toInt(),
       questionNumber: data['questionNumber']?.toString(),
-      dependsOn: data['dependsOn'] != null ? List<String>.from(data['dependsOn']) : null,
       questionText: data['questionText']?.toString(),
       marks: (data['marks'] as num?)?.toInt(),
-      partOfChain: data['partOfChain'] as bool?,
-      chainId: data['chainId']?.toString(),
     );
   }
 }
@@ -65,7 +56,9 @@ class SprintData {
   factory SprintData.fromMap(Map<String, dynamic> data) {
     return SprintData(
       questionText: data['questionText']?.toString(),
-      providedContext: data['providedContext'] as Map<String, dynamic>?,
+      providedContext: data['providedContext'] != null
+          ? Question._safeMapCast(data['providedContext'])
+          : null,
       marks: (data['marks'] as num?)?.toInt(),
       canRandomize: data['canRandomize'] as bool?,
       difficulty: data['difficulty']?.toString(),
@@ -91,6 +84,11 @@ class Question {
   final List<String>? availableInModes; // ["pqp", "sprint"]
   final PQPData? pqpData; // PQP mode specific data
   final SprintData? sprintData; // Sprint mode specific data
+
+  // --- Option 3: Parent-Child Relationships ---
+  final String? parentQuestionId; // Reference to parent question
+  final bool usesParentImage; // Whether to inherit image from parent
+  final Map<String, dynamic>? parentContext; // Cached parent data from backend
 
   // --- Question Content ---
   final String format; // Renamed from questionType
@@ -130,6 +128,9 @@ class Question {
     this.availableInModes, // Dual mode support
     this.pqpData, // PQP mode specific data
     this.sprintData, // Sprint mode specific data
+    this.parentQuestionId, // Option 3: Parent reference
+    this.usesParentImage = false, // Option 3: Image inheritance flag
+    this.parentContext, // Option 3: Cached parent data
     required this.format,
     required this.questionText,
     this.imageUrl,
@@ -172,10 +173,16 @@ class Question {
           ? List<String>.from(data['availableInModes'])
           : null,
       pqpData: data['pqpData'] != null
-          ? PQPData.fromMap(data['pqpData'])
+          ? PQPData.fromMap(_safeMapCast(data['pqpData']))
           : null,
       sprintData: data['sprintData'] != null
-          ? SprintData.fromMap(data['sprintData'])
+          ? SprintData.fromMap(_safeMapCast(data['sprintData']))
+          : null,
+      // Option 3: Parent-child fields
+      parentQuestionId: data['parentQuestionId']?.toString(),
+      usesParentImage: data['usesParentImage'] as bool? ?? false,
+      parentContext: data['parentContext'] != null
+          ? _safeMapCast(data['parentContext'])
           : null,
       format: data['format']?.toString() ?? 'MCQ',
       questionText: data['questionText']?.toString() ?? '',
@@ -239,6 +246,12 @@ class Question {
       marks: (data['marks'] as num?)?.toInt() ?? 0,
       year: (data['year'] as num?)?.toInt() ?? 0,
       season: data['season']?.toString() ?? '',
+      // Option 3: Parent-child fields
+      parentQuestionId: data['parentQuestionId']?.toString(),
+      usesParentImage: data['usesParentImage'] as bool? ?? false,
+      parentContext: data['parentContext'] != null
+          ? _safeMapCast(data['parentContext'])
+          : null,
       format: formatValue,
       questionText: data['questionText'] ?? '',
       imageUrl: imageUrlValue,
@@ -538,6 +551,10 @@ class Question {
         availableInModes: availableInModes,
         pqpData: pqpData,
         sprintData: sprintData,
+        // Option 3: Parent fields
+        parentQuestionId: parentQuestionId,
+        usesParentImage: usesParentImage,
+        parentContext: parentContext,
         format: format,
         questionText: questionText,
         imageUrl: httpQuestionImage,
@@ -586,14 +603,26 @@ class Question {
     return sprintData?.marks ?? marks;
   }
 
-  /// Check if this question is part of a question chain (PQP mode)
-  bool get isPartOfChain => pqpData?.partOfChain ?? false;
+  // --- Option 3: Parent-Child Helpers ---
 
-  /// Get question dependencies for PQP mode
-  List<String> get dependencies => pqpData?.dependsOn ?? [];
+  /// Check if this question has a parent question
+  bool get hasParent =>
+      parentQuestionId != null && parentQuestionId!.isNotEmpty;
 
-  /// Get question chain ID
-  String? get chainId => pqpData?.chainId;
+  /// Get the image URL (inherited from parent if usesParentImage is true)
+  String? get displayImageUrl {
+    if (usesParentImage && parentContext != null) {
+      return parentContext!['imageUrl'] as String?;
+    }
+    return imageUrl;
+  }
+
+  /// Get parent question text from cached context
+  String? get parentQuestionText => parentContext?['questionText'] as String?;
+
+  /// Get parent question number from cached context
+  String? get parentQuestionNumber =>
+      parentContext?['pqpData']?['questionNumber'] as String?;
 
   /// Check if this question can be randomized (Sprint mode)
   bool get canRandomize => sprintData?.canRandomize ?? false;
@@ -609,4 +638,20 @@ class Question {
 
   /// Get provided context for Sprint mode
   Map<String, dynamic>? get providedContext => sprintData?.providedContext;
+
+  /// Helper method to safely cast Map<Object?, Object?> to Map<String, dynamic>
+  static Map<String, dynamic> _safeMapCast(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      return data;
+    } else if (data is Map) {
+      final Map<String, dynamic> result = {};
+      data.forEach((key, value) {
+        if (key is String) {
+          result[key] = value;
+        }
+      });
+      return result;
+    }
+    return {};
+  }
 }

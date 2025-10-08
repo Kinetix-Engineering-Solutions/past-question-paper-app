@@ -61,6 +61,28 @@ function mapQuestionData(doc) {
     // Other fields
     points: questionData.points,
     timeAllocation: questionData.timeAllocation,
+    
+    // ✅ Option 3: Parent-Child fields (CRITICAL - must be included!)
+    isParent: questionData.isParent || false, // Mark parent questions
+    parentQuestionId: questionData.parentQuestionId,
+    usesParentImage: questionData.usesParentImage || false,
+    parentContext: questionData.parentContext,
+    
+    // ✅ Dual mode fields
+    availableInModes: questionData.availableInModes,
+    pqpData: questionData.pqpData,
+    sprintData: questionData.sprintData,
+    
+    // ✅ Short answer fields
+    correctAnswer: questionData.correctAnswer,
+    answerType: questionData.answerType,
+    caseSensitive: questionData.caseSensitive,
+    tolerance: questionData.tolerance,
+    answerVariations: questionData.answerVariations,
+    
+    // ✅ Additional metadata
+    explanation: questionData.explanation,
+    difficulty: questionData.difficulty,
   };
 }
 

@@ -1,19 +1,23 @@
 const { generateSingleDocumentTest } = require('./shortAnswerSingleDocService');
 const { safeArray, mapQuestionData } = require('../helpers/dataHelpers');
+const { getParentQuestion, enrichQuestionWithParent, hasParent } = require('./databaseService');
 
 /**
  * Test generation service specifically for short answer questions
- * Extends the main test service with PQP chain support and dependency resolution
+ * Option 3: Uses parent-child relationships instead of manual chainId
  */
 
 /**
  * Processes short answer questions for test format
  * @param {Array} questions - Array of short answer question data
  * @param {string} mode - Test mode (pqp, sprint)
- * @returns {Array} - Processed questions
+ * @returns {Array} - Processed questions with parent context
  */
-function processShortAnswerQuestions(questions, mode = 'pqp') {
-  return questions.map((question, index) => {
+async function processShortAnswerQuestions(questions, mode = 'pqp') {
+  const processedQuestions = [];
+  
+  for (let i = 0; i < questions.length; i++) {
+    const question = questions[i];
     const processedQuestion = { ...question };
 
     // Ensure required short answer fields are present
@@ -29,26 +33,27 @@ function processShortAnswerQuestions(questions, mode = 'pqp') {
       processedQuestion.answerVariations = question.answerVariations || [];
     }
 
+    // OPTION 3: Enrich with parent context if applicable
+    if (hasParent(question)) {
+      const enrichedQuestion = await enrichQuestionWithParent(question);
+      Object.assign(processedQuestion, enrichedQuestion);
+    }
+
     // Mode-specific processing
     if (mode === 'pqp' && question.pqpData) {
-      processedQuestion.questionText = question.pqpData.questionText;
-      processedQuestion.maxMarks = question.pqpData.marks;
+      processedQuestion.questionText = question.pqpData.questionText || question.questionText;
+      processedQuestion.maxMarks = question.pqpData.marks || question.marks;
       processedQuestion.questionNumber = question.pqpData.questionNumber;
-      processedQuestion.chainId = question.pqpData.chainId;
-      processedQuestion.dependencies = question.pqpData.dependsOn || [];
-      processedQuestion.partOfChain = question.pqpData.partOfChain || false;
+      // ✅ NO chainId, dependsOn, or partOfChain
     } else if (mode === 'sprint' && question.sprintData) {
-      processedQuestion.questionText = question.sprintData.questionText;
-      processedQuestion.maxMarks = question.sprintData.marks;
-      processedQuestion.questionNumber = index + 1; // Sequential numbering for sprint
-      processedQuestion.difficulty = question.sprintData.difficulty;
-      processedQuestion.estimatedTime = question.sprintData.estimatedTime;
-      processedQuestion.tags = question.sprintData.tags || [];
+      processedQuestion.questionText = question.sprintData.questionText || question.questionText;
+      processedQuestion.maxMarks = question.sprintData.marks || question.marks;
+      processedQuestion.questionNumber = i + 1; // Sequential numbering for sprint
       processedQuestion.providedContext = question.sprintData.providedContext || {};
     } else {
       // Fallback to basic question data
       processedQuestion.maxMarks = question.maxMarks || question.marks || 1;
-      processedQuestion.questionNumber = index + 1;
+      processedQuestion.questionNumber = i + 1;
     }
 
     // Add learning support features
@@ -56,29 +61,33 @@ function processShortAnswerQuestions(questions, mode = 'pqp') {
     processedQuestion.workingSteps = question.workingSteps || [];
     processedQuestion.showWorking = question.showWorking || false;
 
-    return processedQuestion;
-  });
+    processedQuestions.push(processedQuestion);
+  }
+  
+  return processedQuestions;
 }
 
 /**
- * Generates PQP mode short answer test with chain support
+ * Generates PQP mode short answer test
+ * Option 3: Uses parent references instead of chainId
  * @param {Object} params - Test generation parameters
  * @returns {Object} - Generated PQP test data
  */
 async function generateShortAnswerPQPTest(params) {
   console.log('Generating Short Answer PQP test with params:', params);
 
-  const { grade, subject, paper, year, season, topic, chainId, limit = 50 } = params;
+  const { grade, subject, paper, year, season, topic, parentId, limit = 50 } = params;
 
   try {
     let questions = [];
 
-    if (chainId) {
-      // Fetch specific question chain
-      console.log(`Fetching PQP chain: ${chainId}`);
-      questions = await fetchPQPQuestionChain(chainId, grade, subject);
+    if (parentId) {
+      // OPTION 3: Fetch questions by parent reference
+      console.log(`Fetching questions for parent: ${parentId}`);
+      const { getChildQuestions } = require('./databaseService');
+      questions = await getChildQuestions(parentId);
     } else {
-      // Fetch questions with dependency resolution
+      // Fetch questions normally
       const queryParams = {
         mode: 'pqp',
         grade,
@@ -99,20 +108,20 @@ async function generateShortAnswerPQPTest(params) {
 
     console.log(`Found ${questions.length} PQP short answer questions`);
 
-    // Process questions for PQP format
-    const processedQuestions = processShortAnswerQuestions(questions, 'pqp');
+    // Process questions for PQP format (now async)
+    const processedQuestions = await processShortAnswerQuestions(questions, 'pqp');
 
-    // Group questions by chain for organization
-    const chainGroups = {};
+    // OPTION 3: Group questions by parent for organization
+    const parentGroups = { standalone: [] };
     processedQuestions.forEach(question => {
-      const chain = question.chainId || 'individual';
-      if (!chainGroups[chain]) {
-        chainGroups[chain] = [];
+      const groupKey = question.parentQuestionId || 'standalone';
+      if (!parentGroups[groupKey]) {
+        parentGroups[groupKey] = [];
       }
-      chainGroups[chain].push(question);
+      parentGroups[groupKey].push(question);
     });
 
-    console.log(`Questions organized into ${Object.keys(chainGroups).length} chain groups`);
+    console.log(`Questions organized into ${Object.keys(parentGroups).length} groups`);
 
     // Calculate total marks
     const totalMarks = processedQuestions.reduce((sum, q) => sum + (q.maxMarks || 1), 0);
@@ -121,7 +130,7 @@ async function generateShortAnswerPQPTest(params) {
       questions: processedQuestions,
       totalQuestions: processedQuestions.length,
       totalMarks: totalMarks,
-      chainGroups: chainGroups,
+      parentGroups: parentGroups,  // Renamed from chainGroups
       generatedAt: new Date().toISOString(),
       mode: 'pqp',
       format: 'short_answer',
@@ -142,15 +151,13 @@ async function generateShortAnswerPQPTest(params) {
 async function generateShortAnswerSprintTest(params) {
   console.log('Generating Short Answer Sprint test with params:', params);
 
-  const { grade, subject, difficulty, tags, topic, limit = 50 } = params;
+  const { grade, subject, topic, limit = 50 } = params;
 
   try {
     const queryParams = {
       mode: 'sprint',
       grade,
       subject,
-      difficulty,
-      tags,
       topic,
       limit
     };
@@ -163,29 +170,16 @@ async function generateShortAnswerSprintTest(params) {
 
     console.log(`Found ${questions.length} Sprint short answer questions`);
 
-    // Process questions for Sprint format
-    const processedQuestions = processShortAnswerQuestions(questions, 'sprint');
+    // Process questions for Sprint format (now async)
+    const processedQuestions = await processShortAnswerQuestions(questions, 'sprint');
 
-    // Group questions by difficulty for analysis
-    const difficultyGroups = {};
-    processedQuestions.forEach(question => {
-      const diff = question.difficulty || 'unknown';
-      if (!difficultyGroups[diff]) {
-        difficultyGroups[diff] = [];
-      }
-      difficultyGroups[diff].push(question);
-    });
-
-    // Calculate total marks and estimated time
+    // Calculate total marks
     const totalMarks = processedQuestions.reduce((sum, q) => sum + (q.maxMarks || 1), 0);
-    const estimatedTime = processedQuestions.reduce((sum, q) => sum + (q.estimatedTime || 2), 0);
 
     return {
       questions: processedQuestions,
       totalQuestions: processedQuestions.length,
       totalMarks: totalMarks,
-      estimatedTime: estimatedTime,
-      difficultyGroups: difficultyGroups,
       generatedAt: new Date().toISOString(),
       mode: 'sprint',
       format: 'short_answer',
@@ -235,41 +229,12 @@ async function generateShortAnswerTest(params) {
   }
 }
 
-/**
- * Validates that questions in a chain have proper dependencies
- * @param {Array} questions - Array of questions in a chain
- * @returns {Object} - Validation result with any issues found
- */
-function validateQuestionChain(questions) {
-  const issues = [];
-  const questionIds = new Set(questions.map(q => q.id));
 
-  questions.forEach(question => {
-    if (question.dependencies && question.dependencies.length > 0) {
-      const missingDependencies = question.dependencies.filter(dep => !questionIds.has(dep));
 
-      if (missingDependencies.length > 0) {
-        issues.push({
-          questionId: question.id,
-          questionNumber: question.questionNumber,
-          missingDependencies: missingDependencies
-        });
-      }
-    }
-  });
-
-  return {
-    isValid: issues.length === 0,
-    issues: issues,
-    totalQuestions: questions.length,
-    questionsWithDependencies: questions.filter(q => q.dependencies && q.dependencies.length > 0).length
-  };
-}
 
 module.exports = {
   processShortAnswerQuestions,
   generateShortAnswerPQPTest,
   generateShortAnswerSprintTest,
-  generateShortAnswerTest,
-  validateQuestionChain
+  generateShortAnswerTest
 };

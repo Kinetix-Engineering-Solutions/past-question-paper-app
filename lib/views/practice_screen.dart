@@ -5,6 +5,7 @@ import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
 import 'package:past_question_paper_v1/views/practice_results_screen.dart';
 import 'package:past_question_paper_v1/widgets/latex_text.dart';
+import 'package:past_question_paper_v1/widgets/parent_question_context_card.dart';
 import 'package:past_question_paper_v1/widgets/question_formats/mcq_text_widget.dart';
 import 'package:past_question_paper_v1/widgets/question_formats/mcq_image_widget.dart';
 import 'package:past_question_paper_v1/widgets/question_formats/true_false_widget.dart';
@@ -115,6 +116,23 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     }
   }
 
+  /// Gets the appropriate question title based on mode and question data
+  String _getQuestionTitle(List<Question> questions) {
+    if (questions.isEmpty) return 'Question';
+
+    final question = questions[_currentPage];
+
+    // PQP Mode: Show actual exam question number if available
+    if (widget.isPQPMode &&
+        question.pqpData?.questionNumber != null &&
+        question.pqpData!.questionNumber!.isNotEmpty) {
+      return 'Question ${question.pqpData!.questionNumber}';
+    }
+
+    // Sprint/Regular Mode: Show sequential numbering with total count
+    return 'Question ${_currentPage + 1} of ${questions.length}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final practiceState = ref.watch(practiceViewModelProvider);
@@ -132,7 +150,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
         backgroundColor: AppColors.paper,
         elevation: 0,
         foregroundColor: AppColors.ink,
-        title: Text('Question ${_currentPage + 1} of ${questions.length}'),
+        title: Text(_getQuestionTitle(questions)),
         centerTitle: true,
       ),
       body: Column(
@@ -289,34 +307,8 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
           ),
         if (widget.isPQPMode || widget.isSprintMode) const SizedBox(height: 12),
 
-        // --- PQP Mode Chain Info ---
-        if (widget.isPQPMode && widget.question.isPartOfChain)
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.shade200),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Question Chain: ${widget.question.pqpData?.questionNumber ?? ''}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                if (widget.question.dependencies.isNotEmpty)
-                  Text(
-                    'Depends on: ${widget.question.dependencies.join(', ')}',
-                    style: TextStyle(color: Colors.blue.shade700, fontSize: 12),
-                  ),
-                Text(
-                  'Marks: ${widget.question.getPQPMarks()}',
-                  style: TextStyle(color: Colors.blue.shade700, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
+        // --- Option 3: Parent Question Context (NEW) ---
+        ParentQuestionContextCard(question: widget.question),
 
         // --- Sprint Mode Context ---
         if (widget.isSprintMode && widget.question.providedContext != null)
@@ -352,7 +344,7 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
             ),
           ),
 
-        if ((widget.isPQPMode && widget.question.isPartOfChain) ||
+        if ((widget.isPQPMode && widget.question.hasParent) ||
             (widget.isSprintMode && widget.question.providedContext != null))
           const SizedBox(height: 16),
 
@@ -394,13 +386,19 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
         ),
         const SizedBox(height: 16),
 
-        // --- Question Image ---
-        if (widget.question.hasQuestionImage)
+        // --- Question Image (Option 3: supports inherited images) ---
+        // Only show image if:
+        // 1. Question has its own unique image (not inherited from parent), OR
+        // 2. Question has no parent (standalone question with image)
+        if ((widget.question.hasQuestionImage &&
+                !widget.question.usesParentImage) ||
+            (widget.question.displayImageUrl != null &&
+                !widget.question.hasParent))
           Center(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
-                widget.question.imageUrl!,
+                widget.question.displayImageUrl ?? widget.question.imageUrl!,
                 fit: BoxFit.contain,
                 width: double.infinity,
                 loadingBuilder: (context, child, loadingProgress) {
@@ -499,7 +497,7 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
   List<String> _getHintsForQuestion() {
     final hints = <String>[];
 
-    // Try to get hints from the test_questions_firestore.json data
+    // Try to get hints from the question data
     // We'll need to enhance the Question model to support hints
     // For now, provide meaningful hints based on question content and type
 
