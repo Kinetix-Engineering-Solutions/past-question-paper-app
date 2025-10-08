@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/admin/viewmodels/question_list_viewmodel.dart';
 import 'package:past_question_paper_v1/admin/widgets/question_preview_dialog.dart';
+import 'package:past_question_paper_v1/admin/views/parent_question_create_view.dart';
 import 'package:past_question_paper_v1/admin/views/question_create_view.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/utils/app_constants.dart';
@@ -414,7 +415,7 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
                       // Edit button
                       IconButton(
                         icon: const Icon(Icons.edit, size: 20),
-                        onPressed: () => _editQuestion(question.id),
+                        onPressed: () => _editQuestion(question),
                         tooltip: 'Edit',
                       ),
                       // Delete button
@@ -578,13 +579,22 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
     );
   }
 
-  void _editQuestion(String questionId) {
-    // TODO: Navigate to edit view with question ID
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Edit feature coming soon! Question ID: $questionId'),
-      ),
-    );
+  void _editQuestion(QuestionListItem question) {
+    final route = question.isParent
+        ? PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                ParentQuestionCreateView(parentId: question.id),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          )
+        : PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                QuestionCreateView(questionId: question.id),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          );
+
+    Navigator.push(context, route);
   }
 
   void _confirmDelete(

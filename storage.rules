@@ -1,0 +1,24 @@
+rules_version = '2';
+
+// Firebase Storage Security Rules
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Parent question images
+    match /parent_question_images/{fileName} {
+      // Allow anyone to write and read (for admin portal)
+      allow read, write: if true;
+    }
+    
+    // Regular question images
+    match /question_images/{fileName} {
+      // Allow anyone to write and read (for admin portal)
+      allow read, write: if true;
+    }
+    
+    // Allow read/write access to all other files
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}

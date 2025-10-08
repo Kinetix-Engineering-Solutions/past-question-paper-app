@@ -38,6 +38,7 @@ class AvailabilitySection extends ConsumerWidget {
                 hintText: 'e.g., 4.2.1',
                 helperText: 'Optional - will auto-generate if empty',
               ),
+              onChanged: notifier.updatePqpNumber,
             ),
           ),
         ],

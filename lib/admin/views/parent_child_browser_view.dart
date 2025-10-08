@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/admin/viewmodels/parent_child_browser_viewmodel.dart';
+import 'package:past_question_paper_v1/admin/views/parent_question_create_view.dart';
+import 'package:past_question_paper_v1/admin/views/question_create_view.dart';
 import 'package:past_question_paper_v1/admin/widgets/question_tree_item.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 
@@ -248,11 +250,45 @@ class _ParentChildBrowserViewState extends ConsumerState<ParentChildBrowserView>
                                 onDeleteChild: (childId) =>
                                     _confirmDeleteChild(
                                         childId, question.id, notifier),
+                                onEditParent: () =>
+                                    _navigateToParentOrStandalone(question),
+                                onEditChild: (childId) =>
+                                    _navigateToChildQuestion(childId),
                               );
                             },
                           ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _navigateToParentOrStandalone(ParentQuestionNode question) {
+    final route = question.hasChildren
+        ? PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                ParentQuestionCreateView(parentId: question.id),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          )
+        : PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                QuestionCreateView(questionId: question.id),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          );
+
+    Navigator.push(context, route);
+  }
+
+  void _navigateToChildQuestion(String childId) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            QuestionCreateView(questionId: childId),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
       ),
     );
   }

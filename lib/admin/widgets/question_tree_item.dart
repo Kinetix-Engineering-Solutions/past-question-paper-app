@@ -9,6 +9,8 @@ class QuestionTreeItem extends StatelessWidget {
   final VoidCallback onToggleExpansion;
   final VoidCallback onDeleteParent;
   final Function(String childId) onDeleteChild;
+  final VoidCallback? onEditParent;
+  final Function(String childId)? onEditChild;
 
   const QuestionTreeItem({
     super.key,
@@ -17,6 +19,8 @@ class QuestionTreeItem extends StatelessWidget {
     required this.onToggleExpansion,
     required this.onDeleteParent,
     required this.onDeleteChild,
+    this.onEditParent,
+    this.onEditChild,
   });
 
   @override
@@ -140,13 +144,14 @@ class QuestionTreeItem extends StatelessWidget {
                         icon: const Icon(Icons.edit, size: 20),
                         color: Colors.blue.shade700,
                         tooltip: 'Edit',
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Edit feature coming soon'),
-                            ),
-                          );
-                        },
+                        onPressed: onEditParent ??
+                            () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Edit feature coming soon'),
+                                ),
+                              );
+                            },
                       ),
                       // Delete button
                       IconButton(
@@ -292,13 +297,15 @@ class QuestionTreeItem extends StatelessWidget {
                 icon: const Icon(Icons.edit, size: 18),
                 color: Colors.blue.shade700,
                 tooltip: 'Edit',
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Edit feature coming soon'),
-                    ),
-                  );
-                },
+                onPressed: onEditChild != null
+                    ? () => onEditChild!(child.id)
+                    : () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Edit feature coming soon'),
+                          ),
+                        );
+                      },
               ),
               // Delete button
               IconButton(

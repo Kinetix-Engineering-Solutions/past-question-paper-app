@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/admin/viewmodels/parent_question_create_viewmodel.dart';
+import 'package:past_question_paper_v1/admin/widgets/image_upload_widget.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/utils/app_constants.dart';
 
 /// Parent Question Creator - For creating context documents that multiple child questions reference
 class ParentQuestionCreateView extends ConsumerStatefulWidget {
-  const ParentQuestionCreateView({super.key});
+  final String? parentId;
+
+  const ParentQuestionCreateView({super.key, this.parentId});
 
   @override
   ConsumerState<ParentQuestionCreateView> createState() =>
@@ -19,24 +22,78 @@ class _ParentQuestionCreateViewState
 
   // Controllers
   final _contextTextController = TextEditingController();
-  final _imageUrlController = TextEditingController();
   final _pqpNumberController = TextEditingController();
   final _yearController = TextEditingController(text: '2024');
+
+  bool _hasAppliedEditState = false;
+  late final ParentQuestionCreateViewModel _viewModel;
+  ProviderSubscription<ParentQuestionCreateState>? _stateSubscription;
 
   @override
   void dispose() {
     _contextTextController.dispose();
-    _imageUrlController.dispose();
     _pqpNumberController.dispose();
     _yearController.dispose();
+    _stateSubscription?.close();
+    _viewModel.exitEditMode();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _viewModel = ref.read(parentQuestionCreateViewModelProvider.notifier);
+
+    _stateSubscription = ref.listenManual<ParentQuestionCreateState>(
+      parentQuestionCreateViewModelProvider,
+      (previous, next) {
+        if (!mounted || next.isLoading) return;
+
+        // Apply loaded data once when entering edit mode
+        if (next.isEditMode && !_hasAppliedEditState) {
+          _applyStateToControllers(next);
+          _hasAppliedEditState = true;
+        }
+
+        // Reset controllers when leaving edit mode or after create reset
+        final bool transitionedOutOfEdit =
+            (previous?.isEditMode == true && !next.isEditMode);
+        final bool finishedCreateSuccess = previous?.isSubmitting == true &&
+            !next.isSubmitting &&
+            next.successMessage != null &&
+            !next.isEditMode;
+
+        if (transitionedOutOfEdit || finishedCreateSuccess) {
+          _hasAppliedEditState = false;
+          _applyStateToControllers(next);
+        }
+      },
+    );
+
+    // Apply defaults immediately
+    _applyStateToControllers(
+      ref.read(parentQuestionCreateViewModelProvider),
+    );
+
+    // Load parent data if editing
+    if (widget.parentId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _viewModel.loadParentForEdit(widget.parentId!);
+      });
+    }
+  }
+
+  void _applyStateToControllers(ParentQuestionCreateState state) {
+    _contextTextController.text = state.contextText;
+    _pqpNumberController.text = state.pqpNumber;
+    _yearController.text = state.year.toString();
   }
 
   void _submitForm() {
     if (_formKey.currentState?.validate() ?? false) {
-      ref
-          .read(parentQuestionCreateViewModelProvider.notifier)
-          .saveParentQuestion();
+      _viewModel.saveParentQuestion();
     }
   }
 
@@ -44,9 +101,18 @@ class _ParentQuestionCreateViewState
   Widget build(BuildContext context) {
     final viewModel = ref.watch(parentQuestionCreateViewModelProvider);
 
+    if (viewModel.isEditMode && !viewModel.isLoading && !_hasAppliedEditState) {
+      _applyStateToControllers(viewModel);
+      _hasAppliedEditState = true;
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Parent Question (Context)'),
+        title: Text(
+          viewModel.isEditMode
+              ? 'Edit Parent Question'
+              : 'Create Parent Question (Context)',
+        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
@@ -64,9 +130,9 @@ class _ParentQuestionCreateViewState
                 : TextButton.icon(
                     onPressed: _submitForm,
                     icon: const Icon(Icons.save, color: AppColors.ink),
-                    label: const Text(
-                      'Save Parent',
-                      style: TextStyle(color: AppColors.ink),
+                    label: Text(
+                      viewModel.isEditMode ? 'Update Parent' : 'Save Parent',
+                      style: const TextStyle(color: AppColors.ink),
                     ),
                   ),
           ),
@@ -75,51 +141,107 @@ class _ParentQuestionCreateViewState
       body: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 1200),
-          child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Info Banner
-                  _buildInfoBanner(),
-                  const SizedBox(height: 24),
+          child: viewModel.isLoading
+              ? const Padding(
+                  padding: EdgeInsets.all(48),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : AbsorbPointer(
+                  absorbing: viewModel.isSubmitting,
+                  child: Form(
+                    key: _formKey,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Info Banner
+                          _buildInfoBanner(),
+                          const SizedBox(height: 24),
 
-                  // Error/Success Messages
-                  if (viewModel.errorMessage != null)
-                    _buildErrorBanner(viewModel.errorMessage!),
-                  if (viewModel.successMessage != null)
-                    _buildSuccessBanner(viewModel.successMessage!),
+                          if (viewModel.isEditMode)
+                            _buildEditSummary(viewModel),
 
-                  // Basic Information
-                  _buildSectionHeader('Basic Information'),
-                  _buildBasicInfoSection(viewModel),
+                          if (viewModel.isEditMode)
+                            const SizedBox(height: 16),
 
-                  const SizedBox(height: 32),
+                          // Error/Success Messages
+                          if (viewModel.errorMessage != null)
+                            _buildErrorBanner(viewModel.errorMessage!),
+                          if (viewModel.successMessage != null)
+                            _buildSuccessBanner(viewModel.successMessage!),
 
-                  // Context Content
-                  _buildSectionHeader('Shared Context'),
-                  _buildContextSection(viewModel),
+                          // Basic Information
+                          _buildSectionHeader('Basic Information'),
+                          _buildBasicInfoSection(viewModel),
 
-                  const SizedBox(height: 32),
+                          const SizedBox(height: 32),
 
-                  // PQP Metadata
-                  _buildSectionHeader('PQP Metadata'),
-                  _buildPQPMetadataSection(viewModel),
+                          // Context Content
+                          _buildSectionHeader('Shared Context'),
+                          _buildContextSection(viewModel),
 
-                  const SizedBox(height: 32),
+                          const SizedBox(height: 32),
 
-                  // Availability
-                  _buildSectionHeader('Availability'),
-                  _buildAvailabilitySection(viewModel),
+                          // PQP Metadata
+                          _buildSectionHeader('PQP Metadata'),
+                          _buildPQPMetadataSection(viewModel),
 
-                  const SizedBox(height: 32),
-                ],
-              ),
+                          const SizedBox(height: 32),
+
+                          // Availability
+                          _buildSectionHeader('Availability'),
+                          _buildAvailabilitySection(viewModel),
+
+                          const SizedBox(height: 32),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditSummary(ParentQuestionCreateState state) {
+    final childCount = state.childQuestionIds.length;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.edit, color: Colors.orange.shade700),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Editing existing parent question',
+                  style: TextStyle(
+                    color: Colors.orange.shade900,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  childCount == 0
+                      ? 'No child questions are currently linked to this parent.'
+                      : '$childCount child question${childCount == 1 ? ' is' : 's are'} linked. Updates to the context will apply to all of them.',
+                  style: TextStyle(
+                    color: Colors.orange.shade700,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -267,45 +389,12 @@ class _ParentQuestionCreateViewState
           style: TextStyle(fontSize: 12, color: AppColors.neutralMid),
         ),
         const SizedBox(height: 12),
-        TextFormField(
-          controller: _imageUrlController,
-          decoration: const InputDecoration(
-            labelText: 'Image URL (Optional)',
-            hintText: 'https://storage.googleapis.com/...',
-            helperText:
-                'Upload image to Firebase Storage first, then paste URL here',
-          ),
-          onChanged: (value) => notifier.updateImageUrl(value),
+        ImageUploadWidget(
+          initialImageUrl: state.imageUrl,
+          onImageUploaded: (url) => notifier.updateImageUrl(url),
+          onImageRemoved: () => notifier.updateImageUrl(''),
+          folder: 'parent_question_images',
         ),
-        if (state.imageUrl != null && state.imageUrl!.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColors.neutralBorder),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Image Preview:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Image.network(
-                  state.imageUrl!,
-                  height: 200,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 200,
-                    alignment: Alignment.center,
-                    child: const Text('Failed to load image'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ],
     );
   }

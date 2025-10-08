@@ -10,6 +10,8 @@ final questionCreateViewModelProvider =
 
 /// State for Question Creation Form
 class QuestionCreateState {
+  static const Object _unset = Object();
+
   final String subject;
   final int grade;
   final String topic;
@@ -23,11 +25,11 @@ class QuestionCreateState {
   final String cognitiveLevel;
   final String difficulty;
   final bool caseSensitive;
-  final String correctOrder; // For drag-and-drop
+  final String correctOrder;
   final bool availableInPQP;
   final bool availableInSprint;
   final bool availableInByTopic;
-  
+
   // Parent-child fields
   final bool isChildQuestion;
   final String? parentQuestionId;
@@ -35,8 +37,21 @@ class QuestionCreateState {
   final String? parentContextText;
   final String? parentImageUrl;
   final String? suggestedPQPNumber;
-  
+  final String pqpNumber;
+
+  // Format-specific support data
+  final List<String> mcqOptions;
+  final List<String> answerVariations;
+  final List<Map<String, dynamic>> dragItems;
+  final String explanation;
+
+  // UI / lifecycle state
   final bool isSubmitting;
+  final bool isLoading;
+  final bool isEditMode;
+  final String? questionId;
+  final String? originalParentQuestionId;
+  final int? originalMarks;
   final String? errorMessage;
   final String? successMessage;
 
@@ -58,7 +73,7 @@ class QuestionCreateState {
     this.availableInPQP = true,
     this.availableInSprint = true,
     this.availableInByTopic = true,
-    
+
     // Parent-child defaults
     this.isChildQuestion = false,
     this.parentQuestionId,
@@ -66,8 +81,21 @@ class QuestionCreateState {
     this.parentContextText,
     this.parentImageUrl,
     this.suggestedPQPNumber,
-    
+    this.pqpNumber = '',
+
+    // Format defaults
+    this.mcqOptions = const ['', '', '', ''],
+    this.answerVariations = const [],
+    this.dragItems = const [],
+    this.explanation = '',
+
+    // UI state
     this.isSubmitting = false,
+    this.isLoading = false,
+    this.isEditMode = false,
+    this.questionId,
+    this.originalParentQuestionId,
+    this.originalMarks,
     this.errorMessage,
     this.successMessage,
   });
@@ -90,18 +118,31 @@ class QuestionCreateState {
     bool? availableInPQP,
     bool? availableInSprint,
     bool? availableInByTopic,
-    
+
     // Parent-child parameters
     bool? isChildQuestion,
-    String? parentQuestionId,
+    Object? parentQuestionId = _unset,
     bool? usesParentImage,
-    String? parentContextText,
-    String? parentImageUrl,
-    String? suggestedPQPNumber,
-    
+    Object? parentContextText = _unset,
+    Object? parentImageUrl = _unset,
+    Object? suggestedPQPNumber = _unset,
+    String? pqpNumber,
+
+    // Format data
+    List<String>? mcqOptions,
+    List<String>? answerVariations,
+    List<Map<String, dynamic>>? dragItems,
+    String? explanation,
+
+    // UI state
     bool? isSubmitting,
-    String? errorMessage,
-    String? successMessage,
+    bool? isLoading,
+    bool? isEditMode,
+    Object? questionId = _unset,
+    Object? originalParentQuestionId = _unset,
+    Object? originalMarks = _unset,
+    Object? errorMessage = _unset,
+    Object? successMessage = _unset,
   }) {
     return QuestionCreateState(
       subject: subject ?? this.subject,
@@ -121,18 +162,47 @@ class QuestionCreateState {
       availableInPQP: availableInPQP ?? this.availableInPQP,
       availableInSprint: availableInSprint ?? this.availableInSprint,
       availableInByTopic: availableInByTopic ?? this.availableInByTopic,
-      
+
       // Parent-child fields
       isChildQuestion: isChildQuestion ?? this.isChildQuestion,
-      parentQuestionId: parentQuestionId ?? this.parentQuestionId,
+      parentQuestionId: parentQuestionId == _unset
+          ? this.parentQuestionId
+          : parentQuestionId as String?,
       usesParentImage: usesParentImage ?? this.usesParentImage,
-      parentContextText: parentContextText ?? this.parentContextText,
-      parentImageUrl: parentImageUrl ?? this.parentImageUrl,
-      suggestedPQPNumber: suggestedPQPNumber ?? this.suggestedPQPNumber,
-      
+      parentContextText: parentContextText == _unset
+          ? this.parentContextText
+          : parentContextText as String?,
+      parentImageUrl: parentImageUrl == _unset
+          ? this.parentImageUrl
+          : parentImageUrl as String?,
+      suggestedPQPNumber: suggestedPQPNumber == _unset
+          ? this.suggestedPQPNumber
+          : suggestedPQPNumber as String?,
+      pqpNumber: pqpNumber ?? this.pqpNumber,
+
+      mcqOptions: mcqOptions ?? this.mcqOptions,
+      answerVariations: answerVariations ?? this.answerVariations,
+      dragItems: dragItems ?? this.dragItems,
+      explanation: explanation ?? this.explanation,
+
       isSubmitting: isSubmitting ?? this.isSubmitting,
-      errorMessage: errorMessage,
-      successMessage: successMessage,
+      isLoading: isLoading ?? this.isLoading,
+      isEditMode: isEditMode ?? this.isEditMode,
+      questionId: questionId == _unset
+          ? this.questionId
+          : questionId as String?,
+      originalParentQuestionId: originalParentQuestionId == _unset
+          ? this.originalParentQuestionId
+          : originalParentQuestionId as String?,
+    originalMarks: originalMarks == _unset
+      ? this.originalMarks
+      : originalMarks as int?,
+      errorMessage: errorMessage == _unset
+          ? this.errorMessage
+          : errorMessage as String?,
+      successMessage: successMessage == _unset
+          ? this.successMessage
+          : successMessage as String?,
     );
   }
 }
@@ -168,7 +238,8 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
   }
 
   void updateFormat(String value) {
-    state = state.copyWith(format: value, correctAnswer: ''); // Reset answer when format changes
+    final normalized = _normalizeFormat(value);
+    state = state.copyWith(format: normalized, correctAnswer: '');
   }
 
   void updateQuestionText(String value) {
@@ -197,6 +268,10 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
 
   void updateCorrectOrder(String value) {
     state = state.copyWith(correctOrder: value);
+  }
+
+  void updatePqpNumber(String value) {
+    state = state.copyWith(pqpNumber: value);
   }
 
   void togglePQPMode() {
@@ -315,6 +390,195 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
     state = state.copyWith(usesParentImage: !state.usesParentImage);
   }
 
+  /// Load an existing question into edit mode
+  Future<void> loadQuestionForEdit(String questionId) async {
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      successMessage: null,
+    );
+
+    try {
+      final doc = await _firestore.collection('questions').doc(questionId).get();
+
+      if (!doc.exists) {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'Question not found.',
+          isEditMode: false,
+          questionId: null,
+        );
+        return;
+      }
+
+      final data = doc.data() as Map<String, dynamic>;
+
+      if (data['isParent'] == true) {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage:
+              'This context is managed via the Parent Question screen. Please edit it there.',
+          isEditMode: false,
+          questionId: null,
+        );
+        return;
+      }
+
+      final formatValue = _normalizeFormat(
+        data['format'] ?? data['questionType'] ?? 'MCQ',
+      );
+      final subject = (data['subject'] ?? state.subject).toString();
+      final grade = _safeInt(data['grade'], state.grade);
+      final topic = (data['topic'] ?? '').toString();
+      final paper = (data['paper'] ?? state.paper).toString();
+      final year = _safeInt(data['year'], state.year);
+      final season = (data['season'] ?? state.season).toString();
+      final marks = _safeInt(data['marks'], state.marks);
+      final cognitiveLevel =
+          (data['cognitiveLevel'] ?? state.cognitiveLevel).toString();
+      final difficulty = (data['difficulty'] ?? state.difficulty).toString();
+      final questionText = (data['questionText'] ?? '').toString();
+      final correctAnswer = _stringifyCorrectAnswer(data['correctAnswer']);
+      final caseSensitive = data['caseSensitive'] == true;
+
+      // PQP data
+      String? pqpNumber;
+      if (data['pqpData'] is Map<String, dynamic>) {
+        final pqpData = data['pqpData'] as Map<String, dynamic>;
+        pqpNumber = pqpData['questionNumber']?.toString();
+      }
+
+      // Availability modes
+      final modes = (data['availableInModes'] is Iterable)
+          ? (data['availableInModes'] as Iterable)
+              .map((mode) => mode.toString())
+              .toList()
+          : <String>[];
+      final availableInPQP = modes.contains('pqp');
+      final availableInSprint = modes.contains('sprint');
+
+      // Parent linkage
+      final rawParentId = data['parentQuestionId'];
+      String? parentId =
+          rawParentId == null || rawParentId.toString().isEmpty
+              ? null
+              : rawParentId.toString();
+      String? parentContextText;
+      String? parentImageUrl;
+
+      if (parentId != null) {
+        final parentDoc =
+            await _firestore.collection('questions').doc(parentId).get();
+        if (parentDoc.exists) {
+          final parentData = parentDoc.data() as Map<String, dynamic>;
+          parentContextText = parentData['questionText']?.toString();
+          parentImageUrl = parentData['imageUrl']?.toString();
+        }
+      }
+
+      // MCQ options
+      List<String> mcqOptions = const ['', '', '', ''];
+      if (formatValue.toLowerCase() == 'mcq' && data['options'] is Iterable) {
+        final optionsList = (data['options'] as Iterable)
+            .map((option) => option?.toString() ?? '')
+            .toList();
+        while (optionsList.length < 4) {
+          optionsList.add('');
+        }
+        mcqOptions = List<String>.from(optionsList.take(4));
+      }
+
+      // Short answer variations
+    final answerVariations = data['answerVariations'] is Iterable
+      ? (data['answerVariations'] as Iterable)
+        .map((variation) => variation?.toString() ?? '')
+        .where((variation) => variation.isNotEmpty)
+        .toList()
+      : <String>[];
+
+      // Drag & drop items
+      List<Map<String, dynamic>> dragItems = [];
+      if (data['dragItems'] is Iterable) {
+        dragItems = (data['dragItems'] as Iterable)
+            .whereType<Map>()
+            .map((item) => item.map(
+                  (key, value) => MapEntry(key.toString(), value),
+                ))
+    .map((item) => Map<String, dynamic>.from(item))
+    .where(
+      (item) =>
+      (item['text']?.toString().trim() ?? '').isNotEmpty,
+    )
+            .toList();
+      }
+
+      // Correct order string
+      String correctOrder = '';
+      final rawOrder = data['correctOrder'];
+      if (rawOrder is Iterable) {
+        final orderList = rawOrder
+            .map((step) => step?.toString() ?? '')
+            .map((step) =>
+                step.startsWith('step_') ? step.substring(5) : step)
+            .where((step) => step.isNotEmpty)
+            .toList();
+        correctOrder = orderList.join(',');
+      } else if (rawOrder is String) {
+        correctOrder = rawOrder.trim();
+      }
+
+      final explanation = (data['explanation'] ?? '').toString();
+      final usesParentImage = data['usesParentImage'] == true;
+
+      state = QuestionCreateState(
+        subject: subject,
+        grade: grade,
+        topic: topic,
+        paper: paper,
+        year: year,
+        season: season,
+        format: formatValue,
+        questionText: questionText,
+        correctAnswer: correctAnswer,
+        marks: marks,
+        cognitiveLevel: cognitiveLevel,
+        difficulty: difficulty,
+        caseSensitive: caseSensitive,
+        correctOrder: correctOrder,
+        availableInPQP: availableInPQP,
+        availableInSprint: availableInSprint,
+        availableInByTopic: true,
+        isChildQuestion: parentId != null,
+        parentQuestionId: parentId,
+        parentContextText: parentContextText,
+        parentImageUrl: parentImageUrl,
+        usesParentImage: usesParentImage,
+        suggestedPQPNumber: null,
+        pqpNumber: pqpNumber ?? '',
+        mcqOptions: mcqOptions,
+        answerVariations: answerVariations,
+        dragItems: dragItems,
+        explanation: explanation,
+        isSubmitting: false,
+        isLoading: false,
+        isEditMode: true,
+        questionId: questionId,
+        originalParentQuestionId: parentId,
+        originalMarks: marks,
+        errorMessage: null,
+        successMessage: null,
+      );
+    } catch (e) {
+      debugPrint('❌ Error loading question for edit: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to load question: ${e.toString()}',
+        isEditMode: false,
+        questionId: null,
+      );
+    }
+  }
+
   /// Submit question to Firestore
   Future<void> submitQuestion({
     required List<String> options,
@@ -371,29 +635,85 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
     );
 
     try {
-      // Build question document
+      final effectivePqpNumber =
+          (pqpNumber ?? state.pqpNumber).isEmpty ? null : pqpNumber ?? state.pqpNumber;
+
       final questionData = _buildQuestionDocument(
         options: options,
         answerVariations: answerVariations,
         dragItems: dragItems,
         explanation: explanation,
-        pqpNumber: pqpNumber,
+        pqpNumber: effectivePqpNumber,
+        isUpdate: state.isEditMode,
       );
 
-      // Add to Firestore
-      final docRef = await _firestore.collection('questions').add(questionData);
+      final normalizedNewParentId = state.isChildQuestion
+          ? state.parentQuestionId?.trim().isEmpty ?? true
+              ? null
+              : state.parentQuestionId!.trim()
+          : null;
+      final normalizedOriginalParentId =
+          state.originalParentQuestionId?.trim().isEmpty ?? true
+              ? null
+              : state.originalParentQuestionId?.trim();
+      final int previousMarks = state.originalMarks ?? state.marks;
+      final int currentMarks = state.marks;
 
-      debugPrint('✅ Question created successfully: ${docRef.id}');
+      if (state.isEditMode && state.questionId != null) {
+        final questionRef =
+            _firestore.collection('questions').doc(state.questionId);
 
-      state = state.copyWith(
-        isSubmitting: false,
-        successMessage: 'Question created successfully!',
-      );
+        await questionRef.update(questionData);
 
-      // Reset form after 2 seconds
-      Future.delayed(const Duration(seconds: 2), () {
-        state = const QuestionCreateState();
-      });
+        debugPrint('✅ Question updated successfully: ${state.questionId}');
+
+        final bool parentChanged =
+            normalizedNewParentId != normalizedOriginalParentId;
+        final bool marksChanged = previousMarks != currentMarks;
+
+        if (parentChanged) {
+          if (normalizedOriginalParentId != null) {
+            await _refreshParentAggregates(normalizedOriginalParentId);
+          }
+          if (normalizedNewParentId != null) {
+            await _refreshParentAggregates(normalizedNewParentId);
+          }
+        } else if (normalizedNewParentId != null && marksChanged) {
+          await _refreshParentAggregates(normalizedNewParentId);
+        }
+
+        state = state.copyWith(
+          isSubmitting: false,
+          successMessage: 'Question updated successfully!',
+          pqpNumber: effectivePqpNumber ?? '',
+          originalParentQuestionId: normalizedNewParentId,
+          originalMarks: currentMarks,
+        );
+      } else {
+        final createData = {
+          ...questionData,
+          'createdAt': FieldValue.serverTimestamp(),
+        };
+
+        final docRef =
+            await _firestore.collection('questions').add(createData);
+
+        debugPrint('✅ Question created successfully: ${docRef.id}');
+
+        state = state.copyWith(
+          isSubmitting: false,
+          successMessage: 'Question created successfully!',
+        );
+
+        if (normalizedNewParentId != null) {
+          await _refreshParentAggregates(normalizedNewParentId);
+        }
+
+        // Reset form after 2 seconds only for create flow
+        Future.delayed(const Duration(seconds: 2), () {
+          state = const QuestionCreateState();
+        });
+      }
     } catch (e) {
       debugPrint('❌ Error creating question: $e');
       state = state.copyWith(
@@ -410,6 +730,7 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
     required List<Map<String, dynamic>> dragItems,
     required String explanation,
     String? pqpNumber,
+    bool isUpdate = false,
   }) {
     // Base question data
     final data = <String, dynamic>{
@@ -434,7 +755,6 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
       'usesParentImage': state.isChildQuestion ? state.usesParentImage : false,
       
       // Timestamps
-      'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
       'createdBy': 'admin', // TODO: Replace with actual user ID when auth is added
     };
@@ -447,12 +767,18 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
     data['availableInModes'] = modesArray;
 
     // Format-specific fields
-    if (state.format == 'MCQ') {
+  if (state.format == 'MCQ') {
       data['options'] = options;
       data['hasImageOptions'] = false;
+    } else if (isUpdate) {
+      data['options'] = FieldValue.delete();
+      data['hasImageOptions'] = FieldValue.delete();
     } else if (state.format == 'short_answer') {
       data['answerVariations'] = answerVariations;
       data['caseSensitive'] = state.caseSensitive;
+    } else if (isUpdate) {
+      data['answerVariations'] = FieldValue.delete();
+      data['caseSensitive'] = FieldValue.delete();
     } else if (state.format == 'drag_drop') {
       // Parse correctOrder from string (e.g., "1,2,3,4")
       final orderList = state.correctOrder
@@ -462,11 +788,16 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
       
       data['dragItems'] = dragItems;
       data['correctOrder'] = orderList;
+    } else if (isUpdate) {
+      data['dragItems'] = FieldValue.delete();
+      data['correctOrder'] = FieldValue.delete();
     }
 
     // Explanation for all question types
     if (explanation.isNotEmpty) {
       data['explanation'] = explanation;
+    } else if (isUpdate) {
+      data['explanation'] = FieldValue.delete();
     }
 
     // PQP-specific data
@@ -476,6 +807,8 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
         'questionText': state.questionText,
         'marks': state.marks,
       };
+    } else if (isUpdate) {
+      data['pqpData'] = FieldValue.delete();
     }
 
     // Sprint-specific data
@@ -489,9 +822,92 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
         'tags': [],                          // Empty for now, can add tag field later
         // 'providedContext' (hints/formulas) - Requires new UI field
       };
+    } else if (isUpdate) {
+      data['sprintData'] = FieldValue.delete();
     }
 
     return data;
+  }
+
+  String _normalizeFormat(dynamic rawFormat) {
+    final raw = rawFormat?.toString().trim();
+    if (raw == null || raw.isEmpty) {
+      return 'MCQ';
+    }
+
+    final normalized = raw.replaceAll('-', '').replaceAll('_', '');
+    final lower = normalized.toLowerCase();
+
+    if (lower.contains('drag') && lower.contains('drop')) {
+      return 'drag_drop';
+    }
+    if (lower.contains('short') && lower.contains('answer')) {
+      return 'short_answer';
+    }
+    if (lower.contains('true') && lower.contains('false')) {
+      return 'true_false';
+    }
+    if (lower.contains('essay')) {
+      return 'essay';
+    }
+    if (lower.contains('mcq') || lower.contains('multiplechoice')) {
+      return 'MCQ';
+    }
+
+    return raw;
+  }
+
+  Future<void> _refreshParentAggregates(String parentId) async {
+    if (parentId.isEmpty) {
+      return;
+    }
+
+    try {
+      final childrenSnapshot = await _firestore
+          .collection('questions')
+          .where('parentQuestionId', isEqualTo: parentId)
+          .get();
+
+      final childIds = <String>[];
+      int totalMarks = 0;
+
+      for (final doc in childrenSnapshot.docs) {
+        childIds.add(doc.id);
+        final data = doc.data();
+        totalMarks += _safeInt(data['marks'], 0);
+      }
+
+      await _firestore.collection('questions').doc(parentId).update({
+        'childQuestionIds': childIds,
+        'totalMarks': totalMarks,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      debugPrint(
+        '🔁 Parent aggregates refreshed for $parentId (children: ${childIds.length}, marks: $totalMarks)',
+      );
+    } catch (e) {
+      debugPrint('⚠️ Failed to refresh parent aggregates for $parentId: $e');
+    }
+  }
+
+  int _safeInt(dynamic value, int fallback) {
+    if (value == null) return fallback;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString()) ?? fallback;
+  }
+
+  String _stringifyCorrectAnswer(dynamic value) {
+    if (value == null) return '';
+    if (value is String) return value;
+    if (value is List) {
+      return value.map((e) => e?.toString() ?? '').join(', ');
+    }
+    if (value is Map) {
+      return value.values.map((e) => e?.toString() ?? '').join(', ');
+    }
+    return value.toString();
   }
 
   /// Generate automatic question number (e.g., "1.0.1")

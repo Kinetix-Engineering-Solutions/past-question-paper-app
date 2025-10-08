@@ -301,16 +301,22 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
             const SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                state.parentImageUrl!,
-                height: 150,
+              child: Container(
+                height: 180,
                 width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  height: 150,
+                color: AppColors.neutralSoft,
+                alignment: Alignment.center,
+                child: Image.network(
+                  state.parentImageUrl!,
+                  height: 160,
+                  width: double.infinity,
+                  fit: BoxFit.contain,
                   alignment: Alignment.center,
-                  color: AppColors.neutralSoft,
-                  child: const Text('Failed to load image'),
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 160,
+                    alignment: Alignment.center,
+                    child: const Text('Failed to load image'),
+                  ),
                 ),
               ),
             ),

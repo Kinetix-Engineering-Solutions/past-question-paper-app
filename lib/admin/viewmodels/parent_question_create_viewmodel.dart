@@ -26,6 +26,11 @@ class ParentQuestionCreateState {
 
   // UI State
   final bool isSubmitting;
+  final bool isLoading;
+  final bool isEditMode;
+  final String? parentId;
+  final List<String> childQuestionIds;
+  final int totalMarks;
   final String? errorMessage;
   final String? successMessage;
 
@@ -42,6 +47,11 @@ class ParentQuestionCreateState {
     this.availableInPQP = true,
     this.availableInSprint = true,
     this.isSubmitting = false,
+    this.isLoading = false,
+    this.isEditMode = false,
+    this.parentId,
+    this.childQuestionIds = const [],
+    this.totalMarks = 0,
     this.errorMessage,
     this.successMessage,
   });
@@ -59,6 +69,11 @@ class ParentQuestionCreateState {
     bool? availableInPQP,
     bool? availableInSprint,
     bool? isSubmitting,
+    bool? isLoading,
+    bool? isEditMode,
+    String? parentId,
+    List<String>? childQuestionIds,
+    int? totalMarks,
     String? errorMessage,
     String? successMessage,
   }) {
@@ -75,6 +90,11 @@ class ParentQuestionCreateState {
       availableInPQP: availableInPQP ?? this.availableInPQP,
       availableInSprint: availableInSprint ?? this.availableInSprint,
       isSubmitting: isSubmitting ?? this.isSubmitting,
+      isLoading: isLoading ?? this.isLoading,
+      isEditMode: isEditMode ?? this.isEditMode,
+      parentId: parentId ?? this.parentId,
+      childQuestionIds: childQuestionIds ?? this.childQuestionIds,
+      totalMarks: totalMarks ?? this.totalMarks,
       errorMessage: errorMessage,
       successMessage: successMessage,
     );
@@ -176,31 +196,44 @@ class ParentQuestionCreateViewModel
 
     state = state.copyWith(
       isSubmitting: true,
+      isLoading: false,
       errorMessage: null,
       successMessage: null,
     );
 
     try {
-      // Build parent question document
-      final parentData = _buildParentDocument();
+      if (state.isEditMode && state.parentId != null) {
+        final updateData = _buildParentDocument(isUpdate: true);
+        await _firestore
+            .collection('questions')
+            .doc(state.parentId)
+            .update(updateData);
 
-      // Add to Firestore
-      final docRef = await _firestore.collection('questions').add(parentData);
+        debugPrint('✅ Parent question updated successfully: ${state.parentId}');
 
-      debugPrint('✅ Parent question created successfully: ${docRef.id}');
+        state = state.copyWith(
+          isSubmitting: false,
+          successMessage: 'Parent question updated successfully!',
+        );
+      } else {
+        final parentData = _buildParentDocument();
+        final docRef = await _firestore.collection('questions').add(parentData);
 
-      state = state.copyWith(
-        isSubmitting: false,
-        successMessage:
-            'Parent question created successfully! You can now add child questions.',
-      );
+        debugPrint('✅ Parent question created successfully: ${docRef.id}');
 
-      // Reset form after 3 seconds
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) {
-          state = const ParentQuestionCreateState();
-        }
-      });
+        state = state.copyWith(
+          isSubmitting: false,
+          successMessage:
+              'Parent question created successfully! You can now add child questions.',
+        );
+
+        // Reset form after 3 seconds for create flow only
+        Future.delayed(const Duration(seconds: 3), () {
+          if (mounted && !state.isEditMode) {
+            state = const ParentQuestionCreateState();
+          }
+        });
+      }
     } catch (e) {
       debugPrint('❌ Error creating parent question: $e');
       state = state.copyWith(
@@ -211,13 +244,13 @@ class ParentQuestionCreateViewModel
   }
 
   /// Build Firestore document structure for parent question
-  Map<String, dynamic> _buildParentDocument() {
+  Map<String, dynamic> _buildParentDocument({bool isUpdate = false}) {
     // Build availableInModes array
     final List<String> modesArray = [];
     if (state.availableInPQP) modesArray.add('pqp');
     if (state.availableInSprint) modesArray.add('sprint');
 
-    return {
+    final Map<String, dynamic> data = {
       // Parent identification
       'type': 'context', // NOT a question format
       'isParent': true,
@@ -236,8 +269,8 @@ class ParentQuestionCreateViewModel
       'season': state.season,
 
       // Parent-specific fields
-      'childQuestionIds': [], // Will be populated as children are created
-      'totalMarks': 0, // Will be calculated from children
+      'childQuestionIds': state.childQuestionIds,
+      'totalMarks': state.totalMarks,
       // Availability
       'availableInModes': modesArray,
 
@@ -252,14 +285,100 @@ class ParentQuestionCreateViewModel
       },
 
       // Timestamps
-      'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
       'createdBy': 'admin', // TODO: Replace with actual user ID when auth added
     };
+
+    if (!isUpdate) {
+      data['childQuestionIds'] = [];
+      data['totalMarks'] = 0;
+      data['createdAt'] = FieldValue.serverTimestamp();
+    }
+
+    return data;
   }
 
   /// Reset form to initial state
   void resetForm() {
+    state = const ParentQuestionCreateState();
+  }
+
+  /// Load an existing parent question for editing
+  Future<void> loadParentForEdit(String parentId) async {
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      successMessage: null,
+    );
+
+    try {
+      final doc = await _firestore.collection('questions').doc(parentId).get();
+
+      if (!doc.exists) {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'Parent question not found.',
+        );
+        return;
+      }
+
+      final data = doc.data() as Map<String, dynamic>;
+
+      if (data['isParent'] != true) {
+        state = state.copyWith(
+          isLoading: false,
+          errorMessage: 'Selected document is not a parent question.',
+        );
+        return;
+      }
+
+        final pqpData = (data['pqpData'] as Map<String, dynamic>?) ?? {};
+        final List<String> modes = (data['availableInModes'] is Iterable)
+            ? (data['availableInModes'] as Iterable)
+                .map((e) => e.toString())
+                .toList()
+            : <String>[];
+
+      int safeInt(dynamic value, int fallback) {
+        if (value == null) return fallback;
+        if (value is int) return value;
+        if (value is num) return value.toInt();
+        return int.tryParse(value.toString()) ?? fallback;
+      }
+
+      state = state.copyWith(
+        isLoading: false,
+        isEditMode: true,
+        parentId: parentId,
+        subject: (data['subject'] ?? '').toString(),
+  grade: safeInt(data['grade'], 12),
+        topic: (data['topic'] ?? '').toString(),
+        paper: (data['paper'] ?? 'p1').toString(),
+  year: safeInt(data['year'], 2024),
+        season: (data['season'] ?? 'November').toString(),
+        contextText: (data['questionText'] ?? '').toString(),
+        imageUrl: data['imageUrl']?.toString(),
+        pqpNumber: pqpData['questionNumber']?.toString() ?? '',
+          availableInPQP: modes.contains('pqp'),
+          availableInSprint: modes.contains('sprint'),
+    childQuestionIds: (data['childQuestionIds'] is Iterable)
+      ? (data['childQuestionIds'] as Iterable)
+        .map((e) => e.toString())
+        .toList()
+      : <String>[],
+  totalMarks: safeInt(data['totalMarks'], 0),
+      );
+    } catch (e) {
+      debugPrint('❌ Error loading parent question: $e');
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Failed to load parent question: ${e.toString()}',
+      );
+    }
+  }
+
+  /// Exit edit mode and reset state
+  void exitEditMode() {
     state = const ParentQuestionCreateState();
   }
 }
