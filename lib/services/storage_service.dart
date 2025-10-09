@@ -1,7 +1,58 @@
+import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 
 class StorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
+
+  /// Upload an image to Firebase Storage
+  /// Returns the download URL on success
+  Future<String> uploadImage({
+    required Uint8List imageBytes,
+    required String fileName,
+    String folder = 'question_images',
+  }) async {
+    try {
+      // Create a unique file path
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final filePath = '$folder/${timestamp}_$fileName';
+
+      // Upload the file
+      final ref = _storage.ref().child(filePath);
+      final uploadTask = ref.putData(
+        imageBytes,
+        SettableMetadata(
+          contentType: 'image/jpeg',
+          customMetadata: {'uploaded': DateTime.now().toIso8601String()},
+        ),
+      );
+
+      // Wait for upload to complete
+      final snapshot = await uploadTask;
+
+      // Get download URL
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+
+      debugPrint('✅ Image uploaded: $downloadUrl');
+      return downloadUrl;
+    } catch (e) {
+      debugPrint('❌ Error uploading image: $e');
+      throw Exception('Failed to upload image: $e');
+    }
+  }
+
+  /// Delete an image from Firebase Storage by URL
+  Future<void> deleteImage(String imageUrl) async {
+    try {
+      // Extract file path from URL
+      final ref = _storage.refFromURL(imageUrl);
+      await ref.delete();
+      debugPrint('✅ Image deleted: $imageUrl');
+    } catch (e) {
+      debugPrint('❌ Error deleting image: $e');
+      throw Exception('Failed to delete image: $e');
+    }
+  }
 
   // Convert a gs:// URI to an HTTP download URL
   Future<String> getDownloadUrl(String gsUri) async {

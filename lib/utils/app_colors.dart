@@ -7,7 +7,7 @@ class AppColors {
   static const Color ink = Color(
     0xFF262626,
   ); // lighter charcoal for text & primary
-  static const Color paper = Color(0xFFF5F5F5); // light gray background
+  static const Color paper = Color(0xFFF0F0ED); // warm off-white background (softer than pure gray)
 
   // Supporting derived neutrals (still within grayscale, not new "colors")
   static const Color neutralMid = Color(
@@ -16,8 +16,8 @@ class AppColors {
   static const Color neutralSoft = Color(
     0xFF8C8C8C,
   ); // tertiary text (adjusted)
-  static const Color neutralCard = Color(0xFFFFFFFF); // pure white cards
-  static const Color neutralBorder = Color(0xFFDDDDDD); // light border
+  static const Color neutralCard = Color(0xFFFAFAF8); // soft cream cards (clear contrast from background)
+  static const Color neutralBorder = Color(0xFFE0E0DD); // subtle warm border
 
   // Accent orange (single chromatic color in otherwise monochrome palette)
   static const Color accent = Color(0xFFFF7A1A); // primary action / highlight
@@ -30,28 +30,68 @@ class AppColors {
   static const Color chalkWhite = paper;
 }
 
+/// Dark palette counterpart for Paper & Ink theme.
+class AppColorsDark {
+  static const Color ink = Color(0xFFF0F0F0); // Brightened primary text for better readability
+  static const Color paper = Color(0xFF1A1A1A); // Lightened from 0F0F0F to reduce harshness
+
+  static const Color neutralMid = Color(0xFFB8B8B8); // Brightened secondary text
+  static const Color neutralSoft = Color(0xFF8C8C8C); // Brightened tertiary text
+  static const Color neutralCard = Color(0xFF242424); // Lightened from 1E1E1E for better contrast
+  static const Color neutralBorder = Color(0xFF3A3A3A); // Lightened from 2F2F2F
+
+  static const Color accent = AppColors.accent;
+  static const Color accentSoft = Color(0xFF40230F);
+
+  static const Color chalkWhite = ink;
+}
+
 /// Extension to provide semantic color access
 extension AppColorsExtension on ColorScheme {
   // Practice mode tones
-  Color get quickPracticeColor => AppColors.neutralMid;
-  Color get standardPracticeColor => AppColors.ink;
-  Color get extendedPracticeColor => AppColors.neutralSoft;
-  Color get unlimitedPracticeColor => AppColors.ink;
+  Color get quickPracticeColor => brightness == Brightness.dark
+    ? AppColorsDark.neutralMid
+    : AppColors.neutralMid;
+  Color get standardPracticeColor => brightness == Brightness.dark
+    ? AppColorsDark.ink
+    : AppColors.ink;
+  Color get extendedPracticeColor => brightness == Brightness.dark
+    ? AppColorsDark.neutralSoft
+    : AppColors.neutralSoft;
+  Color get unlimitedPracticeColor => brightness == Brightness.dark
+    ? AppColorsDark.ink
+    : AppColors.ink;
 
   // Semantic colors
-  Color get successColor => AppColors.ink;
-  Color get warningColor => AppColors.neutralMid; // monochrome warning
-  Color get paperBackground => AppColors.paper;
-  Color get cardBackground => AppColors.neutralCard;
-  Color get textSecondary => AppColors.neutralMid;
-  Color get borderColor => AppColors.neutralBorder;
+  Color get successColor => brightness == Brightness.dark
+    ? AppColorsDark.ink
+    : AppColors.ink;
+  Color get warningColor => brightness == Brightness.dark
+    ? AppColorsDark.neutralMid
+    : AppColors.neutralMid; // monochrome warning
+  Color get paperBackground => brightness == Brightness.dark
+    ? AppColorsDark.paper
+    : AppColors.paper;
+  Color get cardBackground => brightness == Brightness.dark
+    ? AppColorsDark.neutralCard
+    : AppColors.neutralCard;
+  Color get textSecondary => brightness == Brightness.dark
+    ? AppColorsDark.neutralMid
+    : AppColors.neutralMid;
+  Color get borderColor => brightness == Brightness.dark
+    ? AppColorsDark.neutralBorder
+    : AppColors.neutralBorder;
 
   // Orange accent for highlights
   Color get accentOrange => AppColors.accent;
 
   // Chalkboard-like tones
-  Color get chalkboardBackground => AppColors.ink;
-  Color get chalkColor => AppColors.neutralCard;
+  Color get chalkboardBackground => brightness == Brightness.dark
+    ? AppColorsDark.paper
+    : AppColors.ink;
+  Color get chalkColor => brightness == Brightness.dark
+    ? AppColorsDark.chalkWhite
+    : AppColors.neutralCard;
 }
 
 /// Gradient utilities updated to new brand palette

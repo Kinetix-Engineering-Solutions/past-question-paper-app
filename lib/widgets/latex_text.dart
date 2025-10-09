@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
 
 class LatexText extends StatelessWidget {
   final String text;
@@ -20,23 +19,27 @@ class LatexText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Use theme color if no textColor is provided
+    final defaultColor = textColor ?? Theme.of(context).colorScheme.onSurface;
+    final errorColor = Theme.of(context).colorScheme.error;
+    
     final defaultStyle = TextStyle(
       fontSize: fontSize ?? 16,
-      color: textColor ?? AppColors.ink,
+      color: defaultColor,
     );
 
     final style = textStyle?.merge(defaultStyle) ?? defaultStyle;
 
-    return _buildMixedContent(text, style);
+    return _buildMixedContent(text, style, errorColor);
   }
 
-  Widget _buildMixedContent(String text, TextStyle style) {
+  Widget _buildMixedContent(String text, TextStyle style, Color errorColor) {
     // First check if text contains LaTeX wrapped in $ or $$
     final wrappedLatexPattern = RegExp(r'\$\$(.+?)\$\$|\$(.+?)\$');
     final wrappedMatches = wrappedLatexPattern.allMatches(text);
 
     if (wrappedMatches.isNotEmpty) {
-      return _buildWrappedLatexContent(text, style, wrappedMatches);
+      return _buildWrappedLatexContent(text, style, wrappedMatches, errorColor);
     }
 
     // Check for common LaTeX patterns and try to build mixed content
@@ -73,10 +76,18 @@ class LatexText extends StatelessWidget {
           // Try to render as LaTeX
           spans.add(
             WidgetSpan(
-              child: Math.tex(
-                word,
-                mathStyle: MathStyle.text,
-                textStyle: style,
+              alignment: PlaceholderAlignment.middle,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Math.tex(
+                    word,
+                    mathStyle: MathStyle.text,
+                    textStyle: style,
+                  ),
+                ),
               ),
             ),
           );
@@ -128,6 +139,7 @@ class LatexText extends StatelessWidget {
     String text,
     TextStyle style,
     Iterable<RegExpMatch> matches,
+    Color errorColor,
   ) {
     // Build mixed content with LaTeX and regular text
     List<InlineSpan> spans = [];
@@ -147,10 +159,18 @@ class LatexText extends StatelessWidget {
       try {
         spans.add(
           WidgetSpan(
-            child: Math.tex(
-              latexContent,
-              mathStyle: isDisplayMode ? MathStyle.display : MathStyle.text,
-              textStyle: style,
+            alignment: PlaceholderAlignment.middle,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Math.tex(
+                  latexContent,
+                  mathStyle: isDisplayMode ? MathStyle.display : MathStyle.text,
+                  textStyle: style,
+                ),
+              ),
             ),
           ),
         );
@@ -160,7 +180,7 @@ class LatexText extends StatelessWidget {
           TextSpan(
             text: '\$${latexContent}\$',
             style: style.copyWith(
-              color: Colors.red,
+              color: errorColor,
               fontStyle: FontStyle.italic,
             ),
           ),

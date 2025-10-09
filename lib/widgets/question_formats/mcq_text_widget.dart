@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/model/question.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
 import 'package:past_question_paper_v1/widgets/latex_text.dart';
 
@@ -13,6 +12,7 @@ class MCQTextWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       children: [
         // [ADDED] Show question text 09-sept
@@ -35,13 +35,12 @@ class MCQTextWidget extends ConsumerWidget {
           return Padding(
             padding: const EdgeInsets.only(bottom: 12.0),
             child: Card(
-              color: isSelected ? AppColors.accentSoft : AppColors.neutralCard,
+              color: isSelected
+                  ? colorScheme.primary.withOpacity(0.08)
+                  : colorScheme.surface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: BorderSide(
-                  color: isSelected ? AppColors.accent : AppColors.neutralBorder,
-                  width: 1.5,
-                ),
+                side: BorderSide.none,
               ),
               child: ListTile(
                 contentPadding: const EdgeInsets.symmetric(
@@ -50,7 +49,7 @@ class MCQTextWidget extends ConsumerWidget {
                 ),
                 title: LatexText(option),
                 trailing: isSelected
-                    ? Icon(Icons.check_circle, color: AppColors.accent, size: 24)
+          ? Icon(Icons.check_circle, color: colorScheme.primary, size: 24)
                     : null,
                 onTap: () {
                   ref

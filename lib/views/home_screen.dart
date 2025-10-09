@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/utils/app_constants.dart';
 import 'package:past_question_paper_v1/viewmodels/home_viewmodel.dart';
 import 'package:past_question_paper_v1/views/test_configuration_screen.dart';
@@ -12,20 +11,21 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final homeState = ref.watch(homeViewModelProvider);
     final user = homeState.user;
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     // Determine the user's grade. Default to 12 if not set.
     final userGrade = homeState.user?.grade ?? 12;
 
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: colorScheme.background,
       appBar: AppBar(
-        backgroundColor: AppColors.paper,
+        backgroundColor: colorScheme.background,
         elevation: 0,
         title: Text(
           'Hello, ${user?.email ?? 'Student'}!',
-          style: const TextStyle(
-            color: AppColors.ink,
-            fontWeight: FontWeight.bold,
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
           ),
         ),
         // The grade selector in actions has been removed for a cleaner look.
@@ -39,17 +39,16 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 "Let's get practicing",
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(color: AppColors.neutralMid),
+                style: textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 24),
 
               // --- Subject List Header ---
               Text(
                 'Your Subjects for Grade $userGrade',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColors.ink,
+                style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -83,11 +82,17 @@ class _SubjectList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    
     if (subjects.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No subjects selected for this grade.\nGo to your profile to add subjects.',
           textAlign: TextAlign.center,
+          style: textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
         ),
       );
     }
@@ -98,13 +103,12 @@ class _SubjectList extends StatelessWidget {
       itemBuilder: (context, index) {
         final subject = subjects[index];
         return Card(
-          elevation: 2,
+          elevation: 0,
           margin: const EdgeInsets.symmetric(vertical: 8),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: AppColors.neutralBorder),
+            side: BorderSide.none,
           ),
-          color: AppColors.neutralCard,
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 20,
@@ -112,18 +116,19 @@ class _SubjectList extends StatelessWidget {
             ),
             title: Text(
               subject,
-              style: const TextStyle(
+              style: textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: AppColors.ink,
               ),
             ),
             subtitle: Text(
               'Paper 1 & 2 Available',
-              style: TextStyle(color: AppColors.neutralMid),
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
-            trailing: const Icon(
+            trailing: Icon(
               Icons.arrow_forward_ios,
-              color: AppColors.accent,
+              color: colorScheme.primary,
               size: 16,
             ),
             onTap: () {

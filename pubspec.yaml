@@ -49,10 +49,14 @@ dependencies:
   # Math rendering
   flutter_math_fork: ^0.7.2
   
+  # Image handling
+  image_picker: ^1.0.7
+  
   # Utility packages
   shared_preferences: ^2.3.2
   google_fonts: ^6.3.1
   flutter_dotenv: ^6.0.0
+  image_picker_web: ^4.0.0
 
 dev_dependencies:
   flutter_lints: ^5.0.0

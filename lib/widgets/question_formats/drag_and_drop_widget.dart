@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/model/question.dart';
 import 'package:past_question_paper_v1/model/drag_and_drop models/drag_item.dart';
 import 'package:past_question_paper_v1/model/drag_and_drop models/drop_target.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
 import 'package:past_question_paper_v1/widgets/latex_text.dart';
 
@@ -23,6 +22,8 @@ class DragAndDropWidget extends ConsumerStatefulWidget {
 
 class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
   Map<String, String> _dragTargetAssignments = {}; // targetId -> dragItemId
+  late ColorScheme _colorScheme;
+  late TextTheme _textTheme;
 
   @override
   void initState() {
@@ -64,23 +65,25 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
 
   @override
   Widget build(BuildContext context) {
+    _colorScheme = Theme.of(context).colorScheme;
+    _textTheme = Theme.of(context).textTheme;
     // TEMPORARY: Skip validation check for debugging
     if (!widget.question.hasDragDropData) {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.red.shade50,
+          color: _colorScheme.errorContainer,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.red.shade200),
+          border: Border.all(color: _colorScheme.error),
         ),
         child: Column(
           children: [
-            Icon(Icons.error_outline, color: Colors.red.shade600, size: 32),
+            Icon(Icons.error_outline, color: _colorScheme.error, size: 32),
             const SizedBox(height: 12),
             Text(
               'Missing Drag and Drop Data',
               style: TextStyle(
-                color: Colors.red.shade800,
+                color: _colorScheme.onErrorContainer,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -88,7 +91,7 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
             const SizedBox(height: 8),
             Text(
               'dragItems: ${widget.question.dragItems?.length ?? 0}, dragTargets: ${widget.question.dragTargets?.length ?? 0}',
-              style: TextStyle(color: Colors.red.shade600, fontSize: 14),
+              style: TextStyle(color: _colorScheme.error, fontSize: 14),
             ),
           ],
         ),
@@ -102,22 +105,25 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.accentSoft,
+            color: _colorScheme.primary.withOpacity(0.08),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.accent.withOpacity(0.3)),
           ),
           child: Row(
             children: [
-              Icon(Icons.touch_app_outlined, color: AppColors.accent, size: 20),
+              Icon(Icons.touch_app_outlined, color: _colorScheme.primary, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Drag items from below to the correct drop zones above',
-                  style: TextStyle(
-                    color: AppColors.accent,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: _textTheme.bodyMedium?.copyWith(
+                        color: _colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ) ??
+                      TextStyle(
+                        color: _colorScheme.primary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
               ),
             ],
@@ -131,7 +137,7 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.ink,
+            color: _colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 12),
@@ -145,7 +151,7 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.ink,
+            color: _colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 12),
@@ -190,17 +196,17 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
           height: 120,
           decoration: BoxDecoration(
             color: isHighlighted
-                ? AppColors.accent.withOpacity(0.1)
+                ? _colorScheme.primary.withOpacity(0.12)
                 : hasItem
-                ? AppColors.accentSoft
-                : AppColors.neutralCard,
+                ? _colorScheme.primary.withOpacity(0.08)
+                : _colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isHighlighted
-                  ? AppColors.accent
+                  ? _colorScheme.primary
                   : hasItem
-                  ? AppColors.accent.withOpacity(0.5)
-                  : AppColors.neutralBorder,
+                  ? _colorScheme.primary.withOpacity(0.45)
+                  : _colorScheme.outlineVariant,
               width: isHighlighted ? 2 : 1.5,
             ),
           ),
@@ -211,14 +217,14 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.neutralMid.withOpacity(0.1),
+                  color: _colorScheme.onSurfaceVariant.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   target.text ?? target.id,
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.neutralMid,
+                    color: _colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
                   textAlign: TextAlign.center,
@@ -244,12 +250,12 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
                           onTap: () => _onDragItemRemoved(target.id),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.red.shade600,
+                              color: _colorScheme.error,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.close,
-                              color: Colors.white,
+                              color: _colorScheme.onError,
                               size: 16,
                             ),
                           ),
@@ -263,7 +269,7 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
                   child: Center(
                     child: Icon(
                       Icons.add,
-                      color: AppColors.neutralMid.withOpacity(0.5),
+                      color: _colorScheme.onSurfaceVariant.withOpacity(0.5),
                       size: 32,
                     ),
                   ),
@@ -285,19 +291,19 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.green.shade50,
+          color: _colorScheme.tertiaryContainer,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.green.shade200),
+          border: Border.all(color: _colorScheme.tertiary),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.check_circle, color: Colors.green.shade600),
+            Icon(Icons.check_circle, color: _colorScheme.tertiary),
             const SizedBox(width: 8),
             Text(
               'All items have been placed!',
               style: TextStyle(
-                color: Colors.green.shade800,
+                color: _colorScheme.onTertiaryContainer,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -323,7 +329,7 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
           width: 120,
           height: 80,
           decoration: BoxDecoration(
-            color: AppColors.accent,
+            color: _colorScheme.primary,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(child: _buildItemContent(item, isDragging: true)),
@@ -333,27 +339,27 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
         width: 120,
         height: 80,
         decoration: BoxDecoration(
-          color: AppColors.neutralMid.withOpacity(0.3),
+          color: _colorScheme.onSurfaceVariant.withOpacity(0.24),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.neutralBorder,
+            color: _colorScheme.outlineVariant,
             style: BorderStyle.solid,
           ),
         ),
         child: Center(
-          child: Icon(Icons.drag_handle, color: AppColors.neutralMid),
+          child: Icon(Icons.drag_handle, color: _colorScheme.onSurfaceVariant),
         ),
       ),
       child: Container(
         width: 120,
         height: 80,
         decoration: BoxDecoration(
-          color: AppColors.neutralCard,
+          color: _colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.neutralBorder),
+          border: Border.all(color: _colorScheme.outlineVariant),
           boxShadow: [
             BoxShadow(
-              color: AppColors.neutralMid.withOpacity(0.1),
+              color: _colorScheme.shadow.withOpacity(0.08),
               blurRadius: 4,
               spreadRadius: 1,
             ),
@@ -370,10 +376,10 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
     bool isInDropZone = false,
   }) {
     final textColor = isDragging
-        ? Colors.white
+        ? _colorScheme.onPrimary
         : isInDropZone
-        ? AppColors.accent
-        : AppColors.ink;
+        ? _colorScheme.primary
+        : _colorScheme.onSurface;
 
     if (item.image != null) {
       return Column(
@@ -431,9 +437,9 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.paper,
+        color: _colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.neutralBorder),
+        border: Border.all(color: _colorScheme.outlineVariant),
       ),
       child: Column(
         children: [
@@ -445,20 +451,24 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.ink,
+                  color: _colorScheme.onSurface,
                 ),
               ),
               Text(
                 '$completedTargets / $totalTargets items placed',
-                style: TextStyle(fontSize: 12, color: AppColors.neutralMid),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: _colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           LinearProgressIndicator(
             value: progress,
-            backgroundColor: AppColors.neutralBorder,
-            color: progress == 1.0 ? Colors.green : AppColors.accent,
+            backgroundColor: _colorScheme.outlineVariant.withOpacity(0.3),
+            color:
+                progress == 1.0 ? _colorScheme.tertiary : _colorScheme.primary,
             minHeight: 6,
           ),
         ],

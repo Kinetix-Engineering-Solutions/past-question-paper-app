@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/model/question.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
 import 'package:past_question_paper_v1/views/practice_results_screen.dart';
 import 'package:past_question_paper_v1/widgets/latex_text.dart';
@@ -108,25 +107,32 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to submit test. Please try again.'),
-          backgroundColor: Colors.redAccent,
+        SnackBar(
+          content: const Text('Failed to submit test. Please try again.'),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
   }
 
   /// Gets the appropriate question title based on mode and question data
-  String _getQuestionTitle(List<Question> questions) {
+  String _getQuestionTitle(PracticeState practiceState) {
+    final questions = practiceState.questions;
     if (questions.isEmpty) return 'Question';
 
     final question = questions[_currentPage];
 
-    // PQP Mode: Show actual exam question number if available
-    if (widget.isPQPMode &&
-        question.pqpData?.questionNumber != null &&
-        question.pqpData!.questionNumber!.isNotEmpty) {
-      return 'Question ${question.pqpData!.questionNumber}';
+    if (widget.isPQPMode) {
+      final sequentialNumber = practiceState.pqpDisplayNumbers[question.id];
+      final totalQuestions = questions.length;
+
+      if (sequentialNumber != null) {
+        final examNumber = question.pqpData?.questionNumber;
+        if (examNumber != null && examNumber.isNotEmpty) {
+          return 'Question $sequentialNumber of $totalQuestions • PQP $examNumber';
+        }
+        return 'Question $sequentialNumber of $totalQuestions';
+      }
     }
 
     // Sprint/Regular Mode: Show sequential numbering with total count
@@ -137,20 +143,23 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
   Widget build(BuildContext context) {
     final practiceState = ref.watch(practiceViewModelProvider);
     final questions = practiceState.questions;
+    final colorScheme = Theme.of(context).colorScheme;
 
     if (questions.isEmpty) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: AppColors.accent)),
+      return Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(color: colorScheme.primary),
+        ),
       );
     }
 
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: colorScheme.background,
       appBar: AppBar(
-        backgroundColor: AppColors.paper,
+        backgroundColor: colorScheme.background,
         elevation: 0,
-        foregroundColor: AppColors.ink,
-        title: Text(_getQuestionTitle(questions)),
+        foregroundColor: colorScheme.onBackground,
+        title: Text(_getQuestionTitle(practiceState)),
         centerTitle: true,
       ),
       body: Column(
@@ -160,8 +169,8 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: LinearProgressIndicator(
               value: (_currentPage + 1) / questions.length,
-              backgroundColor: AppColors.neutralBorder,
-              color: AppColors.accent,
+              backgroundColor: colorScheme.outlineVariant,
+              color: colorScheme.primary,
             ),
           ),
 
@@ -182,15 +191,16 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
           ),
 
           // --- Navigation Controls ---
-          _buildBottomControls(questions.length),
+          _buildBottomControls(context, questions.length),
         ],
       ),
     );
   }
 
-  Widget _buildBottomControls(int totalQuestions) {
+  Widget _buildBottomControls(BuildContext context, int totalQuestions) {
     final isLastPage = _currentPage == totalQuestions - 1;
     final practiceState = ref.watch(practiceViewModelProvider);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -213,8 +223,8 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
           // --- Next / Submit Button ---
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: isLastPage ? Colors.green : AppColors.accent,
-              foregroundColor: Colors.white,
+              backgroundColor: colorScheme.primary,
+              foregroundColor: colorScheme.onPrimary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -229,10 +239,13 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
                     );
                   },
             child: practiceState.isSubmitting && isLastPage
-                ? const SizedBox(
+                ? SizedBox(
                     height: 20,
                     width: 20,
-                    child: CircularProgressIndicator(color: Colors.white),
+                    child: CircularProgressIndicator(
+                      color: colorScheme.onPrimary,
+                      strokeWidth: 2,
+                    ),
                   )
                 : Text(isLastPage ? 'Submit Test' : 'Next'),
           ),
@@ -265,48 +278,11 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
   Widget build(BuildContext context) {
     final practiceState = ref.watch(practiceViewModelProvider);
     final selectedOption = practiceState.userAnswers[widget.question.id];
+    final colorScheme = Theme.of(context).colorScheme;
 
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
-        // --- Mode Indicator ---
-        if (widget.isPQPMode || widget.isSprintMode)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: widget.isPQPMode
-                  ? Colors.blue.shade50
-                  : Colors.orange.shade50,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: widget.isPQPMode ? Colors.blue : Colors.orange,
-                width: 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  widget.isPQPMode
-                      ? Icons.assignment_outlined
-                      : Icons.flash_on_outlined,
-                  size: 16,
-                  color: widget.isPQPMode ? Colors.blue : Colors.orange,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  widget.isPQPMode ? 'PQP Mode' : 'Sprint Mode',
-                  style: TextStyle(
-                    color: widget.isPQPMode ? Colors.blue : Colors.orange,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        if (widget.isPQPMode || widget.isSprintMode) const SizedBox(height: 12),
-
         // --- Option 3: Parent Question Context (NEW) ---
         ParentQuestionContextCard(question: widget.question),
 
@@ -315,30 +291,32 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.orange.shade50,
+              color: colorScheme.primary.withOpacity(0.08),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.orange.shade200),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Provided Context:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 4),
                 ...widget.question.providedContext!.entries.map(
                   (entry) => Text(
                     '${entry.key}: ${entry.value}',
                     style: TextStyle(
-                      color: Colors.orange.shade700,
+                      color: colorScheme.primary,
                       fontSize: 12,
                     ),
                   ),
                 ),
                 Text(
                   'Marks: ${widget.question.getSprintMarks()} | Difficulty: ${widget.question.difficulty ?? 'N/A'}',
-                  style: TextStyle(color: Colors.orange.shade700, fontSize: 12),
+                  style:
+                      TextStyle(color: colorScheme.primary, fontSize: 12),
                 ),
               ],
             ),
@@ -365,9 +343,8 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
               margin: const EdgeInsets.only(left: 8),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.1),
+                color: colorScheme.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.accent, width: 1.5),
               ),
               child: Text(
                 '${widget.isPQPMode
@@ -375,10 +352,10 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
                     : widget.isSprintMode
                     ? widget.question.getSprintMarks()
                     : widget.question.marks} marks',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
-                  color: AppColors.accent,
+                  color: colorScheme.primary,
                 ),
               ),
             ),
@@ -403,16 +380,20 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
                 width: double.infinity,
                 loadingBuilder: (context, child, loadingProgress) {
                   if (loadingProgress == null) return child;
-                  return const SizedBox(
+                  return SizedBox(
                     height: 200,
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: colorScheme.primary,
+                      ),
+                    ),
                   );
                 },
                 errorBuilder: (context, error, stackTrace) {
-                  return const Center(
+                  return Center(
                     child: Text(
                       'Image failed to load',
-                      style: TextStyle(color: Colors.redAccent),
+                      style: TextStyle(color: colorScheme.error),
                     ),
                   );
                 },
@@ -436,8 +417,8 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
                 ),
                 label: Text(_showHints ? 'Hide Hints' : 'Show Hints'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange.shade100,
-                  foregroundColor: Colors.orange.shade700,
+                  backgroundColor: colorScheme.primary.withOpacity(0.12),
+                  foregroundColor: colorScheme.primary,
                 ),
               ),
             ],
@@ -449,20 +430,22 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
             margin: const EdgeInsets.symmetric(vertical: 8),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.yellow.shade50,
+              color: colorScheme.primary.withOpacity(0.06),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.yellow.shade300),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.lightbulb, color: Colors.orange),
-                    SizedBox(width: 8),
+                    Icon(Icons.lightbulb, color: colorScheme.primary),
+                    const SizedBox(width: 8),
                     Text(
                       'Hints:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),

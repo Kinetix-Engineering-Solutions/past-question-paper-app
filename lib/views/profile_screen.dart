@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/utils/app_constants.dart';
 import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_v1/viewmodels/profile_viewmodel.dart';
+import 'package:past_question_paper_v1/viewmodels/theme_viewmodel.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -45,9 +45,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             subjects: _selectedSubjects,
           );
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Preferences saved successfully!'),
-          backgroundColor: AppColors.accent,
+        SnackBar(
+          content: const Text('Preferences saved successfully!'),
+          backgroundColor: Theme.of(context).colorScheme.primary,
         ),
       );
     } catch (e) {
@@ -68,18 +68,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final userState = ref.watch(profileViewModelProvider);
     final authViewModel = ref.watch(authViewModelProvider.notifier);
-
-    return Scaffold(
-      backgroundColor: AppColors.paper,
+    final themeState = ref.watch(themeViewModelProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;    return Scaffold(
+      backgroundColor: colorScheme.background,
       appBar: AppBar(
         title: const Text('Profile & Settings'),
-        backgroundColor: AppColors.paper,
+        backgroundColor: colorScheme.background,
         elevation: 0,
-        foregroundColor: AppColors.ink,
+        foregroundColor: colorScheme.onBackground,
       ),
       body: userState.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.accent),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: colorScheme.primary),
         ),
         error: (error, stack) => Center(child: Text('Error: $error')),
         data: (user) {
@@ -94,136 +95,227 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           }
 
           return ListView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(20.0),
             children: [
-              // --- User Info Card ---
-              Card(
-                color: AppColors.neutralCard,
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      const CircleAvatar(
-                        radius: 40,
-                        backgroundColor: AppColors.accentSoft,
-                        child: Icon(
-                          Icons.person,
-                          size: 40,
-                          color: AppColors.accent,
+              _ProfileSectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                          radius: 36,
+                          backgroundColor:
+                              colorScheme.primary.withOpacity(0.12),
+                          child: Icon(
+                            Icons.person,
+                            size: 36,
+                            color: colorScheme.primary,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        user.name ?? 'Student',
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.ink,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                user.name ?? 'Student',
+                                style: textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                user.email ?? '',
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        user.email ?? '',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: AppColors.neutralMid,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // --- Grade Selection ---
-              _buildSectionHeader('My Grade'),
-              DropdownButtonFormField<int>(
-                value: _selectedGrade,
-                items: AppConstants.grades.map((grade) {
-                  return DropdownMenuItem(
-                    value: grade,
-                    child: Text('Grade $grade'),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) setState(() => _selectedGrade = value);
-                },
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: AppColors.neutralCard,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                      color: AppColors.neutralBorder,
+                      ],
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildInfoChip(
+                          context,
+                          label:
+                              'Grade ${_selectedGrade ?? user.grade ?? AppConstants.grades.first}',
+                          icon: Icons.school_outlined,
+                        ),
+                        if (_selectedSubjects.isEmpty)
+                          _buildInfoChip(
+                            context,
+                            label: 'No subjects selected',
+                            icon: Icons.library_add_outlined,
+                          )
+                        else
+                          _buildInfoChip(
+                            context,
+                            label: '${_selectedSubjects.length} ${_selectedSubjects.length == 1 ? 'subject' : 'subjects'} selected',
+                            icon: Icons.bookmark_added_outlined,
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              _ProfileSectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionHeader(context, 'Grade level'),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int>(
+                      value: _selectedGrade,
+                      items: AppConstants.grades.map((grade) {
+                        return DropdownMenuItem(
+                          value: grade,
+                          child: Text('Grade $grade'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _selectedGrade = value);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      icon: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: colorScheme.surface,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                      dropdownColor: colorScheme.surface,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              _ProfileSectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.library_books_outlined,
+                          size: 20,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildSectionHeader(
+                            context,
+                            'Subjects I care about',
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      'Select subjects to personalize your home screen',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildSubjectSelection(context),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              _ThemeToggle(mode: themeState.mode),
+              const SizedBox(height: 20),
+
+              _ProfileSectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionHeader(context, 'Account actions'),
+                    if (_hasUnsavedChanges())
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              size: 20,
+                              color: colorScheme.onPrimaryContainer,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Don\'t forget to save your preferences',
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.onPrimaryContainer,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed: _isSaving ? null : _savePreferences,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52),
+                      ),
+                      child: _isSaving
+                          ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation(
+                                  colorScheme.onPrimary,
+                                ),
+                              ),
+                            )
+                          : const Text(
+                              'Save preferences',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                    ),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: TextButton(
+                        onPressed: () async => await authViewModel
+                            .signOutUserInUI(context: context),
+                        style: TextButton.styleFrom(
+                          foregroundColor: colorScheme.error,
+                        ),
+                        child: const Text('Sign out'),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 24),
-
-              // --- Subject Selection ---
-              _buildSectionHeader('My Subjects'),
-              ...AppConstants.allSubjects.map((subject) {
-                return CheckboxListTile(
-                  title: Text(subject),
-                  value: _selectedSubjects.contains(subject),
-                  onChanged: (bool? value) {
-                    setState(() {
-                      if (value == true) {
-                        _selectedSubjects.add(subject);
-                      } else {
-                        _selectedSubjects.remove(subject);
-                      }
-                    });
-                  },
-                  activeColor: AppColors.accent,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  tileColor: AppColors.neutralCard,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                );
-              }).toList(),
-              const SizedBox(height: 32),
-
-              // --- Action Buttons ---
-              ElevatedButton(
-                onPressed: _isSaving ? null : _savePreferences,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: _isSaving
-                    ? const SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(color: Colors.white),
-                      )
-                    : const Text(
-                        'Save Preferences',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () async =>
-                    await authViewModel.signOutUserInUI(context: context),
-                child: const Text(
-                  'Sign Out',
-                  style: TextStyle(color: Colors.redAccent, fontSize: 16),
-                ),
-              ),
             ],
           );
         },
@@ -231,17 +323,324 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Text(
         title,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: AppColors.ink,
-        ),
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ) ??
+            const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
       ),
     );
+  }
+
+  Widget _buildInfoChip(BuildContext context,
+      {required String label, required IconData icon}) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: colorScheme.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: colorScheme.primary),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: textTheme.bodyMedium?.copyWith(
+              color: colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatSubjectLabel(String subject) {
+    return subject
+        .split(RegExp(r'[ _]+'))
+        .where((word) => word.isNotEmpty)
+        .map(
+          (word) =>
+              '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
+        )
+        .join(' ');
+  }
+
+  String _normalizeSubject(String subject) => subject.trim().toLowerCase();
+
+  bool _hasUnsavedChanges() {
+    final userState = ref.read(profileViewModelProvider);
+    return userState.whenOrNull(
+      data: (user) {
+        if (user == null) return false;
+        
+        // Check if grade changed
+        if (_selectedGrade != user.grade) return true;
+        
+        // Check if subjects changed
+        final currentSubjects = user.selectedSubjects ?? [];
+        if (_selectedSubjects.length != currentSubjects.length) return true;
+        
+        final normalizedCurrent = currentSubjects.map(_normalizeSubject).toSet();
+        final normalizedSelected = _selectedSubjects.map(_normalizeSubject).toSet();
+        
+        return !normalizedCurrent.containsAll(normalizedSelected) ||
+               !normalizedSelected.containsAll(normalizedCurrent);
+      },
+    ) ?? false;
+  }
+
+  Widget _buildSubjectSelection(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    if (AppConstants.allSubjects.isEmpty) {
+      return Text(
+        'No subjects available yet.',
+        style: textTheme.bodyMedium?.copyWith(
+          color: colorScheme.onSurfaceVariant,
+        ),
+      );
+    }
+
+    final normalizedSelected = _selectedSubjects.map(_normalizeSubject).toSet();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Show selected count
+        if (_selectedSubjects.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.check_circle,
+                    size: 16,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${_selectedSubjects.length} selected',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+        // Subject chips
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: AppConstants.allSubjects.map((subject) {
+            final normalizedSubject = _normalizeSubject(subject);
+            final isSelected = normalizedSelected.contains(normalizedSubject);
+
+            return FilterChip(
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isSelected)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: Icon(
+                        Icons.check,
+                        size: 16,
+                        color: colorScheme.onPrimary,
+                      ),
+                    ),
+                  Text(_formatSubjectLabel(subject)),
+                ],
+              ),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  if (selected) {
+                    if (!normalizedSelected.contains(normalizedSubject)) {
+                      _selectedSubjects.add(subject);
+                    }
+                  } else {
+                    _selectedSubjects.removeWhere(
+                      (item) => _normalizeSubject(item) == normalizedSubject,
+                    );
+                  }
+                });
+              },
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              visualDensity: VisualDensity.comfortable,
+              showCheckmark: false,
+              labelStyle: textTheme.bodyMedium?.copyWith(
+                color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              ),
+              backgroundColor: colorScheme.surface,
+              selectedColor: colorScheme.primary,
+              side: BorderSide.none,
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProfileSectionCard extends StatelessWidget {
+  const _ProfileSectionCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _ThemeToggle extends ConsumerWidget {
+  const _ThemeToggle({required this.mode});
+
+  final ThemeMode mode;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final options = [
+      (
+        mode: ThemeMode.system,
+        label: 'Match device',
+        icon: Icons.brightness_auto,
+      ),
+      (
+        mode: ThemeMode.light,
+        label: 'Light mode',
+        icon: Icons.wb_sunny_outlined,
+      ),
+      (
+        mode: ThemeMode.dark,
+        label: 'Dark mode',
+        icon: Icons.nightlight_round,
+      ),
+    ];
+
+    return _ProfileSectionCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                mode == ThemeMode.dark
+                    ? Icons.nightlight_round
+                    : mode == ThemeMode.light
+                        ? Icons.wb_sunny
+                        : Icons.brightness_auto,
+                color: colorScheme.primary,
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Appearance',
+                    style:
+                        Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _labelForMode(mode),
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: options.map((option) {
+              final isSelected = option.mode == mode;
+              return ChoiceChip(
+                label: Text(option.label),
+                avatar: Icon(
+                  option.icon,
+                  size: 16,
+                  color: isSelected
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSurfaceVariant,
+                ),
+                selected: isSelected,
+                onSelected: (_) {
+                  ref
+                      .read(themeViewModelProvider.notifier)
+                      .setThemeMode(option.mode);
+                },
+                showCheckmark: false,
+                labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: isSelected
+                          ? colorScheme.onPrimary
+                          : colorScheme.onSurface,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                backgroundColor: colorScheme.surface,
+                selectedColor: colorScheme.primary,
+                side: BorderSide.none,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _labelForMode(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.dark:
+        return 'Dark mode';
+      case ThemeMode.light:
+        return 'Light mode';
+      case ThemeMode.system:
+        return 'Match device settings';
+    }
   }
 }

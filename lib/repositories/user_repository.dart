@@ -137,4 +137,12 @@ class UserRepository {
       throw Exception('Failed to update user preferences in the repository.');
     }
   }
+
+  Future<List<String>> getAvailableSubjects({int? grade}) async {
+    try {
+      return await _database.getAvailableSubjects(grade: grade);
+    } catch (e) {
+      throw Exception('Failed to load available subjects.');
+    }
+  }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/model/question.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
 
 class TrueFalseWidget extends ConsumerWidget {
@@ -13,6 +12,8 @@ class TrueFalseWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Column(
       children: [
         Row(
@@ -24,7 +25,7 @@ class TrueFalseWidget extends ConsumerWidget {
                 'True',
                 selectedOption == 'True',
                 Icons.check_circle_outline,
-                Colors.green,
+                colorScheme.primary,
               ),
             ),
             const SizedBox(width: 16),
@@ -35,7 +36,7 @@ class TrueFalseWidget extends ConsumerWidget {
                 'False',
                 selectedOption == 'False',
                 Icons.cancel_outlined,
-                Colors.red,
+                colorScheme.error,
               ),
             ),
           ],
@@ -45,20 +46,23 @@ class TrueFalseWidget extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.accentSoft,
+              color: colorScheme.primary.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.accent.withOpacity(0.3)),
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: AppColors.accent, size: 20),
+                Icon(Icons.info_outline, color: colorScheme.primary, size: 20),
                 const SizedBox(width: 8),
                 Text(
                   'You selected: $selectedOption',
-                  style: TextStyle(
-                    color: AppColors.accent,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ) ??
+                      TextStyle(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
               ],
             ),
@@ -75,23 +79,29 @@ class TrueFalseWidget extends ConsumerWidget {
     IconData icon,
     Color iconColor,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Container(
       height: 60,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: isSelected
-              ? AppColors.accent
-              : AppColors.neutralCard,
-          foregroundColor: isSelected ? Colors.white : AppColors.ink,
+              ? colorScheme.primary
+              : colorScheme.surface,
+          foregroundColor:
+              isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
-              color: isSelected ? AppColors.accent : AppColors.neutralBorder,
+              color: isSelected
+                  ? colorScheme.primary
+                  : colorScheme.outlineVariant,
               width: isSelected ? 2 : 1,
             ),
           ),
           elevation: isSelected ? 4 : 1,
-          shadowColor: isSelected ? AppColors.accent.withOpacity(0.3) : null,
+          shadowColor:
+              isSelected ? colorScheme.primary.withOpacity(0.3) : null,
         ),
         onPressed: () {
           ref
@@ -105,11 +115,19 @@ class TrueFalseWidget extends ConsumerWidget {
             const SizedBox(width: 8),
             Text(
               option,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : AppColors.ink,
-              ),
+              style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: isSelected
+                        ? colorScheme.onPrimary
+                        : colorScheme.onSurface,
+                  ) ??
+                  TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected
+                        ? colorScheme.onPrimary
+                        : colorScheme.onSurface,
+                  ),
             ),
           ],
         ),

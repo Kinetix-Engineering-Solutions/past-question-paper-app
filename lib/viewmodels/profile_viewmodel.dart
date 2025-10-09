@@ -48,3 +48,9 @@ class ProfileViewModel extends StateNotifier<AsyncValue<AppUser?>> {
     }
   }
 }
+
+final availableSubjectsProvider =
+    FutureProvider.autoDispose.family<List<String>, int?>((ref, grade) async {
+      final userRepository = ref.watch(userRepositoryProvider);
+      return userRepository.getAvailableSubjects(grade: grade);
+    });

@@ -25,22 +25,26 @@ class PracticeState {
   final List<Question> questions;
   final Map<String, dynamic> userAnswers;
   final bool isSubmitting;
+  final Map<String, int> pqpDisplayNumbers;
 
   const PracticeState({
     this.questions = const [],
     this.userAnswers = const {},
     this.isSubmitting = false,
+    this.pqpDisplayNumbers = const {},
   });
 
   PracticeState copyWith({
     List<Question>? questions,
     Map<String, dynamic>? userAnswers,
     bool? isSubmitting,
+    Map<String, int>? pqpDisplayNumbers,
   }) {
     return PracticeState(
       questions: questions ?? this.questions,
       userAnswers: userAnswers ?? this.userAnswers,
       isSubmitting: isSubmitting ?? this.isSubmitting,
+      pqpDisplayNumbers: pqpDisplayNumbers ?? this.pqpDisplayNumbers,
     );
   }
 }
@@ -126,7 +130,11 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
   Future<void> startSession(List<Question> questions) async {
     if (!isActive) return;
 
-    state = PracticeState(questions: questions, userAnswers: {});
+    state = PracticeState(
+      questions: questions,
+      userAnswers: const {},
+      pqpDisplayNumbers: _generateSequentialPqpNumbers(questions),
+    );
 
     // Option 3: Load parent context for questions that need it
     // Note: Backend should already enrich, but this is a fallback
@@ -149,7 +157,11 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
   void resetSession() {
     if (!isActive) return;
     if (state.questions.isNotEmpty) {
-      state = PracticeState(questions: state.questions, userAnswers: {});
+      state = PracticeState(
+        questions: state.questions,
+        userAnswers: const {},
+        pqpDisplayNumbers: state.pqpDisplayNumbers,
+      );
     } else {
       state = const PracticeState();
     }
@@ -161,6 +173,19 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
     final newAnswers = Map<String, dynamic>.from(state.userAnswers);
     newAnswers[questionId] = answer;
     state = state.copyWith(userAnswers: newAnswers);
+  }
+
+  Map<String, int> _generateSequentialPqpNumbers(List<Question> questions) {
+    if (questions.isEmpty) {
+      return const {};
+    }
+
+    final Map<String, int> displayNumbers = {};
+    for (var index = 0; index < questions.length; index++) {
+      displayNumbers[questions[index].id] = index + 1;
+    }
+
+    return displayNumbers;
   }
 
   /// Submits the user's answers to the backend for grading.
