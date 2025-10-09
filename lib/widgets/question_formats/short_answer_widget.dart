@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/model/question.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
 
 class ShortAnswerWidget extends ConsumerStatefulWidget {
@@ -37,28 +36,33 @@ class _ShortAnswerWidgetState extends ConsumerState<ShortAnswerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.accentSoft,
+            color: colorScheme.primary.withOpacity(0.08),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.accent.withOpacity(0.3)),
           ),
           child: Row(
             children: [
-              Icon(Icons.edit_outlined, color: AppColors.accent, size: 20),
+              Icon(Icons.edit_outlined, color: colorScheme.primary, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Type your answer below. Be specific and clear.',
-                  style: TextStyle(
-                    color: AppColors.accent,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ) ??
+                      TextStyle(
+                        color: colorScheme.primary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
               ),
             ],
@@ -70,26 +74,33 @@ class _ShortAnswerWidgetState extends ConsumerState<ShortAnswerWidget> {
           focusNode: _focusNode,
           maxLines: 3,
           minLines: 3,
-          style: const TextStyle(fontSize: 16, color: AppColors.ink),
+          style: textTheme.bodyLarge?.copyWith(
+                color: colorScheme.onSurface,
+              ) ??
+              TextStyle(fontSize: 16, color: colorScheme.onSurface),
           decoration: InputDecoration(
             hintText: 'Enter your answer here...',
-            hintStyle: TextStyle(color: AppColors.neutralMid, fontSize: 16),
+            hintStyle: textTheme.bodyMedium?.copyWith(
+                  color: textTheme.bodyMedium?.color?.withOpacity(0.6) ??
+                      colorScheme.onSurfaceVariant,
+                ) ??
+                TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 16,
+                ),
             filled: true,
-            fillColor: AppColors.neutralCard,
+            fillColor: colorScheme.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.neutralBorder),
+              borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: AppColors.neutralBorder,
-                width: 1.5,
-              ),
+              borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.accent, width: 2),
+              borderSide: BorderSide.none,
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -103,7 +114,10 @@ class _ShortAnswerWidgetState extends ConsumerState<ShortAnswerWidget> {
                           .read(practiceViewModelProvider.notifier)
                           .answerQuestion(widget.question.id, '');
                     },
-                    icon: Icon(Icons.clear, color: AppColors.neutralMid),
+                    icon: Icon(
+                      Icons.clear,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   )
                 : null,
           ),
@@ -117,12 +131,15 @@ class _ShortAnswerWidgetState extends ConsumerState<ShortAnswerWidget> {
         const SizedBox(height: 12),
         Row(
           children: [
-            Icon(Icons.info_outline, color: AppColors.neutralMid, size: 16),
+            Icon(Icons.info_outline, color: colorScheme.onSurfaceVariant, size: 16),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
                 'Marks: ${widget.question.marks} • Be concise but complete',
-                style: TextStyle(color: AppColors.neutralMid, fontSize: 12),
+                style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ) ??
+                    TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
               ),
             ),
           ],

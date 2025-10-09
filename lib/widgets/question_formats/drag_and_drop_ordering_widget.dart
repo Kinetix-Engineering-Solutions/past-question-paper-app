@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/model/question.dart';
 import 'package:past_question_paper_v1/model/drag_and_drop models/drag_item.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
 import 'package:past_question_paper_v1/widgets/latex_text.dart';
 
@@ -25,6 +24,8 @@ class _DragAndDropOrderingWidgetState
     extends ConsumerState<DragAndDropOrderingWidget> {
   List<DragItem> _orderedSteps = [];
   List<DragItem> _availableItems = [];
+  late ColorScheme _colorScheme;
+  late TextTheme _textTheme;
 
   @override
   void initState() {
@@ -114,6 +115,9 @@ class _DragAndDropOrderingWidgetState
 
   @override
   Widget build(BuildContext context) {
+    _colorScheme = Theme.of(context).colorScheme;
+    _textTheme = Theme.of(context).textTheme;
+    
     // Check if we have any data to work with for ordering
     final hasOrderingData =
         (widget.question.dragItems != null &&
@@ -125,18 +129,17 @@ class _DragAndDropOrderingWidgetState
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.red.shade50,
+          color: _colorScheme.errorContainer,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.red.shade200),
         ),
         child: Column(
           children: [
-            Icon(Icons.error_outline, color: Colors.red.shade600, size: 32),
+            Icon(Icons.error_outline, color: _colorScheme.error, size: 32),
             const SizedBox(height: 12),
             Text(
               'Missing Step Ordering Data',
               style: TextStyle(
-                color: Colors.red.shade800,
+                color: _colorScheme.onErrorContainer,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -144,7 +147,7 @@ class _DragAndDropOrderingWidgetState
             const SizedBox(height: 8),
             Text(
               'This question requires drag items for step ordering.',
-              style: TextStyle(color: Colors.red.shade600, fontSize: 14),
+              style: TextStyle(color: _colorScheme.error, fontSize: 14),
               textAlign: TextAlign.center,
             ),
           ],
@@ -155,41 +158,13 @@ class _DragAndDropOrderingWidgetState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Instructions
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.accentSoft,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.accent.withOpacity(0.3)),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.list_alt, color: AppColors.accent, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Arrange the steps below in the correct order to solve the problem',
-                  style: TextStyle(
-                    color: AppColors.accent,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
         // Ordered Steps Area
         Text(
           'Your Solution Steps (in order):',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.ink,
+            color: _colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 12),
@@ -203,7 +178,7 @@ class _DragAndDropOrderingWidgetState
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.ink,
+            color: _colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 12),
@@ -221,19 +196,18 @@ class _DragAndDropOrderingWidgetState
         width: double.infinity,
         height: 120,
         decoration: BoxDecoration(
-          color: AppColors.neutralCard,
+          color: _colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.neutralBorder),
         ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.list_alt, color: AppColors.neutralMid, size: 32),
+              Icon(Icons.list_alt, color: _colorScheme.onSurfaceVariant, size: 32),
               const SizedBox(height: 8),
               Text(
                 'Drag steps here to arrange them in order',
-                style: TextStyle(color: AppColors.neutralMid, fontSize: 14),
+                style: TextStyle(color: _colorScheme.onSurfaceVariant, fontSize: 14),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -244,9 +218,8 @@ class _DragAndDropOrderingWidgetState
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.neutralCard,
+        color: _colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.neutralBorder),
       ),
       child: ReorderableListView.builder(
         shrinkWrap: true,
@@ -266,30 +239,22 @@ class _DragAndDropOrderingWidgetState
       key: key,
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.accent.withOpacity(0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.neutralMid.withOpacity(0.1),
-            blurRadius: 2,
-            spreadRadius: 1,
-          ),
-        ],
       ),
       child: ListTile(
         leading: Container(
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: AppColors.accent,
+            color: _colorScheme.primary,
             shape: BoxShape.circle,
           ),
           child: Center(
             child: Text(
               '${index + 1}',
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: _colorScheme.onPrimary,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
@@ -300,17 +265,17 @@ class _DragAndDropOrderingWidgetState
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.drag_handle, color: AppColors.neutralMid),
+            Icon(Icons.drag_handle, color: _colorScheme.onSurfaceVariant),
             const SizedBox(width: 8),
             GestureDetector(
               onTap: () => _removeStep(index),
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade100,
+                  color: _colorScheme.errorContainer,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.close, color: Colors.red.shade600, size: 16),
+                child: Icon(Icons.close, color: _colorScheme.error, size: 16),
               ),
             ),
           ],
@@ -324,19 +289,18 @@ class _DragAndDropOrderingWidgetState
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.neutralCard,
+          color: _colorScheme.tertiaryContainer,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.neutralMid),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.check_circle, color: Colors.green.shade600),
+            Icon(Icons.check_circle, color: _colorScheme.tertiary),
             const SizedBox(width: 8),
             Text(
               'All steps have been arranged!',
               style: TextStyle(
-                color: AppColors.neutralMid,
+                color: _colorScheme.onTertiaryContainer,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -361,21 +325,13 @@ class _DragAndDropOrderingWidgetState
         constraints: const BoxConstraints(minWidth: 120, maxWidth: 200),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.neutralCard,
+          color: _colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.neutralBorder),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.neutralMid.withOpacity(0.1),
-              blurRadius: 4,
-              spreadRadius: 1,
-            ),
-          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.add_circle_outline, color: AppColors.accent, size: 16),
+            Icon(Icons.add_circle_outline, color: _colorScheme.primary, size: 16),
             const SizedBox(width: 8),
             Flexible(child: _buildItemContent(item)),
           ],
@@ -398,7 +354,7 @@ class _DragAndDropOrderingWidgetState
               errorBuilder: (context, error, stackTrace) {
                 return Icon(
                   Icons.broken_image,
-                  color: AppColors.neutralMid,
+                  color: _colorScheme.onSurfaceVariant,
                   size: 24,
                 );
               },
@@ -410,7 +366,7 @@ class _DragAndDropOrderingWidgetState
               item.text!,
               style: TextStyle(
                 fontSize: 10,
-                color: AppColors.ink,
+                color: _colorScheme.onSurface,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
@@ -423,7 +379,7 @@ class _DragAndDropOrderingWidgetState
     } else {
       return LatexText(
         item.text ?? item.id,
-        textColor: AppColors.ink,
+        textColor: _colorScheme.onSurface,
         fontSize: 12,
         textAlign: TextAlign.center,
       );
@@ -441,9 +397,8 @@ class _DragAndDropOrderingWidgetState
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.paper,
+        color: _colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.neutralBorder),
       ),
       child: Column(
         children: [
@@ -455,20 +410,23 @@ class _DragAndDropOrderingWidgetState
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.ink,
+                  color: _colorScheme.onSurface,
                 ),
               ),
               Text(
                 '$arrangedItems / $totalItems steps arranged',
-                style: TextStyle(fontSize: 12, color: AppColors.neutralMid),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: _colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           LinearProgressIndicator(
             value: progress,
-            backgroundColor: AppColors.neutralBorder,
-            color: progress == 1.0 ? AppColors.accent : AppColors.accent,
+            backgroundColor: _colorScheme.outlineVariant.withOpacity(0.3),
+            color: progress == 1.0 ? _colorScheme.tertiary : _colorScheme.primary,
             minHeight: 6,
           ),
         ],

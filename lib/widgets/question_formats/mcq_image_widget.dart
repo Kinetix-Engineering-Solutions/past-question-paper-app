@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/model/question.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
 
 class MCQImageWidget extends ConsumerWidget {
@@ -14,12 +13,17 @@ class MCQImageWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final optionImages = question.optionImages ?? [];
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     if (optionImages.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No image options available',
-          style: TextStyle(fontSize: 16, color: AppColors.neutralMid),
+          style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ) ??
+              TextStyle(fontSize: 16, color: colorScheme.onSurfaceVariant),
         ),
       );
     }
@@ -47,19 +51,6 @@ class MCQImageWidget extends ConsumerWidget {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? AppColors.accent : AppColors.neutralBorder,
-                width: isSelected ? 3 : 1.5,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: AppColors.accent.withOpacity(0.3),
-                        blurRadius: 8,
-                        spreadRadius: 2,
-                      ),
-                    ]
-                  : null,
             ),
             child: Stack(
               children: [
@@ -71,7 +62,7 @@ class MCQImageWidget extends ConsumerWidget {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
-                          color: AppColors.neutralCard, // fallback color
+                          color: colorScheme.surface,
                           child: Image.network(
                             imageUrl,
                             fit: BoxFit
@@ -80,7 +71,7 @@ class MCQImageWidget extends ConsumerWidget {
                               if (loadingProgress == null) return child;
                               return Center(
                                 child: CircularProgressIndicator(
-                                  color: AppColors.accent,
+                                  color: colorScheme.primary,
                                   value:
                                       loadingProgress.expectedTotalBytes != null
                                       ? loadingProgress.cumulativeBytesLoaded /
@@ -90,21 +81,25 @@ class MCQImageWidget extends ConsumerWidget {
                               );
                             },
                             errorBuilder: (context, error, stackTrace) {
-                              return const Center(
+                              return Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
                                       Icons.broken_image,
-                                      color: AppColors.neutralMid,
+                                      color: colorScheme.onSurfaceVariant,
                                     ),
                                     SizedBox(height: 8),
                                     Text(
                                       'Image failed to load',
-                                      style: TextStyle(
+                                      style: textTheme.bodySmall?.copyWith(
                                         fontSize: 12,
-                                        color: AppColors.neutralMid,
-                                      ),
+                                        color: colorScheme.onSurfaceVariant,
+                                      ) ??
+                                          TextStyle(
+                                            fontSize: 12,
+                                            color: colorScheme.onSurfaceVariant,
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -122,19 +117,12 @@ class MCQImageWidget extends ConsumerWidget {
                     right: 8,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: AppColors.accent,
+                        color: colorScheme.primary,
                         shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 4,
-                            spreadRadius: 1,
-                          ),
-                        ],
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.check,
-                        color: Colors.white,
+                        color: colorScheme.onPrimary,
                         size: 20,
                       ),
                     ),

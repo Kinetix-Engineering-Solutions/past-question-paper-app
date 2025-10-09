@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:past_question_paper_v1/model/question.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/widgets/latex_text.dart';
 
 /// Widget that displays parent question context for child questions
@@ -12,6 +11,8 @@ class ParentQuestionContextCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     // Only show if question has parent context
     if (!question.hasParent || question.parentContext == null) {
       return const SizedBox.shrink();
@@ -32,16 +33,8 @@ class ParentQuestionContextCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.neutralCard,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.accent.withOpacity(0.3), width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.ink.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,7 +42,7 @@ class ParentQuestionContextCard extends StatelessWidget {
           // Header with icon
           Row(
             children: [
-              Icon(Icons.link, color: AppColors.accent, size: 20),
+              Icon(Icons.link, color: colorScheme.primary, size: 20),
               const SizedBox(width: 8),
               Text(
                 parentNumber != null
@@ -58,7 +51,7 @@ class ParentQuestionContextCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.accent,
+                  color: colorScheme.primary,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -72,7 +65,7 @@ class ParentQuestionContextCard extends StatelessWidget {
               parentText,
               textStyle: TextStyle(
                 fontSize: 16,
-                color: AppColors.ink,
+                color: colorScheme.onSurface,
                 height: 1.5,
               ),
             ),
@@ -90,10 +83,10 @@ class ParentQuestionContextCard extends StatelessWidget {
                   if (loadingProgress == null) return child;
                   return Container(
                     height: 200,
-                    color: AppColors.paper,
+                    color: colorScheme.surfaceVariant,
                     child: Center(
                       child: CircularProgressIndicator(
-                        color: AppColors.accent,
+                        color: colorScheme.primary,
                         value: loadingProgress.expectedTotalBytes != null
                             ? loadingProgress.cumulativeBytesLoaded /
                                   loadingProgress.expectedTotalBytes!
@@ -105,7 +98,7 @@ class ParentQuestionContextCard extends StatelessWidget {
                 errorBuilder: (context, error, stackTrace) {
                   return Container(
                     height: 200,
-                    color: AppColors.paper,
+                    color: colorScheme.surfaceVariant,
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -113,13 +106,13 @@ class ParentQuestionContextCard extends StatelessWidget {
                           Icon(
                             Icons.broken_image_outlined,
                             size: 48,
-                            color: AppColors.ink.withOpacity(0.3),
+                            color: colorScheme.onSurfaceVariant.withOpacity(0.5),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Image not available',
                             style: TextStyle(
-                              color: AppColors.ink.withOpacity(0.5),
+                              color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -138,7 +131,7 @@ class ParentQuestionContextCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontStyle: FontStyle.italic,
-              color: AppColors.ink.withOpacity(0.6),
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
         ],

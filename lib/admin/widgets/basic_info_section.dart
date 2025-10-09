@@ -11,7 +11,7 @@ class BasicInfoSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(questionCreateViewModelProvider);
     final notifier = ref.read(questionCreateViewModelProvider.notifier);
-    
+
     // When a parent is selected, these fields are read-only (auto-filled from parent)
     final isReadOnly = state.isChildQuestion && state.parentQuestionId != null;
 
@@ -34,16 +34,13 @@ class BasicInfoSection extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     'These fields are automatically filled from the parent question',
-                    style: TextStyle(
-                      color: Colors.blue.shade700,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Colors.blue.shade700, fontSize: 13),
                   ),
                 ),
               ],
             ),
           ),
-        
+
         Row(
           children: [
             Expanded(
@@ -56,9 +53,11 @@ class BasicInfoSection extends ConsumerWidget {
                 items: AppConstants.subjects
                     .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                     .toList(),
-                onChanged: isReadOnly ? null : (value) {
-                  if (value != null) notifier.updateSubject(value);
-                },
+                onChanged: isReadOnly
+                    ? null
+                    : (value) {
+                        if (value != null) notifier.updateSubject(value);
+                      },
                 validator: (value) =>
                     value == null ? 'Subject is required' : null,
               ),
@@ -74,9 +73,11 @@ class BasicInfoSection extends ConsumerWidget {
                 items: AppConstants.grades
                     .map((g) => DropdownMenuItem(value: g, child: Text('$g')))
                     .toList(),
-                onChanged: isReadOnly ? null : (value) {
-                  if (value != null) notifier.updateGrade(value);
-                },
+                onChanged: isReadOnly
+                    ? null
+                    : (value) {
+                        if (value != null) notifier.updateGrade(value);
+                      },
                 validator: (value) =>
                     value == null ? 'Grade is required' : null,
               ),
@@ -93,9 +94,11 @@ class BasicInfoSection extends ConsumerWidget {
           items: (AppConstants.topicsBySubject[state.subject] ?? [])
               .map((t) => DropdownMenuItem(value: t, child: Text(t)))
               .toList(),
-          onChanged: isReadOnly ? null : (value) {
-            if (value != null) notifier.updateTopic(value);
-          },
+          onChanged: isReadOnly
+              ? null
+              : (value) {
+                  if (value != null) notifier.updateTopic(value);
+                },
           validator: (value) => value == null ? 'Topic is required' : null,
         ),
         const SizedBox(height: 16),
@@ -113,9 +116,11 @@ class BasicInfoSection extends ConsumerWidget {
                   DropdownMenuItem(value: 'p2', child: Text('Paper 2')),
                   DropdownMenuItem(value: 'p3', child: Text('Paper 3')),
                 ],
-                onChanged: isReadOnly ? null : (value) {
-                  if (value != null) notifier.updatePaper(value);
-                },
+                onChanged: isReadOnly
+                    ? null
+                    : (value) {
+                        if (value != null) notifier.updatePaper(value);
+                      },
               ),
             ),
             const SizedBox(width: 16),
@@ -147,9 +152,11 @@ class BasicInfoSection extends ConsumerWidget {
                   DropdownMenuItem(value: 'June', child: Text('June')),
                   DropdownMenuItem(value: 'March', child: Text('March')),
                 ],
-                onChanged: isReadOnly ? null : (value) {
-                  if (value != null) notifier.updateSeason(value);
-                },
+                onChanged: isReadOnly
+                    ? null
+                    : (value) {
+                        if (value != null) notifier.updateSeason(value);
+                      },
               ),
             ),
           ],

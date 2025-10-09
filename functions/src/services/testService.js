@@ -10,6 +10,87 @@ const { generateBlueprintCompliantTest } = require('./enhancedTestService');
 // ✅ SHORT ANSWER FIX: Removed unused import - short answers now use standard generation
 // const { generateShortAnswerTest } = require('./shortAnswerTestService');
 
+function parsePqpSegments(questionNumber) {
+  if (!questionNumber || typeof questionNumber !== 'string') {
+    return [];
+  }
+
+  return questionNumber
+    .split('.')
+    .map((segment) => {
+      const numeric = parseInt(segment, 10);
+      return Number.isFinite(numeric) ? numeric : 0;
+    });
+}
+
+function extractQuestionNumber(question) {
+  if (!question || typeof question !== 'object') {
+    return null;
+  }
+
+  const pqpNumber = question?.pqpData?.questionNumber;
+  if (pqpNumber && typeof pqpNumber === 'string') {
+    return pqpNumber;
+  }
+
+  const directNumber = question.questionNumber;
+  if (typeof directNumber === 'string') {
+    return directNumber;
+  }
+
+  if (typeof directNumber === 'number') {
+    return directNumber.toString();
+  }
+
+  return null;
+}
+
+function comparePqpQuestionNumbers(a, b) {
+  const aSegments = parsePqpSegments(extractQuestionNumber(a));
+  const bSegments = parsePqpSegments(extractQuestionNumber(b));
+
+  const maxLength = Math.max(aSegments.length, bSegments.length);
+
+  for (let index = 0; index < maxLength; index += 1) {
+    const aValue = index < aSegments.length ? aSegments[index] : 0;
+    const bValue = index < bSegments.length ? bSegments[index] : 0;
+
+    if (aValue !== bValue) {
+      return aValue - bValue;
+    }
+  }
+
+  return 0;
+}
+
+function sortQuestionsByPqpNumber(questions) {
+  if (!Array.isArray(questions) || questions.length === 0) {
+    return questions;
+  }
+
+  const hasPqpNumbers = questions.some((question) => extractQuestionNumber(question));
+  if (!hasPqpNumbers) {
+    return questions;
+  }
+
+  const sorted = [...questions].sort(comparePqpQuestionNumbers);
+
+  return sorted.map((question, index) => ({
+    ...question,
+    questionNumber: index + 1,
+  }));
+}
+
+function shouldSortByPqp(params) {
+  if (!params || typeof params !== 'object') {
+    return false;
+  }
+
+  const mode = (params.mode || '').toString().toLowerCase();
+
+  return mode === 'full_exam' || mode === 'pqp' || params.isPQPMode === true;
+}
+
 /**
  * Test generation service for creating past paper tests
  */
@@ -189,8 +270,11 @@ async function generateTestPaper(params) {
     
     if (enhancedResult && enhancedResult.questions && enhancedResult.questions.length > 0) {
       console.log(`✅ Enhanced generation successful: ${enhancedResult.questions.length} questions`);
+      const sortedQuestions = shouldSortByPqp(params)
+        ? sortQuestionsByPqpNumber(enhancedResult.questions)
+        : enhancedResult.questions;
       return {
-        questions: enhancedResult.questions,
+        questions: sortedQuestions,
         totalQuestions: enhancedResult.totalQuestions,
         blueprint: enhancedResult.blueprint,
         params: params,
@@ -282,9 +366,13 @@ async function generateLegacyTestPaper(params) {
 
   console.log(`Generated ${generatedQuestions.length} total questions`);
 
+  const orderedQuestions = shouldSortByPqp(params)
+    ? sortQuestionsByPqpNumber(generatedQuestions)
+    : generatedQuestions;
+
   return {
-    questions: generatedQuestions,
-    totalQuestions: generatedQuestions.length,
+    questions: orderedQuestions,
+    totalQuestions: orderedQuestions.length,
     blueprint: blueprint,
     params: params,
     generatedAt: new Date().toISOString()

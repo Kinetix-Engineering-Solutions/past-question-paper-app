@@ -4,7 +4,6 @@ import 'package:past_question_paper_v1/utils/app_constants.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:past_question_paper_v1/utils/app_colors.dart';
 
 import '../repositories/question_repository.dart';
 import 'practice_screen.dart';
@@ -110,18 +109,21 @@ class _TestConfigurationScreenState extends State<TestConfigurationScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: colorScheme.background,
       appBar: AppBar(
         title: Text(widget.subject),
-        backgroundColor: AppColors.paper,
-        foregroundColor: AppColors.ink,
+        backgroundColor: colorScheme.background,
+        foregroundColor: colorScheme.onBackground,
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
-          labelColor: AppColors.accent,
-          unselectedLabelColor: AppColors.neutralMid,
-          indicatorColor: AppColors.accent,
+          labelColor: colorScheme.primary,
+          unselectedLabelColor: textTheme.bodyMedium?.color?.withOpacity(0.7),
+          indicatorColor: colorScheme.primary,
           tabs: const [
             Tab(text: 'Full Exam'),
             Tab(text: 'Quick Practice'),
@@ -153,14 +155,28 @@ class _FullExamView extends ConsumerStatefulWidget {
 
 class _FullExamViewState extends ConsumerState<_FullExamView> {
   // State for selected year and season
-  int _selectedYear = DateTime.now().year;
+  int _selectedYear = DateTime.now().year - 1;
   String _selectedSeason = 'November';
 
   @override
   Widget build(BuildContext context) {
     final loadingButtonId = ref.watch(testConfigurationViewModelProvider);
-    final years = List.generate(4, (index) => DateTime.now().year - index);
+    final currentYear = DateTime.now().year;
+    final years = List.generate(
+      4,
+      (index) => currentYear - index - 1,
+    ).where((year) => year > 2000).toList();
     const seasons = ['November', 'June', 'March'];
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final paper1Meta = AppConstants.getFullExamPaperMeta(widget.subject, widget.grade, 'p1');
+    final paper2Meta = AppConstants.getFullExamPaperMeta(
+      widget.subject,
+      widget.grade,
+      'p2',
+    );
+    final paper1Subtitle = paper1Meta?.summary() ?? 'Blueprint details syncing soon';
+    final paper2Subtitle = paper2Meta?.summary() ?? 'Blueprint details syncing soon';
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -174,9 +190,10 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
         const SizedBox(height: 8),
         Text(
           'Practice with authentic past exam papers. Questions appear exactly as they did in the original exam, with proper numbering and question chains.',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: AppColors.neutralMid),
+          style: textTheme.bodyMedium?.copyWith(
+            color: textTheme.bodyMedium?.color?.withOpacity(0.75) ??
+                colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 24),
         Text(
@@ -214,7 +231,9 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
         ),
         const SizedBox(height: 24),
         _buildStartCard(
+          context,
           title: 'Paper 1 ($_selectedSeason $_selectedYear)',
+          subtitle: paper1Subtitle,
           icon: Icons.article,
           isLoading: loadingButtonId == 'paper1',
           onTap: () {
@@ -236,7 +255,9 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
           },
         ),
         _buildStartCard(
+          context,
           title: 'Paper 2 ($_selectedSeason $_selectedYear)',
+          subtitle: paper2Subtitle,
           icon: Icons.article_outlined,
           isLoading: loadingButtonId == 'paper2',
           onTap: () {
@@ -271,6 +292,8 @@ class _QuickPracticeView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loadingButtonId = ref.watch(testConfigurationViewModelProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -283,9 +306,10 @@ class _QuickPracticeView extends ConsumerWidget {
         const SizedBox(height: 8),
         Text(
           'Fast-paced practice with mixed topics. Questions are simplified for learning, with hints available to help you understand concepts better.',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: AppColors.neutralMid),
+          style: textTheme.bodyMedium?.copyWith(
+            color: textTheme.bodyMedium?.color?.withOpacity(0.75) ??
+                colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 24),
         Text(
@@ -296,6 +320,7 @@ class _QuickPracticeView extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         _buildStartCard(
+          context,
           title: '15 Minute Sprint',
           subtitle: '~25 Marks',
           icon: Icons.timer_outlined,
@@ -318,6 +343,7 @@ class _QuickPracticeView extends ConsumerWidget {
           },
         ),
         _buildStartCard(
+          context,
           title: '30 Minute Review',
           subtitle: '~50 Marks',
           icon: Icons.timer,
@@ -355,6 +381,8 @@ class _ByTopicView extends ConsumerWidget {
     final loadingButtonId = ref.watch(testConfigurationViewModelProvider);
     // Get the topics for the current subject from your constants file
     final topics = AppConstants.topicsBySubject[subject] ?? [];
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -376,9 +404,10 @@ class _ByTopicView extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   'Focus on specific topics to strengthen weak areas. Select a topic below to practice questions only from that section.',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: AppColors.neutralMid),
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: textTheme.bodyMedium?.color?.withOpacity(0.75) ??
+                        colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -397,6 +426,7 @@ class _ByTopicView extends ConsumerWidget {
         final topic = topics[topicIndex];
         final buttonId = 'topic_$topicIndex';
         return _buildStartCard(
+          context,
           title: topic,
           icon: Icons.bookmark_border,
           isLoading: loadingButtonId == buttonId,
@@ -420,34 +450,50 @@ class _ByTopicView extends ConsumerWidget {
 }
 
 // --- Reusable Card Widget for Starting a Test ---
-Widget _buildStartCard({
+Widget _buildStartCard(
+  BuildContext context, {
   required String title,
   String? subtitle,
   required IconData icon,
   required bool isLoading,
   required VoidCallback onTap,
 }) {
+  final colorScheme = Theme.of(context).colorScheme;
+  final textTheme = Theme.of(context).textTheme;
+
   return Card(
-    elevation: 2,
+    elevation: 0,
     margin: const EdgeInsets.symmetric(vertical: 8),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(12),
-      side: const BorderSide(color: AppColors.neutralBorder),
+      side: BorderSide.none,
     ),
     child: ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      leading: Icon(icon, color: AppColors.accent, size: 32),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: subtitle != null ? Text(subtitle) : null,
+      leading: Icon(icon, color: colorScheme.primary, size: 32),
+      title: Text(
+        title,
+        style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600) ??
+            const TextStyle(fontWeight: FontWeight.w600),
+      ),
+      subtitle: subtitle != null
+          ? Text(
+              subtitle,
+              style: textTheme.bodySmall?.copyWith(
+                color: textTheme.bodySmall?.color?.withOpacity(0.75) ??
+                    colorScheme.onSurfaceVariant,
+              ),
+            )
+          : null,
       trailing: isLoading
-          ? const SizedBox(
+          ? SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(color: AppColors.accent),
+              child: CircularProgressIndicator(color: colorScheme.primary),
             )
-          : const Icon(
+          : Icon(
               Icons.play_circle_fill,
-              color: AppColors.accent,
+              color: colorScheme.primary,
               size: 28,
             ),
       onTap: isLoading ? null : onTap,

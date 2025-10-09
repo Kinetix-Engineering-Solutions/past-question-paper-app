@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/admin/views/admin_home_view.dart';
 import 'package:past_question_paper_v1/firebase_options.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
+import 'package:past_question_paper_v1/utils/app_theme.dart';
+import 'package:past_question_paper_v1/viewmodels/theme_viewmodel.dart';
 
 /// Entry point for Admin Portal (Web)
 /// This is a simplified version without authentication for quick data entry
@@ -17,40 +18,19 @@ void main() async {
   runApp(const ProviderScope(child: AdminApp()));
 }
 
-class AdminApp extends StatelessWidget {
+class AdminApp extends ConsumerWidget {
   const AdminApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeState = ref.watch(themeViewModelProvider);
+
     return MaterialApp(
       title: 'PQP Admin Portal',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.light(
-          primary: AppColors.accent,
-          secondary: AppColors.ink,
-          surface: AppColors.paper,
-          background: AppColors.paper,
-        ),
-        scaffoldBackgroundColor: AppColors.paper,
-        appBarTheme: AppBarTheme(
-          backgroundColor: AppColors.ink,
-          foregroundColor: AppColors.paper,
-          elevation: 0,
-        ),
-        cardTheme: CardThemeData(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          filled: true,
-          fillColor: Colors.white,
-        ),
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeState.mode,
       home: const AdminHomeView(),
     );
   }

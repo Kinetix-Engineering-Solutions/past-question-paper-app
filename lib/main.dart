@@ -7,6 +7,7 @@ import 'package:past_question_paper_v1/services/deep_link_handler.dart';
 import 'package:past_question_paper_v1/services/navigation_service.dart';
 import 'package:past_question_paper_v1/utils/app_theme.dart';
 import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
+import 'package:past_question_paper_v1/viewmodels/theme_viewmodel.dart';
 import 'package:past_question_paper_v1/views/login.dart';
 import 'package:past_question_paper_v1/views/main_navigation_screen.dart';
 import 'package:past_question_paper_v1/views/onboarding_screen.dart';
@@ -36,10 +37,14 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final themeState = ref.watch(themeViewModelProvider);
+
     return MaterialApp(
       title: 'STEM Question Papers',
       navigatorKey: NavigationService.navigatorKey,
-      theme: AppTheme.paperAndInkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeState.mode,
       home: const AppInitializer(),
       routes: {
         '/login': (context) => const LoginScreen(),

@@ -40,12 +40,7 @@ class ParentChildBrowserState {
 }
 
 /// Filter modes for question display
-enum FilterMode {
-  all,
-  parentsOnly,
-  childrenOnly,
-  standalone,
-}
+enum FilterMode { all, parentsOnly, childrenOnly, standalone }
 
 /// Node representing a parent question with its children
 class ParentQuestionNode {
@@ -59,7 +54,8 @@ class ParentQuestionNode {
     this.children = const [],
   });
 
-  String get pqpNumber => data['pqpData']?['questionNumber'] ?? id.substring(0, 8);
+  String get pqpNumber =>
+      data['pqpData']?['questionNumber'] ?? id.substring(0, 8);
   String get subject => data['subject'] ?? '';
   String get topic => data['topic'] ?? '';
   String get contextText => data['contextText'] ?? '';
@@ -71,19 +67,18 @@ class ChildQuestionNode {
   final String id;
   final Map<String, dynamic> data;
 
-  ChildQuestionNode({
-    required this.id,
-    required this.data,
-  });
+  ChildQuestionNode({required this.id, required this.data});
 
-  String get pqpNumber => data['pqpData']?['questionNumber'] ?? id.substring(0, 8);
+  String get pqpNumber =>
+      data['pqpData']?['questionNumber'] ?? id.substring(0, 8);
   String get questionText => data['questionText'] ?? '';
   String get format => data['format'] ?? '';
   int get marks => data['marks'] ?? 0;
 }
 
 /// ViewModel for Parent-Child Browser
-class ParentChildBrowserViewModel extends StateNotifier<ParentChildBrowserState> {
+class ParentChildBrowserViewModel
+    extends StateNotifier<ParentChildBrowserState> {
   ParentChildBrowserViewModel() : super(const ParentChildBrowserState()) {
     loadQuestions();
   }
@@ -110,20 +105,14 @@ class ParentChildBrowserViewModel extends StateNotifier<ParentChildBrowserState>
 
         if (isParent) {
           // This is a parent question
-          parentsMap[doc.id] = ParentQuestionNode(
-            id: doc.id,
-            data: data,
-          );
+          parentsMap[doc.id] = ParentQuestionNode(id: doc.id, data: data);
         } else if (parentId != null) {
           // This is a child question
           final child = ChildQuestionNode(id: doc.id, data: data);
           childrenByParent.putIfAbsent(parentId, () => []).add(child);
         } else {
           // This is a standalone question (no parent, not a parent)
-          standaloneQuestions.add(ParentQuestionNode(
-            id: doc.id,
-            data: data,
-          ));
+          standaloneQuestions.add(ParentQuestionNode(id: doc.id, data: data));
         }
       }
 
@@ -139,11 +128,13 @@ class ParentChildBrowserViewModel extends StateNotifier<ParentChildBrowserState>
         // Sort children by PQP number
         children.sort((a, b) => a.pqpNumber.compareTo(b.pqpNumber));
 
-        questionsList.add(ParentQuestionNode(
-          id: parent.id,
-          data: parent.data,
-          children: children,
-        ));
+        questionsList.add(
+          ParentQuestionNode(
+            id: parent.id,
+            data: parent.data,
+            children: children,
+          ),
+        );
       }
 
       // Add standalone questions
@@ -152,10 +143,7 @@ class ParentChildBrowserViewModel extends StateNotifier<ParentChildBrowserState>
       // Sort by PQP number
       questionsList.sort((a, b) => a.pqpNumber.compareTo(b.pqpNumber));
 
-      state = state.copyWith(
-        questions: questionsList,
-        isLoading: false,
-      );
+      state = state.copyWith(questions: questionsList, isLoading: false);
     } catch (e) {
       debugPrint('Error loading questions: $e');
       state = state.copyWith(
@@ -214,10 +202,9 @@ class ParentChildBrowserViewModel extends StateNotifier<ParentChildBrowserState>
         final childrenOnly = <ParentQuestionNode>[];
         for (final parent in questions) {
           for (final child in parent.children) {
-            childrenOnly.add(ParentQuestionNode(
-              id: child.id,
-              data: child.data,
-            ));
+            childrenOnly.add(
+              ParentQuestionNode(id: child.id, data: child.data),
+            );
           }
         }
         questions = childrenOnly;
@@ -238,7 +225,7 @@ class ParentChildBrowserViewModel extends StateNotifier<ParentChildBrowserState>
         final subjectMatch = q.subject.toLowerCase().contains(query);
         final topicMatch = q.topic.toLowerCase().contains(query);
         final contextMatch = q.contextText.toLowerCase().contains(query);
-        
+
         // Also search in children
         final childMatch = q.children.any((child) {
           final childPqp = child.pqpNumber.toLowerCase().contains(query);
@@ -246,7 +233,11 @@ class ParentChildBrowserViewModel extends StateNotifier<ParentChildBrowserState>
           return childPqp || childText;
         });
 
-        return pqpMatch || subjectMatch || topicMatch || contextMatch || childMatch;
+        return pqpMatch ||
+            subjectMatch ||
+            topicMatch ||
+            contextMatch ||
+            childMatch;
       }).toList();
     }
 
@@ -294,5 +285,5 @@ class ParentChildBrowserViewModel extends StateNotifier<ParentChildBrowserState>
 /// Provider for Parent-Child Browser ViewModel
 final parentChildBrowserViewModelProvider =
     StateNotifierProvider<ParentChildBrowserViewModel, ParentChildBrowserState>(
-  (ref) => ParentChildBrowserViewModel(),
-);
+      (ref) => ParentChildBrowserViewModel(),
+    );

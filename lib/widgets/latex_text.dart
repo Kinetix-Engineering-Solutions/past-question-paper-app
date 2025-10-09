@@ -19,23 +19,27 @@ class LatexText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Use theme color if no textColor is provided
+    final defaultColor = textColor ?? Theme.of(context).colorScheme.onSurface;
+    final errorColor = Theme.of(context).colorScheme.error;
+    
     final defaultStyle = TextStyle(
       fontSize: fontSize ?? 16,
-      color: textColor ?? const Color(0xFF262626),
+      color: defaultColor,
     );
 
     final style = textStyle?.merge(defaultStyle) ?? defaultStyle;
 
-    return _buildMixedContent(text, style);
+    return _buildMixedContent(text, style, errorColor);
   }
 
-  Widget _buildMixedContent(String text, TextStyle style) {
+  Widget _buildMixedContent(String text, TextStyle style, Color errorColor) {
     // First check if text contains LaTeX wrapped in $ or $$
     final wrappedLatexPattern = RegExp(r'\$\$(.+?)\$\$|\$(.+?)\$');
     final wrappedMatches = wrappedLatexPattern.allMatches(text);
 
     if (wrappedMatches.isNotEmpty) {
-      return _buildWrappedLatexContent(text, style, wrappedMatches);
+      return _buildWrappedLatexContent(text, style, wrappedMatches, errorColor);
     }
 
     // Check for common LaTeX patterns and try to build mixed content
@@ -135,6 +139,7 @@ class LatexText extends StatelessWidget {
     String text,
     TextStyle style,
     Iterable<RegExpMatch> matches,
+    Color errorColor,
   ) {
     // Build mixed content with LaTeX and regular text
     List<InlineSpan> spans = [];
@@ -175,7 +180,7 @@ class LatexText extends StatelessWidget {
           TextSpan(
             text: '\$${latexContent}\$',
             style: style.copyWith(
-              color: Colors.red,
+              color: errorColor,
               fontStyle: FontStyle.italic,
             ),
           ),

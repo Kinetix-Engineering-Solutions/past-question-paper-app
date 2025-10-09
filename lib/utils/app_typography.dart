@@ -5,70 +5,75 @@ import 'app_colors.dart';
 
 /// PQP Typography: Montserrat for headings/titles, Inter for body/labels.
 class AppTypography {
-  static TextTheme textTheme([TextTheme? seed]) {
+  static TextTheme textTheme([TextTheme? seed, bool isDark = false]) {
     final seedTheme = seed ?? ThemeData.light().textTheme;
     final mont = GoogleFonts.montserratTextTheme(seedTheme);
     final inter = GoogleFonts.interTextTheme(seedTheme);
     // Slightly reduce overall font sizes for a tighter, denser UI.
     const fontScale = 0.94;
 
+    // Select colors based on theme brightness
+    final ink = isDark ? AppColorsDark.ink : AppColors.ink;
+    final neutralMid = isDark ? AppColorsDark.neutralMid : AppColors.neutralMid;
+    final neutralSoft = isDark ? AppColorsDark.neutralSoft : AppColors.neutralSoft;
+
     final composed = TextTheme(
       // Headings & titles (Montserrat)
       headlineLarge: mont.headlineLarge?.copyWith(
-        color: AppColors.ink,
+        color: ink,
         fontWeight: FontWeight.w700,
         letterSpacing: -1.0,
       ),
       headlineMedium: mont.headlineMedium?.copyWith(
-        color: AppColors.ink,
+        color: ink,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.5,
       ),
       headlineSmall: mont.headlineSmall?.copyWith(
-        color: AppColors.ink,
+        color: ink,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.3,
       ),
       titleLarge: mont.titleLarge?.copyWith(
-        color: AppColors.ink,
+        color: ink,
         fontWeight: FontWeight.w600,
       ),
       titleMedium: mont.titleMedium?.copyWith(
-        color: AppColors.ink,
+        color: ink,
         fontWeight: FontWeight.w500,
       ),
       titleSmall: mont.titleSmall?.copyWith(
-        color: AppColors.ink,
+        color: ink,
         fontWeight: FontWeight.w500,
       ),
 
       // Body & labels (Inter)
       bodyLarge: inter.bodyLarge?.copyWith(
-        color: AppColors.ink,
+        color: ink,
         fontWeight: FontWeight.w400,
         height: 1.5,
       ),
       bodyMedium: inter.bodyMedium?.copyWith(
-        color: AppColors.ink,
+        color: ink,
         fontWeight: FontWeight.w400,
         height: 1.5,
       ),
       bodySmall: inter.bodySmall?.copyWith(
-        color: AppColors.neutralSoft,
+        color: neutralSoft,
         fontWeight: FontWeight.w400,
         height: 1.4,
       ),
       labelLarge: inter.labelLarge?.copyWith(
-        color: AppColors.ink,
+        color: ink,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
       ),
       labelMedium: inter.labelMedium?.copyWith(
-        color: AppColors.neutralMid,
+        color: neutralMid,
         letterSpacing: 0.2,
       ),
       labelSmall: inter.labelSmall?.copyWith(
-        color: AppColors.neutralSoft,
+        color: neutralSoft,
         letterSpacing: 0.3,
       ),
     );
