@@ -14,13 +14,24 @@ class ParentSelectorSection extends ConsumerStatefulWidget {
 }
 
 class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
+  final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _parentQuestions = [];
+  List<Map<String, dynamic>> _filteredParentQuestions = [];
+  List<int> _availableYears = [];
+  int? _selectedYear;
+  String _searchTerm = '';
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadParentQuestions();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadParentQuestions() async {
@@ -36,45 +47,156 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
       // Map and sort in memory
       final parentsList = snapshot.docs.map((doc) {
         final data = doc.data();
-        String displayText = doc.id.substring(0, 8);
+        String identifier = doc.id.substring(0, 8);
 
-        // Try to get PQP number
         if (data['pqpData'] != null && data['pqpData'] is Map) {
           final pqpData = data['pqpData'] as Map<String, dynamic>;
           final pqpNumber = pqpData['questionNumber'];
           if (pqpNumber != null) {
-            displayText = pqpNumber.toString();
+            identifier = pqpNumber.toString();
           }
         }
 
-        // Add subject and topic for context
-        final subject = data['subject'] ?? '';
-        final topic = data['topic'] ?? '';
+        final subject = (data['subject'] as String?)?.trim() ?? '';
+        final topic = (data['topic'] as String?)?.trim() ?? '';
+        final season = (data['season'] as String?)?.trim() ?? '';
+        final year = _parseYear(data['year']);
+
+        final labelSegments = <String>[];
+        if (identifier.isNotEmpty) {
+          labelSegments.add(identifier);
+        }
+        if (subject.isNotEmpty) {
+          labelSegments.add(subject);
+        }
+        if (topic.isNotEmpty) {
+          labelSegments.add(topic);
+        }
+        if (year != null || season.isNotEmpty) {
+          final window = season.isNotEmpty
+              ? year != null
+                  ? '$year $season'
+                  : season
+              : year?.toString() ?? '';
+          if (window.isNotEmpty) {
+            labelSegments.add(window);
+          }
+        }
+
+        final displayLabel = labelSegments.isEmpty
+            ? identifier
+            : labelSegments.join(' • ');
+
+        final searchVector = [
+          identifier,
+          subject,
+          topic,
+          season,
+          year?.toString() ?? '',
+          doc.id,
+        ]
+            .where((element) => element.trim().isNotEmpty)
+            .join(' ')
+            .toLowerCase();
 
         return {
           'id': doc.id,
-          'displayText': '$displayText - $subject - $topic',
-          'pqpNumber': displayText,
+          'displayText': displayLabel,
+          'pqpNumber': identifier,
           'subject': subject,
           'topic': topic,
+          'year': year,
+          'season': season,
+          'searchIndex': searchVector,
         };
       }).toList();
 
-      // Sort by PQP number in memory (avoids Firestore composite index)
       parentsList.sort((a, b) {
         final aNumber = a['pqpNumber'] as String? ?? '';
         final bNumber = b['pqpNumber'] as String? ?? '';
         return aNumber.compareTo(bNumber);
       });
 
+      final uniqueYears = parentsList
+          .map((parent) => parent['year'])
+          .whereType<int>()
+          .toSet()
+          .toList()
+        ..sort((a, b) => b.compareTo(a));
+
       setState(() {
         _parentQuestions = parentsList;
+        _availableYears = uniqueYears;
         _isLoading = false;
       });
+
+      _applyFilters();
     } catch (e) {
       debugPrint('❌ Error loading parent questions: $e');
       setState(() => _isLoading = false);
     }
+  }
+
+  int? _parseYear(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  void _applyFilters() {
+    if (!mounted) return;
+
+    final selectedParentId =
+        ref.read(questionCreateViewModelProvider).parentQuestionId;
+
+    final filtered = _parentQuestions.where((parent) {
+      final yearMatch =
+          _selectedYear == null || parent['year'] == _selectedYear;
+      final searchIndex = parent['searchIndex'] as String? ?? '';
+      final searchMatch =
+          _searchTerm.isEmpty || searchIndex.contains(_searchTerm);
+      return yearMatch && searchMatch;
+    }).toList();
+
+    if (selectedParentId != null &&
+        filtered.every((parent) => parent['id'] != selectedParentId)) {
+      final selectedParent = _findParentById(selectedParentId);
+      if (selectedParent != null) {
+        filtered.insert(0, selectedParent);
+      }
+    }
+
+    filtered.sort((a, b) {
+      final aNumber = a['pqpNumber'] as String? ?? '';
+      final bNumber = b['pqpNumber'] as String? ?? '';
+      return aNumber.compareTo(bNumber);
+    });
+
+    setState(() {
+      _filteredParentQuestions = filtered;
+    });
+  }
+
+  Map<String, dynamic>? _findParentById(String id) {
+    for (final parent in _parentQuestions) {
+      if (parent['id'] == id) {
+        return parent;
+      }
+    }
+    return null;
+  }
+
+  bool get _hasActiveFilters =>
+      _searchTerm.isNotEmpty || _selectedYear != null;
+
+  void _clearFilters() {
+    setState(() {
+      _searchTerm = '';
+      _selectedYear = null;
+      _searchController.clear();
+    });
+    _applyFilters();
   }
 
   @override
@@ -107,12 +229,12 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
           const Divider(),
           const SizedBox(height: 16),
 
-          // Parent selector
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _parentQuestions.isEmpty
-              ? _buildNoParentsMessage()
-              : _buildParentDropdown(state, notifier),
+      // Parent selector
+      _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : _parentQuestions.isEmpty
+          ? _buildNoParentsMessage()
+          : _buildParentDropdown(state, notifier),
 
           // Parent context preview (shown when parent is selected)
           if (state.parentQuestionId != null) ...[
@@ -180,6 +302,18 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
     QuestionCreateState state,
     QuestionCreateViewModel notifier,
   ) {
+    final dropdownParents =
+        List<Map<String, dynamic>>.from(_filteredParentQuestions);
+    final selectedId = state.parentQuestionId;
+
+    if (selectedId != null &&
+        dropdownParents.every((parent) => parent['id'] != selectedId)) {
+      final selectedParent = _findParentById(selectedId);
+      if (selectedParent != null) {
+        dropdownParents.insert(0, selectedParent);
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -188,34 +322,132 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: state.parentQuestionId,
-          decoration: InputDecoration(
-            labelText: 'Parent Question',
-            hintText: 'Choose a parent question...',
-            suffixIcon: state.parentQuestionId != null
-                ? IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () => notifier.clearParent(),
-                  )
-                : null,
+        if (_parentQuestions.isNotEmpty) _buildFilterControls(),
+        if (dropdownParents.isEmpty)
+          _buildEmptyFilteredMessage()
+        else
+          DropdownButtonFormField<String>(
+            value: state.parentQuestionId,
+            decoration: InputDecoration(
+              labelText: 'Parent Question',
+              hintText: 'Choose a parent question...',
+              suffixIcon: state.parentQuestionId != null
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () => notifier.clearParent(),
+                    )
+                  : null,
+            ),
+            menuMaxHeight: 320,
+            items: dropdownParents.map((parent) {
+              return DropdownMenuItem<String>(
+                value: parent['id'] as String,
+                child: Text(
+                  parent['displayText'] as String,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (value != null) {
+                notifier.selectParent(value);
+              }
+            },
           ),
-          items: _parentQuestions.map((parent) {
-            return DropdownMenuItem<String>(
-              value: parent['id'],
-              child: Text(
-                parent['displayText'],
-                overflow: TextOverflow.ellipsis,
-              ),
-            );
-          }).toList(),
-          onChanged: (value) {
-            if (value != null) {
-              notifier.selectParent(value);
-            }
-          },
-        ),
       ],
+    );
+  }
+
+  Widget _buildFilterControls() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                decoration: const InputDecoration(
+                  labelText: 'Search parent questions',
+                  prefixIcon: Icon(Icons.search),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _searchTerm = value.trim().toLowerCase();
+                  });
+                  _applyFilters();
+                },
+              ),
+            ),
+            if (_availableYears.isNotEmpty) ...[
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 160,
+                child: DropdownButtonFormField<int?>(
+                  value: _selectedYear,
+                  decoration: const InputDecoration(
+                    labelText: 'Filter by year',
+                  ),
+                  items: [
+                    const DropdownMenuItem<int?>(
+                      value: null,
+                      child: Text('All years'),
+                    ),
+                    ..._availableYears.map(
+                      (year) => DropdownMenuItem<int?>(
+                        value: year,
+                        child: Text(year.toString()),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedYear = value;
+                    });
+                    _applyFilters();
+                  },
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  Widget _buildEmptyFilteredMessage() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'No parent questions match your filters.',
+            style: TextStyle(
+              color: Colors.orange.shade900,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (_hasActiveFilters)
+            TextButton(
+              onPressed: _clearFilters,
+              child: const Text('Clear filters'),
+            )
+          else
+            const Text(
+              'Adjust your filters or create a new parent question.',
+              style: TextStyle(fontSize: 12),
+            ),
+        ],
+      ),
     );
   }
 

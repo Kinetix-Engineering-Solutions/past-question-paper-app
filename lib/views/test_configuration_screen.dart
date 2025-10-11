@@ -162,7 +162,7 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
     final loadingButtonId = ref.watch(testConfigurationViewModelProvider);
     final currentYear = DateTime.now().year;
     final years = List.generate(
-      4,
+      5,
       (index) => currentYear - index - 1,
     ).where((year) => year > 2000).toList();
     const seasons = ['November', 'June', 'March'];
