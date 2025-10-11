@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/model/question.dart';
 import 'package:past_question_paper_v1/model/drag_and_drop models/drag_item.dart';
+import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
 import 'package:past_question_paper_v1/widgets/latex_text.dart';
 
@@ -117,7 +118,7 @@ class _DragAndDropOrderingWidgetState
   Widget build(BuildContext context) {
     _colorScheme = Theme.of(context).colorScheme;
     _textTheme = Theme.of(context).textTheme;
-    
+
     // Check if we have any data to work with for ordering
     final hasOrderingData =
         (widget.question.dragItems != null &&
@@ -183,9 +184,6 @@ class _DragAndDropOrderingWidgetState
         ),
         const SizedBox(height: 12),
         _buildAvailableItems(),
-
-        const SizedBox(height: 16),
-        _buildProgressIndicator(),
       ],
     );
   }
@@ -203,11 +201,18 @@ class _DragAndDropOrderingWidgetState
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.list_alt, color: _colorScheme.onSurfaceVariant, size: 32),
+              Icon(
+                Icons.list_alt,
+                color: _colorScheme.onSurfaceVariant,
+                size: 32,
+              ),
               const SizedBox(height: 8),
               Text(
                 'Drag steps here to arrange them in order',
-                style: TextStyle(color: _colorScheme.onSurfaceVariant, fontSize: 14),
+                style: TextStyle(
+                  color: _colorScheme.onSurfaceVariant,
+                  fontSize: 14,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -319,19 +324,32 @@ class _DragAndDropOrderingWidgetState
   }
 
   Widget _buildAvailableItemCard(DragItem item) {
+    final isDark = _colorScheme.brightness == Brightness.dark;
+    final bgColor = isDark
+        ? AppColors.brandCyan.withOpacity(0.15)
+        : AppColors.brandCyan.withOpacity(0.08);
+
     return GestureDetector(
       onTap: () => _addStep(item),
       child: Container(
         constraints: const BoxConstraints(minWidth: 120, maxWidth: 200),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: _colorScheme.surface,
+          color: bgColor,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppColors.brandCyan.withOpacity(0.3),
+            width: 1,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.add_circle_outline, color: _colorScheme.primary, size: 16),
+            Icon(
+              Icons.add_circle_outline,
+              color: AppColors.brandCyan,
+              size: 16,
+            ),
             const SizedBox(width: 8),
             Flexible(child: _buildItemContent(item)),
           ],
@@ -384,53 +402,5 @@ class _DragAndDropOrderingWidgetState
         textAlign: TextAlign.center,
       );
     }
-  }
-
-  Widget _buildProgressIndicator() {
-    // Calculate total items from available sources
-    final totalItems =
-        widget.question.dragItems?.length ??
-        widget.question.correctOrder.length;
-    final arrangedItems = _orderedSteps.length;
-    final progress = totalItems > 0 ? arrangedItems / totalItems : 0.0;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: _colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Progress',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: _colorScheme.onSurface,
-                ),
-              ),
-              Text(
-                '$arrangedItems / $totalItems steps arranged',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: _colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: progress,
-            backgroundColor: _colorScheme.outlineVariant.withOpacity(0.3),
-            color: progress == 1.0 ? _colorScheme.tertiary : _colorScheme.primary,
-            minHeight: 6,
-          ),
-        ],
-      ),
-    );
   }
 }

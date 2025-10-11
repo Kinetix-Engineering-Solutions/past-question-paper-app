@@ -6,55 +6,55 @@ class AppTheme {
   static ThemeData get paperAndInkTheme => lightTheme;
 
   static ThemeData get lightTheme => _buildTheme(
-        const ColorScheme.light(
-          primary: AppColors.accent,
-          onPrimary: AppColors.neutralCard,
-          secondary: AppColors.ink,
-          onSecondary: AppColors.neutralCard,
-          surface: AppColors.neutralCard,
-          onSurface: AppColors.ink,
-          background: AppColors.paper,
-          onBackground: AppColors.ink,
-          error: AppColors.ink,
-          onError: AppColors.neutralCard,
-          outline: AppColors.neutralBorder,
-          outlineVariant: AppColors.neutralMid,
-        ),
-      );
+    const ColorScheme.light(
+      primary: AppColors.accent,
+      onPrimary: AppColors.neutralCard,
+      secondary: AppColors.ink,
+      onSecondary: AppColors.neutralCard,
+      surface: AppColors.neutralCard,
+      onSurface: AppColors.ink,
+      background: AppColors.paper,
+      onBackground: AppColors.ink,
+      error: AppColors.ink,
+      onError: AppColors.neutralCard,
+      outline: AppColors.neutralBorder,
+      outlineVariant: AppColors.neutralMid,
+    ),
+  );
 
   static ThemeData get darkTheme => _buildTheme(
-        const ColorScheme.dark(
-          primary: AppColors.accent,
-          onPrimary: AppColorsDark.paper,
-          secondary: AppColorsDark.ink,
-          onSecondary: AppColorsDark.paper,
-          surface: AppColorsDark.neutralCard,
-          onSurface: AppColorsDark.ink,
-          background: AppColorsDark.paper,
-          onBackground: AppColorsDark.ink,
-          error: AppColorsDark.ink,
-          onError: AppColorsDark.paper,
-          outline: AppColorsDark.neutralBorder,
-          outlineVariant: AppColorsDark.neutralSoft,
-        ),
-      );
+    const ColorScheme.dark(
+      primary: AppColors.accent,
+      onPrimary: AppColorsDark.paper,
+      secondary: AppColorsDark.ink,
+      onSecondary: AppColorsDark.paper,
+      surface: AppColorsDark.neutralCard,
+      onSurface: AppColorsDark.ink,
+      background: AppColorsDark.paper,
+      onBackground: AppColorsDark.ink,
+      error: AppColorsDark.ink,
+      onError: AppColorsDark.paper,
+      outline: AppColorsDark.neutralBorder,
+      outlineVariant: AppColorsDark.neutralSoft,
+    ),
+  );
 
   static ThemeData _buildTheme(ColorScheme colorScheme) {
     final isDark = colorScheme.brightness == Brightness.dark;
     final accent = AppColors.accent;
-    final accentSoft =
-        isDark ? AppColorsDark.accentSoft : AppColors.accentSoft;
-    final paper =
-        isDark ? AppColorsDark.paper : AppColors.paper;
+    final accentSoft = isDark ? AppColorsDark.accentSoft : AppColors.accentSoft;
+    final paper = isDark ? AppColorsDark.paper : AppColors.paper;
     final ink = isDark ? AppColorsDark.ink : AppColors.ink;
-    final neutralMid =
-        isDark ? AppColorsDark.neutralMid : AppColors.neutralMid;
-    final neutralSoft =
-        isDark ? AppColorsDark.neutralSoft : AppColors.neutralSoft;
-    final neutralCard =
-        isDark ? AppColorsDark.neutralCard : AppColors.neutralCard;
-    final neutralBorder =
-        isDark ? AppColorsDark.neutralBorder : AppColors.neutralBorder;
+    final neutralMid = isDark ? AppColorsDark.neutralMid : AppColors.neutralMid;
+    final neutralSoft = isDark
+        ? AppColorsDark.neutralSoft
+        : AppColors.neutralSoft;
+    final neutralCard = isDark
+        ? AppColorsDark.neutralCard
+        : AppColors.neutralCard;
+    final neutralBorder = isDark
+        ? AppColorsDark.neutralBorder
+        : AppColors.neutralBorder;
 
     return ThemeData(
       useMaterial3: true,
@@ -118,7 +118,10 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: accent,
-          side: BorderSide(color: neutralBorder, width: 1), // Subtle neutral border only
+          side: BorderSide(
+            color: neutralBorder,
+            width: 1,
+          ), // Subtle neutral border only
           overlayColor: accent.withOpacity(0.05),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -171,20 +174,17 @@ class AppTheme {
         selectedItemColor: accent,
         unselectedItemColor: neutralSoft,
         selectedIconTheme: IconThemeData(color: accent, size: 24),
-        unselectedIconTheme: IconThemeData(
-          color: neutralSoft,
-          size: 22,
-        ),
+        unselectedIconTheme: IconThemeData(color: neutralSoft, size: 22),
         selectedLabelStyle: TextStyle(
           color: accent,
           fontSize: 11,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           letterSpacing: 0.1,
         ),
         unselectedLabelStyle: TextStyle(
           color: neutralSoft,
           fontSize: 10,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w600,
           letterSpacing: 0.1,
         ),
         type: BottomNavigationBarType.fixed,
@@ -221,9 +221,8 @@ class AppTheme {
       ),
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith(
-          (states) => states.contains(MaterialState.selected)
-              ? accent
-              : neutralSoft,
+          (states) =>
+              states.contains(MaterialState.selected) ? accent : neutralSoft,
         ),
         trackColor: MaterialStateProperty.resolveWith(
           (states) => states.contains(MaterialState.selected)
@@ -233,18 +232,16 @@ class AppTheme {
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: MaterialStateProperty.resolveWith(
-          (states) => states.contains(MaterialState.selected)
-              ? accent
-              : neutralBorder,
+          (states) =>
+              states.contains(MaterialState.selected) ? accent : neutralBorder,
         ),
         checkColor: MaterialStateProperty.all(colorScheme.onPrimary),
         side: BorderSide(color: neutralMid, width: 1),
       ),
       radioTheme: RadioThemeData(
         fillColor: MaterialStateProperty.resolveWith(
-          (states) => states.contains(MaterialState.selected)
-              ? accent
-              : neutralMid,
+          (states) =>
+              states.contains(MaterialState.selected) ? accent : neutralMid,
         ),
       ),
     );

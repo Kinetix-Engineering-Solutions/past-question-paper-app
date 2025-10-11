@@ -33,6 +33,7 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final results = _extractList(widget.gradingResults['results']) ?? [];
 
     // Create a map for easy question lookup
@@ -45,11 +46,11 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: colorScheme.background,
       appBar: AppBar(
-        backgroundColor: AppColors.paper,
+        backgroundColor: colorScheme.background,
         elevation: 0,
-        foregroundColor: AppColors.ink,
+        foregroundColor: colorScheme.onBackground,
         title: Text(
           'Question ${_currentQuestionIndex + 1} of ${results.length}',
         ),
@@ -68,7 +69,7 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
             padding: const EdgeInsets.all(16),
             child: LinearProgressIndicator(
               value: ((_currentQuestionIndex + 1) / results.length),
-              backgroundColor: AppColors.neutralBorder,
+              backgroundColor: colorScheme.surfaceContainerHighest,
               color: AppColors.accent,
             ),
           ),
@@ -139,6 +140,7 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
     Map<String, dynamic> result,
     Map<String, dynamic>? question,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
     final isCorrect = result['isCorrect'] == true;
     final userAnswer = result['userAnswer'];
     final correctAnswer = result['correctAnswer'];
@@ -190,13 +192,17 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.ink,
+                color: colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               question['questionText'],
-              style: TextStyle(fontSize: 16, color: AppColors.ink, height: 1.4),
+              style: TextStyle(
+                fontSize: 16,
+                color: colorScheme.onSurface,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 16),
           ],
@@ -210,8 +216,13 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                 height: 100,
-                color: Colors.grey[200],
-                child: Center(child: Text('Image unavailable')),
+                color: colorScheme.surfaceContainerHighest,
+                child: Center(
+                  child: Text(
+                    'Image unavailable',
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -226,7 +237,7 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.ink,
+                color: colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 8),
@@ -240,7 +251,7 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
                   '$optionLabel) $option',
-                  style: TextStyle(fontSize: 14, color: AppColors.ink),
+                  style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
                 ),
               );
             }).toList(),
@@ -248,7 +259,13 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
           ],
 
           // Answer comparison
-          _buildAnswerComparison(format, userAnswer, correctAnswer, result),
+          _buildAnswerComparison(
+            format,
+            userAnswer,
+            correctAnswer,
+            result,
+            colorScheme,
+          ),
 
           // Explanation
           if (question != null && question['explanation'] != null) ...[
@@ -256,7 +273,7 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: AppColors.accent.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -267,13 +284,16 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.blue[700],
+                      color: AppColors.accent,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     question['explanation'],
-                    style: TextStyle(fontSize: 13, color: Colors.blue[800]),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colorScheme.onSurface,
+                    ),
                   ),
                 ],
               ),
@@ -289,14 +309,15 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
     dynamic userAnswer,
     dynamic correctAnswer,
     Map<String, dynamic> result,
+    ColorScheme colorScheme,
   ) {
     if (format.toLowerCase() == 'draganddrop' ||
         format.toLowerCase() == 'drag-and-drop') {
       final subFormat = result['subFormat']?.toString();
       if (subFormat == 'ordering') {
-        return _buildOrderingComparison(result);
+        return _buildOrderingComparison(result, colorScheme);
       } else {
-        return _buildMatchingComparison(result);
+        return _buildMatchingComparison(result, colorScheme);
       }
     }
 
@@ -307,7 +328,7 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.1),
+            color: AppColors.accent.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(
@@ -318,13 +339,13 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue,
+                  color: AppColors.accent,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 userAnswer?.toString() ?? 'No answer',
-                style: TextStyle(fontSize: 14, color: AppColors.ink),
+                style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
               ),
             ],
           ),
@@ -352,7 +373,7 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
               const SizedBox(height: 4),
               Text(
                 correctAnswer?.toString() ?? 'N/A',
-                style: TextStyle(fontSize: 14, color: AppColors.ink),
+                style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
               ),
             ],
           ),
@@ -361,7 +382,10 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
     );
   }
 
-  Widget _buildOrderingComparison(Map<String, dynamic> result) {
+  Widget _buildOrderingComparison(
+    Map<String, dynamic> result,
+    ColorScheme colorScheme,
+  ) {
     final detailedResults = _extractList(result['detailedResults']) ?? [];
 
     return Column(
@@ -372,7 +396,7 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: AppColors.ink,
+            color: colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -424,7 +448,10 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
                     children: [
                       Text(
                         'Your: $userAnswer',
-                        style: TextStyle(fontSize: 12, color: AppColors.ink),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurface,
+                        ),
                       ),
                       if (!isCorrect)
                         Text(
@@ -450,7 +477,10 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
     );
   }
 
-  Widget _buildMatchingComparison(Map<String, dynamic> result) {
+  Widget _buildMatchingComparison(
+    Map<String, dynamic> result,
+    ColorScheme colorScheme,
+  ) {
     final detailedResults = _extractList(result['detailedResults']) ?? [];
 
     return Column(
@@ -461,7 +491,7 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: AppColors.ink,
+            color: colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 8),
@@ -503,12 +533,15 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.ink,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       Text(
                         'Your: $userAnswer',
-                        style: TextStyle(fontSize: 12, color: AppColors.ink),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurface,
+                        ),
                       ),
                       if (!isCorrect)
                         Text(

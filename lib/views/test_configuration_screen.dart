@@ -4,7 +4,6 @@ import 'package:past_question_paper_v1/utils/app_constants.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 import '../repositories/question_repository.dart';
 import 'practice_screen.dart';
 
@@ -169,14 +168,20 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
     const seasons = ['November', 'June', 'March'];
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final paper1Meta = AppConstants.getFullExamPaperMeta(widget.subject, widget.grade, 'p1');
+    final paper1Meta = AppConstants.getFullExamPaperMeta(
+      widget.subject,
+      widget.grade,
+      'p1',
+    );
     final paper2Meta = AppConstants.getFullExamPaperMeta(
       widget.subject,
       widget.grade,
       'p2',
     );
-    final paper1Subtitle = paper1Meta?.summary() ?? 'Blueprint details syncing soon';
-    final paper2Subtitle = paper2Meta?.summary() ?? 'Blueprint details syncing soon';
+    final paper1Subtitle =
+        paper1Meta?.summary() ?? 'Blueprint details syncing soon';
+    final paper2Subtitle =
+        paper2Meta?.summary() ?? 'Blueprint details syncing soon';
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -191,7 +196,8 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
         Text(
           'Practice with authentic past exam papers. Questions appear exactly as they did in the original exam, with proper numbering and question chains.',
           style: textTheme.bodyMedium?.copyWith(
-            color: textTheme.bodyMedium?.color?.withOpacity(0.75) ??
+            color:
+                textTheme.bodyMedium?.color?.withOpacity(0.75) ??
                 colorScheme.onSurfaceVariant,
           ),
         ),
@@ -307,7 +313,8 @@ class _QuickPracticeView extends ConsumerWidget {
         Text(
           'Fast-paced practice with mixed topics. Questions are simplified for learning, with hints available to help you understand concepts better.',
           style: textTheme.bodyMedium?.copyWith(
-            color: textTheme.bodyMedium?.color?.withOpacity(0.75) ??
+            color:
+                textTheme.bodyMedium?.color?.withOpacity(0.75) ??
                 colorScheme.onSurfaceVariant,
           ),
         ),
@@ -405,7 +412,8 @@ class _ByTopicView extends ConsumerWidget {
                 Text(
                   'Focus on specific topics to strengthen weak areas. Select a topic below to practice questions only from that section.',
                   style: textTheme.bodyMedium?.copyWith(
-                    color: textTheme.bodyMedium?.color?.withOpacity(0.75) ??
+                    color:
+                        textTheme.bodyMedium?.color?.withOpacity(0.75) ??
                         colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -473,14 +481,16 @@ Widget _buildStartCard(
       leading: Icon(icon, color: colorScheme.primary, size: 32),
       title: Text(
         title,
-        style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600) ??
+        style:
+            textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600) ??
             const TextStyle(fontWeight: FontWeight.w600),
       ),
       subtitle: subtitle != null
           ? Text(
               subtitle,
               style: textTheme.bodySmall?.copyWith(
-                color: textTheme.bodySmall?.color?.withOpacity(0.75) ??
+                color:
+                    textTheme.bodySmall?.color?.withOpacity(0.75) ??
                     colorScheme.onSurfaceVariant,
               ),
             )
@@ -491,11 +501,7 @@ Widget _buildStartCard(
               height: 24,
               child: CircularProgressIndicator(color: colorScheme.primary),
             )
-          : Icon(
-              Icons.play_circle_fill,
-              color: colorScheme.primary,
-              size: 28,
-            ),
+          : null,
       onTap: isLoading ? null : onTap,
     ),
   );
