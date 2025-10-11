@@ -1,11 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:past_question_paper_v1/model/user.dart';
+import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/utils/app_constants.dart';
 import 'package:past_question_paper_v1/viewmodels/home_viewmodel.dart';
+import 'package:past_question_paper_v1/views/profile_screen.dart';
 import 'package:past_question_paper_v1/views/test_configuration_screen.dart';
 
+const String _heroImageAsset = 'assets/images/3.png';
+
+const List<double> _grayscaleColorMatrix = <double>[
+  0.2126,
+  0.7152,
+  0.0722,
+  0,
+  0,
+  0.2126,
+  0.7152,
+  0.0722,
+  0,
+  0,
+  0.2126,
+  0.7152,
+  0.0722,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+];
+
 class HomeScreen extends ConsumerWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -14,21 +42,37 @@ class HomeScreen extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    // Determine the user's grade. Default to 12 if not set.
-    final userGrade = homeState.user?.grade ?? 12;
+    final userGrade = user?.grade ?? 12;
+    final selectedSubjects = user?.selectedSubjects ?? const <String>[];
+    final subjects = AppConstants.allSubjects.where((subject) {
+      if (selectedSubjects.isEmpty) {
+        return true;
+      }
+      return selectedSubjects.contains(subject);
+    }).toList();
 
     return Scaffold(
       backgroundColor: colorScheme.background,
       appBar: AppBar(
         backgroundColor: colorScheme.background,
+        automaticallyImplyLeading: false,
         elevation: 0,
         title: Text(
-          'Hello, ${user?.email ?? 'Student'}!',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          'Hello, ${resolvePreferredFirstName(user)}!',
+          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
-        // The grade selector in actions has been removed for a cleaner look.
+        actions: [
+          IconButton(
+            tooltip: 'Profile',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              );
+            },
+            icon: const Icon(Icons.settings_outlined),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -37,15 +81,18 @@ class HomeScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
-              Text(
-                "Let's get practicing",
-                style: textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+              _PracticeHero(
+                user: user,
+                grade: userGrade,
+                subjects: subjects,
+                onManageTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                  );
+                },
               ),
               const SizedBox(height: 24),
-
-              // --- Subject List Header ---
               Text(
                 'Your Subjects for Grade $userGrade',
                 style: textTheme.titleMedium?.copyWith(
@@ -53,21 +100,268 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 12),
-
-              // --- Personalized Subject List ---
               Expanded(
                 child: _SubjectList(
-                  subjects: AppConstants.allSubjects.where((subject) {
-                    return user?.selectedSubjects?.isEmpty ?? true
-                        ? true
-                        : user!.selectedSubjects!.contains(subject);
-                  }).toList(),
+                  subjects: subjects,
                   selectedGrade: userGrade,
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PracticeHero extends StatelessWidget {
+  final AppUser? user;
+  final int grade;
+  final List<String> subjects;
+  final VoidCallback onManageTap;
+
+  const _PracticeHero({
+    required this.user,
+    required this.grade,
+    required this.subjects,
+    required this.onManageTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final hasSubjects = subjects.isNotEmpty;
+    final firstName = resolvePreferredFirstName(user);
+    final initials = resolveInitials(user);
+    final palette = _HeroPalette.resolve(
+      hasSubjects: hasSubjects,
+      colorScheme: colorScheme,
+    );
+
+    final headline = hasSubjects
+        ? 'Consistency builds confidence, $firstName.'
+        : 'Set up your study plan, $firstName.';
+
+    final subtitle = hasSubjects
+        ? 'Aim for one focused session today—pick any subject below and keep Grade $grade goals in sight.'
+        : 'Tell us which subjects you care about so every practice session works harder for you.';
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Stack(
+        children: [
+          Positioned.fill(child: Container(color: palette.backgroundColor)),
+          if (palette.showHeroImage)
+            Positioned.fill(
+              child: ColorFiltered(
+                colorFilter: const ColorFilter.matrix(_grayscaleColorMatrix),
+                child: Image.asset(
+                  _heroImageAsset,
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                  filterQuality: FilterQuality.high,
+                ),
+              ),
+            ),
+          Positioned.fill(
+            child: Container(
+              color: palette.showHeroImage
+                  ? palette.backgroundColor.withValues(
+                      alpha: palette.overlayOpacity,
+                    )
+                  : Colors.transparent,
+            ),
+          ),
+          if (palette.overlayGradient != null)
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(gradient: palette.overlayGradient),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: palette.avatarBackground,
+                        border: Border.all(
+                          color: palette.avatarBorder,
+                          width: 1.2,
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        initials,
+                        style: textTheme.titleMedium?.copyWith(
+                          color: palette.headlineColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            headline,
+                            style: textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: palette.headlineColor,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            subtitle,
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: palette.subtitleColor,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              onPressed: onManageTap,
+                              style: TextButton.styleFrom(
+                                foregroundColor: palette.actionColor,
+                              ),
+                              icon: Icon(
+                                Icons.edit_note_outlined,
+                                color: palette.actionColor,
+                              ),
+                              label: Text(
+                                hasSubjects
+                                    ? 'Manage subjects'
+                                    : 'Review profile',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroPalette {
+  final Color backgroundColor;
+  final Color headlineColor;
+  final Color subtitleColor;
+  final Color actionColor;
+  final Color avatarBackground;
+  final Color avatarBorder;
+  final bool showHeroImage;
+  final double overlayOpacity;
+  final LinearGradient? overlayGradient;
+
+  const _HeroPalette({
+    required this.backgroundColor,
+    required this.headlineColor,
+    required this.subtitleColor,
+    required this.actionColor,
+    required this.avatarBackground,
+    required this.avatarBorder,
+    required this.showHeroImage,
+    required this.overlayOpacity,
+    required this.overlayGradient,
+  });
+
+  factory _HeroPalette.resolve({
+    required bool hasSubjects,
+    required ColorScheme colorScheme,
+  }) {
+    final isDark = colorScheme.brightness == Brightness.dark;
+
+    if (hasSubjects) {
+      if (isDark) {
+        final surfaceTone = Color.lerp(
+          colorScheme.surface,
+          Colors.black,
+          0.25,
+        )!;
+        return _HeroPalette(
+          backgroundColor: Color.lerp(AppColors.accent, surfaceTone, 0.75)!,
+          headlineColor: AppColorsDark.ink,
+          subtitleColor: AppColorsDark.neutralMid,
+          actionColor: AppColors.accent,
+          avatarBackground: colorScheme.surface.withValues(alpha: 0.35),
+          avatarBorder: AppColors.accent.withValues(alpha: 0.3),
+          showHeroImage: true,
+          overlayOpacity: 0.5,
+          overlayGradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.black.withValues(alpha: 0.55),
+              Colors.transparent,
+              Colors.black.withValues(alpha: 0.7),
+            ],
+            stops: const [0.0, 0.45, 1.0],
+          ),
+        );
+      }
+
+      return _HeroPalette(
+        backgroundColor: Color.lerp(AppColors.accent, Colors.white, 0.85)!,
+        headlineColor: Colors.white,
+        subtitleColor: Colors.white.withValues(alpha: 0.92),
+        actionColor: AppColors.accent,
+        avatarBackground: Colors.white.withValues(alpha: 0.15),
+        avatarBorder: AppColors.accent.withValues(alpha: 0.35),
+        showHeroImage: true,
+        overlayOpacity: 0.65,
+        overlayGradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.brandCharcoal.withValues(alpha: 0.65),
+            AppColors.brandCharcoal.withValues(alpha: 0.45),
+            AppColors.brandCharcoal.withValues(alpha: 0.75),
+          ],
+          stops: const [0.0, 0.5, 1.0],
+        ),
+      );
+    }
+
+    final baseBackground = isDark
+        ? Color.lerp(AppColors.brandCharcoal, colorScheme.surface, 0.35)!
+        : AppColors.brandCharcoal;
+
+    return _HeroPalette(
+      backgroundColor: baseBackground,
+      headlineColor: isDark ? AppColorsDark.ink : AppColors.chalkWhite,
+      subtitleColor: (isDark ? AppColorsDark.neutralSoft : AppColors.chalkWhite)
+          .withValues(alpha: 0.78),
+      actionColor: AppColors.brandTeal,
+      avatarBackground: isDark
+          ? colorScheme.surface.withValues(alpha: 0.28)
+          : AppColors.brandTeal.withValues(alpha: 0.22),
+      avatarBorder: AppColors.brandTeal.withValues(alpha: isDark ? 0.4 : 0.55),
+      showHeroImage: false,
+      overlayOpacity: 0,
+      overlayGradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          baseBackground,
+          Color.lerp(baseBackground, AppColors.brandCharcoal, 0.25)!,
+        ],
       ),
     );
   }
@@ -84,7 +378,7 @@ class _SubjectList extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     if (subjects.isEmpty) {
       return Center(
         child: Text(
@@ -132,7 +426,6 @@ class _SubjectList extends StatelessWidget {
               size: 16,
             ),
             onTap: () {
-              // Navigate to the new Test Configuration Screen
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -148,4 +441,78 @@ class _SubjectList extends StatelessWidget {
       },
     );
   }
+}
+
+String resolvePreferredFirstName(AppUser? user) {
+  final full = _resolveFullName(user);
+  final sanitized = full.trim();
+  if (sanitized.isEmpty) {
+    return 'Student';
+  }
+
+  if (sanitized == 'Student') {
+    return sanitized;
+  }
+
+  if (sanitized.contains(' ')) {
+    final first = sanitized.split(RegExp(r'\s+')).first;
+    return first.isNotEmpty ? first : 'Student';
+  }
+
+  if (sanitized.contains('@')) {
+    final first = sanitized.split('@').first;
+    return first.isNotEmpty ? first : 'Student';
+  }
+
+  return sanitized;
+}
+
+String resolveInitials(AppUser? user) {
+  final full = _resolveFullName(user);
+  final sanitized = full.trim();
+  if (sanitized.isEmpty) {
+    return 'S';
+  }
+
+  if (sanitized.contains('@')) {
+    return sanitized.substring(0, 1).toUpperCase();
+  }
+
+  final parts = sanitized
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .toList();
+  if (parts.isEmpty) {
+    return sanitized.substring(0, 1).toUpperCase();
+  }
+
+  if (parts.length == 1) {
+    return _initialFromWord(parts.first);
+  }
+
+  final firstInitial = _initialFromWord(parts[0]);
+  final secondInitial = _initialFromWord(parts[1]);
+  final combined = '$firstInitial$secondInitial'.trim();
+  return combined.isNotEmpty ? combined : firstInitial;
+}
+
+String _resolveFullName(AppUser? user) {
+  final name = user?.name?.trim();
+  if (name != null && name.isNotEmpty) {
+    return name;
+  }
+
+  final email = user?.email?.trim();
+  if (email != null && email.isNotEmpty) {
+    return email;
+  }
+
+  return 'Student';
+}
+
+String _initialFromWord(String word) {
+  if (word.isEmpty) {
+    return '';
+  }
+  return word.substring(0, 1).toUpperCase();
 }

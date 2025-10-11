@@ -41,6 +41,7 @@ class MyApp extends ConsumerWidget {
 
     return MaterialApp(
       title: 'STEM Question Papers',
+      debugShowCheckedModeBanner: false,
       navigatorKey: NavigationService.navigatorKey,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

@@ -28,9 +28,18 @@ class MainNavigationScreen extends ConsumerWidget {
           ref.read(bottomNavigationProvider.notifier).setIndex(index);
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.backpack), label: 'PQP'),
-          BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Learning Aids'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.backpack),
+            label: 'PQP Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.menu_book),
+            label: 'PQP Resources',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'PQP Profile',
+          ),
         ],
       ),
     );

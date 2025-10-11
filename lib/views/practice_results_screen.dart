@@ -14,6 +14,8 @@ class PracticeResultsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     // Safely extract statistics with type checking
     final statistics = _extractMap(gradingResults['statistics']) ?? {};
 
@@ -31,11 +33,11 @@ class PracticeResultsScreen extends StatelessWidget {
     final totalMarks = _extractInt(statistics['totalMarks']) ?? 0;
 
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: colorScheme.background,
       appBar: AppBar(
         title: const Text('Test Results'),
-        backgroundColor: AppColors.paper,
-        foregroundColor: AppColors.ink,
+        backgroundColor: colorScheme.background,
+        foregroundColor: colorScheme.onBackground,
         elevation: 0,
       ),
       body: Column(
@@ -48,27 +50,23 @@ class PracticeResultsScreen extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  _getScoreColor(percentage),
-                  _getScoreColor(percentage).withOpacity(0.8),
+                  _getScoreColor(percentage, colorScheme),
+                  _getScoreColor(percentage, colorScheme).withOpacity(0.8),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.ink.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
             child: Column(
               children: [
                 Text(
                   'Marks Earned',
                   style: TextStyle(
-                    color: _getTextColor(percentage).withOpacity(0.9),
+                    color: _getTextColor(
+                      percentage,
+                      colorScheme,
+                    ).withOpacity(0.9),
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
@@ -77,7 +75,7 @@ class PracticeResultsScreen extends StatelessWidget {
                 Text(
                   '$score/$totalMarks',
                   style: TextStyle(
-                    color: _getTextColor(percentage),
+                    color: _getTextColor(percentage, colorScheme),
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                   ),
@@ -85,7 +83,10 @@ class PracticeResultsScreen extends StatelessWidget {
                 Text(
                   'marks',
                   style: TextStyle(
-                    color: _getTextColor(percentage).withOpacity(0.7),
+                    color: _getTextColor(
+                      percentage,
+                      colorScheme,
+                    ).withOpacity(0.7),
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -93,7 +94,7 @@ class PracticeResultsScreen extends StatelessWidget {
                 Text(
                   '$percentage% (${_getGrade(percentage)})',
                   style: TextStyle(
-                    color: _getTextColor(percentage),
+                    color: _getTextColor(percentage, colorScheme),
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                   ),
@@ -105,20 +106,20 @@ class PracticeResultsScreen extends StatelessWidget {
                     _buildStatItem(
                       'Mark %',
                       '${percentage}%',
-                      AppColors.neutralCard.withOpacity(0.9),
+                      colorScheme.surface,
                       AppColors.accent,
                     ),
                     _buildStatItem(
                       'Grade',
                       _getGrade(percentage),
-                      AppColors.neutralCard.withOpacity(0.9),
-                      AppColors.ink,
+                      colorScheme.surface,
+                      colorScheme.onSurface,
                     ),
                     _buildStatItem(
                       'Questions',
                       '${_extractInt(statistics['totalQuestions']) ?? 0}',
-                      AppColors.neutralCard.withOpacity(0.9),
-                      AppColors.neutralMid,
+                      colorScheme.surface,
+                      colorScheme.onSurfaceVariant,
                     ),
                   ],
                 ),
@@ -133,15 +134,8 @@ class PracticeResultsScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.neutralCard,
+                color: colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.ink.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
               ),
               child: Column(
                 children: [
@@ -151,13 +145,16 @@ class PracticeResultsScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.ink,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'You earned $score out of $totalMarks marks (${percentage}% - ${_getGrade(percentage)} grade).',
-                    style: TextStyle(fontSize: 16, color: AppColors.neutralMid),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -210,7 +207,7 @@ class PracticeResultsScreen extends StatelessWidget {
                     label: const Text('Review Questions One by One'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.accent,
-                      foregroundColor: AppColors.neutralCard,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -232,8 +229,8 @@ class PracticeResultsScreen extends StatelessWidget {
                         icon: const Icon(Icons.home),
                         label: const Text('Back to Home'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.neutralMid,
-                          foregroundColor: AppColors.neutralCard,
+                          backgroundColor: colorScheme.surfaceContainerHighest,
+                          foregroundColor: colorScheme.onSurface,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -250,10 +247,8 @@ class PracticeResultsScreen extends StatelessWidget {
                         icon: const Icon(Icons.refresh),
                         label: const Text('Try Again'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.ink,
-                          side: const BorderSide(
-                            color: AppColors.neutralBorder,
-                          ),
+                          foregroundColor: colorScheme.primary,
+                          side: BorderSide(color: colorScheme.outline),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -302,20 +297,26 @@ class PracticeResultsScreen extends StatelessWidget {
     );
   }
 
-  Color _getScoreColor(int percentage) {
+  Color _getScoreColor(int percentage, ColorScheme colorScheme) {
+    final isDark = colorScheme.brightness == Brightness.dark;
+
     if (percentage >= 80) return AppColors.accent; // Great score - accent color
-    if (percentage >= 60)
-      return AppColors.neutralMid; // Good score - neutral mid
-    return AppColors.ink; // Needs improvement - primary ink color
+    if (percentage >= 60) {
+      // Good score - lighter gray
+      return isDark
+          ? Color.lerp(colorScheme.surface, Colors.white, 0.15)!
+          : colorScheme.surfaceContainerHighest;
+    }
+    // Needs improvement - even lighter for better contrast
+    return isDark
+        ? Color.lerp(colorScheme.surface, Colors.white, 0.12)!
+        : colorScheme.inverseSurface;
   }
 
-  Color _getTextColor(int percentage) {
-    // Return white for dark backgrounds, ink for light backgrounds
-    if (percentage >= 80)
-      return AppColors.neutralCard; // White text on accent background
-    if (percentage >= 60)
-      return AppColors.neutralCard; // White text on neutral mid background
-    return AppColors.neutralCard; // White text on ink background
+  Color _getTextColor(int percentage, ColorScheme colorScheme) {
+    // Return white for accent/dark backgrounds, theme color for lighter backgrounds
+    if (percentage >= 80) return Colors.white;
+    return colorScheme.onSurface;
   }
 
   String _getGrade(int percentage) {
