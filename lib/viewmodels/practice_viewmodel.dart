@@ -210,7 +210,13 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
       });
       print('Questions with correctOrder:');
       for (final q in state.questions) {
-        if (q.format == 'drag-and-drop' && q.correctOrder.isNotEmpty) {
+        final format = q.format.toLowerCase();
+        final isDragAndDrop =
+            format == 'draganddrop' ||
+            format == 'drag-and-drop' ||
+            format == 'drag_drop' ||
+            format == 'drag and drop';
+        if (isDragAndDrop && q.correctOrder.isNotEmpty) {
           print('  ${q.id}: correctOrder = ${q.correctOrder}');
         }
       }

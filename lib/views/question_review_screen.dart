@@ -311,8 +311,11 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
     Map<String, dynamic> result,
     ColorScheme colorScheme,
   ) {
-    if (format.toLowerCase() == 'draganddrop' ||
-        format.toLowerCase() == 'drag-and-drop') {
+    final normalizedFormat = format.toLowerCase();
+    if (normalizedFormat == 'draganddrop' ||
+        normalizedFormat == 'drag-and-drop' ||
+        normalizedFormat == 'drag_drop' ||
+        normalizedFormat == 'drag and drop') {
       final subFormat = result['subFormat']?.toString();
       if (subFormat == 'ordering') {
         return _buildOrderingComparison(result, colorScheme);

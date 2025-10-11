@@ -299,24 +299,20 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
               children: [
                 Text(
                   'Provided Context:',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
                 ...widget.question.providedContext!.entries.map(
                   (entry) => Text(
                     '${entry.key}: ${entry.value}',
-                    style: TextStyle(
-                      color: colorScheme.primary,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: colorScheme.primary, fontSize: 12),
                   ),
                 ),
                 Text(
                   'Marks: ${widget.question.getSprintMarks()} | Difficulty: ${widget.question.difficulty ?? 'N/A'}',
-                  style:
-                      TextStyle(color: colorScheme.primary, fontSize: 12),
+                  style: TextStyle(color: colorScheme.primary, fontSize: 12),
                 ),
               ],
             ),
@@ -442,10 +438,9 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
                     const SizedBox(width: 8),
                     Text(
                       'Hints:',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -544,7 +539,8 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
     WidgetRef ref,
     String? selectedOption,
   ) {
-    switch (widget.question.format.toLowerCase()) {
+    final format = widget.question.format.toLowerCase();
+    switch (format) {
       case 'mcq':
         if (widget.question.hasImageOptions) {
           return MCQImageWidget(
@@ -558,6 +554,9 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
           );
         }
       case 'draganddrop':
+      case 'drag_drop':
+      case 'drag-and-drop':
+      case 'drag and drop':
         // Check if this is ordering format (has correctOrder) or matching format
         if (widget.question.correctOrder.isNotEmpty) {
           return DragAndDropOrderingWidget(
@@ -572,12 +571,14 @@ class _QuestionViewState extends ConsumerState<_QuestionView> {
         }
       case 'true_false':
       case 'true-false':
+      case 'true false':
         return TrueFalseWidget(
           question: widget.question,
           selectedOption: selectedOption,
         );
       case 'short_answer':
       case 'short-answer':
+      case 'short answer':
         return ShortAnswerWidget(
           question: widget.question,
           initialAnswer: selectedOption,

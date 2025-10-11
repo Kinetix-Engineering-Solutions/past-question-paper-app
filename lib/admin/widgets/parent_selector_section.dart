@@ -75,8 +75,8 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
         if (year != null || season.isNotEmpty) {
           final window = season.isNotEmpty
               ? year != null
-                  ? '$year $season'
-                  : season
+                    ? '$year $season'
+                    : season
               : year?.toString() ?? '';
           if (window.isNotEmpty) {
             labelSegments.add(window);
@@ -94,10 +94,7 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
           season,
           year?.toString() ?? '',
           doc.id,
-        ]
-            .where((element) => element.trim().isNotEmpty)
-            .join(' ')
-            .toLowerCase();
+        ].where((element) => element.trim().isNotEmpty).join(' ').toLowerCase();
 
         return {
           'id': doc.id,
@@ -117,12 +114,13 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
         return aNumber.compareTo(bNumber);
       });
 
-      final uniqueYears = parentsList
-          .map((parent) => parent['year'])
-          .whereType<int>()
-          .toSet()
-          .toList()
-        ..sort((a, b) => b.compareTo(a));
+      final uniqueYears =
+          parentsList
+              .map((parent) => parent['year'])
+              .whereType<int>()
+              .toSet()
+              .toList()
+            ..sort((a, b) => b.compareTo(a));
 
       setState(() {
         _parentQuestions = parentsList;
@@ -147,8 +145,9 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
   void _applyFilters() {
     if (!mounted) return;
 
-    final selectedParentId =
-        ref.read(questionCreateViewModelProvider).parentQuestionId;
+    final selectedParentId = ref
+        .read(questionCreateViewModelProvider)
+        .parentQuestionId;
 
     final filtered = _parentQuestions.where((parent) {
       final yearMatch =
@@ -187,8 +186,7 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
     return null;
   }
 
-  bool get _hasActiveFilters =>
-      _searchTerm.isNotEmpty || _selectedYear != null;
+  bool get _hasActiveFilters => _searchTerm.isNotEmpty || _selectedYear != null;
 
   void _clearFilters() {
     setState(() {
@@ -229,12 +227,12 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
           const Divider(),
           const SizedBox(height: 16),
 
-      // Parent selector
-      _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : _parentQuestions.isEmpty
-          ? _buildNoParentsMessage()
-          : _buildParentDropdown(state, notifier),
+          // Parent selector
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _parentQuestions.isEmpty
+              ? _buildNoParentsMessage()
+              : _buildParentDropdown(state, notifier),
 
           // Parent context preview (shown when parent is selected)
           if (state.parentQuestionId != null) ...[
@@ -302,8 +300,9 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
     QuestionCreateState state,
     QuestionCreateViewModel notifier,
   ) {
-    final dropdownParents =
-        List<Map<String, dynamic>>.from(_filteredParentQuestions);
+    final dropdownParents = List<Map<String, dynamic>>.from(
+      _filteredParentQuestions,
+    );
     final selectedId = state.parentQuestionId;
 
     if (selectedId != null &&
