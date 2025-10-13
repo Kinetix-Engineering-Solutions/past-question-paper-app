@@ -41,6 +41,8 @@ class QuestionCreateState {
 
   // Format-specific support data
   final List<String> mcqOptions;
+  final List<String> mcqOptionImages; // Image URLs for MCQ options
+  final bool useImageOptions; // Toggle between text and image options
   final List<String> answerVariations;
   final List<Map<String, dynamic>> dragItems;
   final String explanation;
@@ -85,6 +87,8 @@ class QuestionCreateState {
 
     // Format defaults
     this.mcqOptions = const ['', '', '', ''],
+    this.mcqOptionImages = const [],
+    this.useImageOptions = false,
     this.answerVariations = const [],
     this.dragItems = const [],
     this.explanation = '',
@@ -130,6 +134,8 @@ class QuestionCreateState {
 
     // Format data
     List<String>? mcqOptions,
+    List<String>? mcqOptionImages,
+    bool? useImageOptions,
     List<String>? answerVariations,
     List<Map<String, dynamic>>? dragItems,
     String? explanation,
@@ -181,6 +187,8 @@ class QuestionCreateState {
       pqpNumber: pqpNumber ?? this.pqpNumber,
 
       mcqOptions: mcqOptions ?? this.mcqOptions,
+      mcqOptionImages: mcqOptionImages ?? this.mcqOptionImages,
+      useImageOptions: useImageOptions ?? this.useImageOptions,
       answerVariations: answerVariations ?? this.answerVariations,
       dragItems: dragItems ?? this.dragItems,
       explanation: explanation ?? this.explanation,
@@ -287,6 +295,42 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
 
   void toggleByTopicMode() {
     state = state.copyWith(availableInByTopic: !state.availableInByTopic);
+  }
+
+  /// Toggle between text and image options for MCQ
+  void toggleUseImageOptions() {
+    final newValue = !state.useImageOptions;
+    state = state.copyWith(
+      useImageOptions: newValue,
+      // Clear the opposite type when switching
+      mcqOptions: newValue ? const ['', '', '', ''] : state.mcqOptions,
+      mcqOptionImages: newValue ? state.mcqOptionImages : const [],
+      correctAnswer: '', // Reset correct answer when switching
+    );
+  }
+
+  /// Update MCQ option image at specific index
+  void updateMcqOptionImage(int index, String imageUrl) {
+    final updatedImages = List<String>.from(state.mcqOptionImages);
+    
+    // Ensure list is large enough
+    while (updatedImages.length <= index) {
+      updatedImages.add('');
+    }
+    
+    updatedImages[index] = imageUrl;
+    state = state.copyWith(mcqOptionImages: updatedImages);
+  }
+
+  /// Remove MCQ option image at specific index
+  void removeMcqOptionImage(int index) {
+    final updatedImages = List<String>.from(state.mcqOptionImages);
+    
+    if (index < updatedImages.length) {
+      updatedImages[index] = '';
+    }
+    
+    state = state.copyWith(mcqOptionImages: updatedImages);
   }
 
   /// Toggle child question mode
@@ -448,7 +492,7 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
           .toString();
       final difficulty = (data['difficulty'] ?? state.difficulty).toString();
       final questionText = (data['questionText'] ?? '').toString();
-      final correctAnswer = _stringifyCorrectAnswer(data['correctAnswer']);
+      String correctAnswer = _stringifyCorrectAnswer(data['correctAnswer']);
       final caseSensitive = data['caseSensitive'] == true;
 
       // PQP data
@@ -489,14 +533,35 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
 
       // MCQ options
       List<String> mcqOptions = const ['', '', '', ''];
-      if (formatValue.toLowerCase() == 'mcq' && data['options'] is Iterable) {
-        final optionsList = (data['options'] as Iterable)
-            .map((option) => option?.toString() ?? '')
-            .toList();
-        while (optionsList.length < 4) {
-          optionsList.add('');
+      List<String> mcqOptionImages = const [];
+      bool useImageOptions = false;
+      
+      if (formatValue.toLowerCase() == 'mcq') {
+        // Check if this MCQ uses image options
+        if (data['hasImageOptions'] == true && data['optionImages'] is Iterable) {
+          useImageOptions = true;
+          mcqOptionImages = (data['optionImages'] as Iterable)
+              .map((url) => url?.toString() ?? '')
+              .toList();
+          
+          // For image MCQs, correctAnswer is the image URL
+          // We need to map it back to a letter (A/B/C/D)
+          final correctImageUrl = data['correctAnswer']?.toString() ?? '';
+          final answerIndex = mcqOptionImages.indexOf(correctImageUrl);
+          if (answerIndex != -1) {
+            correctAnswer = ['A', 'B', 'C', 'D'][answerIndex];
+          }
+        } else if (data['options'] is Iterable) {
+          // Text-based options
+          useImageOptions = false;
+          final optionsList = (data['options'] as Iterable)
+              .map((option) => option?.toString() ?? '')
+              .toList();
+          while (optionsList.length < 4) {
+            optionsList.add('');
+          }
+          mcqOptions = List<String>.from(optionsList.take(4));
         }
-        mcqOptions = List<String>.from(optionsList.take(4));
       }
 
       // Short answer variations
@@ -564,6 +629,8 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
         suggestedPQPNumber: null,
         pqpNumber: pqpNumber ?? '',
         mcqOptions: mcqOptions,
+        mcqOptionImages: mcqOptionImages,
+        useImageOptions: useImageOptions,
         answerVariations: answerVariations,
         dragItems: dragItems,
         explanation: explanation,
@@ -606,9 +673,21 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
       return;
     }
 
-    if (state.format == 'MCQ' && options.any((o) => o.isEmpty)) {
-      state = state.copyWith(errorMessage: 'All MCQ options are required');
-      return;
+    if (state.format == 'MCQ') {
+      if (state.useImageOptions) {
+        // Validate image options
+        final imageUrls = state.mcqOptionImages.where((url) => url.isNotEmpty).toList();
+        if (imageUrls.length < 4) {
+          state = state.copyWith(
+            errorMessage: 'All 4 image options are required for image MCQ',
+          );
+          return;
+        }
+      } else if (options.any((o) => o.isEmpty)) {
+        // Validate text options
+        state = state.copyWith(errorMessage: 'All MCQ options are required');
+        return;
+      }
     }
 
     // Validate correctAnswer for MCQ and short_answer formats
@@ -783,10 +862,37 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
 
     // Format-specific fields
     if (state.format == 'MCQ') {
-      data['options'] = options;
-      data['hasImageOptions'] = false;
+      if (state.useImageOptions) {
+        // Image-based MCQ options
+        final imageUrls = state.mcqOptionImages.where((url) => url.isNotEmpty).toList();
+        data['optionImages'] = imageUrls;
+        data['hasImageOptions'] = true;
+        
+        // For image MCQs, correctAnswer is the image URL (not letter)
+        // Map letter (A/B/C/D) to corresponding image URL
+        final answerIndex = {'A': 0, 'B': 1, 'C': 2, 'D': 3}[state.correctAnswer];
+        if (answerIndex != null && answerIndex < imageUrls.length) {
+          data['correctAnswer'] = imageUrls[answerIndex];
+        }
+        
+        // Remove text options
+        if (isUpdate) {
+          data['options'] = FieldValue.delete();
+        }
+      } else {
+        // Text-based MCQ options
+        data['options'] = options;
+        data['hasImageOptions'] = false;
+        data['correctAnswer'] = state.correctAnswer; // Letter (A/B/C/D)
+        
+        // Remove image options
+        if (isUpdate) {
+          data['optionImages'] = FieldValue.delete();
+        }
+      }
     } else if (isUpdate) {
       data['options'] = FieldValue.delete();
+      data['optionImages'] = FieldValue.delete();
       data['hasImageOptions'] = FieldValue.delete();
     } else if (state.format == 'short_answer') {
       data['answerVariations'] = answerVariations;
