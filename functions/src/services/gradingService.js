@@ -351,9 +351,13 @@ function calculateTestStatistics(results) {
  * @returns {Object} - Complete grading results
  */
 async function gradeTestSubmission(params) {
-  const { submissions, userId } = params;
+  const { submissions, userId, metadata = {} } = params;
 
-  console.log('Grading test submission:', { submissionCount: Object.keys(submissions).length });
+  console.log('Grading test submission:', {
+    submissionCount: Object.keys(submissions).length,
+    subject: metadata.subject,
+    mode: metadata.mode,
+  });
 
   // Get question IDs from submissions
   const questionIds = Object.keys(submissions);
@@ -381,28 +385,69 @@ async function gradeTestSubmission(params) {
     const question = questionsMap[questionId];
     const submissionValue = submissions[questionId];
     
-    if (question && submissionValue !== undefined && submissionValue !== null) {
-      // Normalize submission format - handle both object and direct value formats
-      const submission = typeof submissionValue === 'object' && submissionValue !== null
-        ? submissionValue
-        : { answer: submissionValue };
-      
-      console.log(`Processing submission for ${questionId}:`, submission);
-      
-      const result = gradeSingleQuestion(question, submission);
-      results.push(result);
+    if (question) {
+      // Handle unanswered questions (null, undefined, or empty string)
+      if (submissionValue === undefined || submissionValue === null || submissionValue === '') {
+        console.warn(`⚠️ Unanswered question: ${questionId} - Grading as 0 marks`);
+        
+        // Create a "no answer" result for unanswered questions
+        const format = (question.format || 'multipleChoice').toLowerCase().replace(/[-_]/g, '');
+        const noAnswerResult = {
+          questionId: question.id,
+          format: question.format,
+          userAnswer: null,
+          correctAnswer: question.correctAnswer,
+          isCorrect: false,
+          marksAwarded: 0,
+          maxMarks: question.maxMarks || 2,
+          wasUnanswered: true
+        };
+        
+        results.push(noAnswerResult);
+      } else {
+        // Normalize submission format - handle both object and direct value formats
+        const submission = typeof submissionValue === 'object' && submissionValue !== null
+          ? submissionValue
+          : { answer: submissionValue };
+        
+        console.log(`Processing submission for ${questionId}:`, submission);
+        
+        const result = gradeSingleQuestion(question, submission);
+        results.push(result);
+      }
     } else {
-      console.warn(`Missing question or submission for ID: ${questionId}`);
+      console.warn(`Missing question for ID: ${questionId}`);
     }
   }
 
   // Calculate overall statistics
-  const statistics = calculateTestStatistics(results);
+  const baseStatistics = calculateTestStatistics(results);
+  const statistics = {
+    ...baseStatistics,
+    totalQuestions: metadata.totalQuestions || baseStatistics.totalQuestions || results.length,
+    subject: metadata.subject || null,
+    paper: metadata.paper || null,
+    mode: metadata.mode || 'Practice',
+    durationMinutes: metadata.durationMinutes ?? null,
+    sessionDurationSeconds: metadata.sessionDurationSeconds ?? null,
+    flags: metadata.flags || {},
+  };
+
+  const gradedAtIso = metadata.submittedAt || new Date().toISOString();
 
   const gradingResult = {
     results: results,
     statistics: statistics,
-    gradedAt: new Date().toISOString(),
+    metadata: {
+      ...metadata,
+      totalQuestions: statistics.totalQuestions,
+      subject: statistics.subject,
+      paper: statistics.paper,
+      mode: statistics.mode,
+      durationMinutes: statistics.durationMinutes,
+      sessionDurationSeconds: statistics.sessionDurationSeconds,
+    },
+    gradedAt: gradedAtIso,
     userId: userId
   };
 

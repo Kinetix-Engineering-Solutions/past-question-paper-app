@@ -59,11 +59,37 @@ exports.generateTest = functions.https.onCall(async (data, context) => {
  */
 exports.gradeTest = functions.https.onCall(async (data, context) => {
   try {
-    console.log('Grading request received');
+    console.log('🎯 Grading request received');
     
     // Extract parameters from request
     const params = data.data || data;
-    const { submissions, answers, userId } = params;
+    const {
+      submissions,
+      answers,
+      userId,
+      subject,
+      paper,
+      mode,
+      totalQuestions,
+      durationMinutes,
+      sessionDurationSeconds,
+      sessionMetadata,
+      flags,
+    } = params;
+    
+    // DEBUG: Log received parameters
+    console.log('📋 Received parameters:', {
+      hasSubmissions: !!submissions || !!answers,
+      hasUserId: !!userId,
+      contextAuthUid: context.auth?.uid,
+      receivedUserId: userId,
+      finalUserIdWillBe: userId || (context.auth ? context.auth.uid : null),
+      subject,
+      paper,
+      mode,
+      totalQuestions,
+      durationMinutes,
+    });
     
     // Handle both new format (submissions) and legacy format (answers)
     const submissionsData = submissions || answers;
@@ -71,13 +97,33 @@ exports.gradeTest = functions.https.onCall(async (data, context) => {
     // Validate parameters
     validateGradingParams({ submissions: submissionsData });
     
+    // Get userId from params or context auth (fallback)
+    const finalUserId = userId || (context.auth ? context.auth.uid : null);
+    console.log('✅ Final userId for storage:', finalUserId || '⚠️ WARNING: No userId available');
+    console.log('   - Received userId param:', userId);
+    console.log('   - Context auth uid:', context.auth?.uid);
+    console.log('   - Using:', finalUserId);
+
+    const metadata = {
+      subject: subject || sessionMetadata?.subject || null,
+      paper: paper || sessionMetadata?.paper || sessionMetadata?.selectedPaper || null,
+      mode: mode || sessionMetadata?.modeKey || 'Practice',
+      totalQuestions: totalQuestions || sessionMetadata?.totalQuestions || (submissionsData ? Object.keys(submissionsData).length : null),
+      durationMinutes: durationMinutes ?? sessionMetadata?.configuredDurationMinutes ?? sessionMetadata?.duration ?? null,
+      sessionDurationSeconds: sessionDurationSeconds ?? sessionMetadata?.sessionDurationSeconds ?? null,
+      flags: flags || {},
+      sessionMetadata: sessionMetadata || {},
+      submittedAt: params.submittedAt || new Date().toISOString(),
+    };
+    
     // Grade test using modular service
     const gradingResult = await gradeTestSubmission({
       submissions: submissionsData,
-      userId: userId || (context.auth ? context.auth.uid : null)
+      userId: finalUserId,  // Pass the resolved userId
+      metadata,
     });
     
-    console.log('Grading completed successfully');
+    console.log('✅ Grading completed successfully');
     
     return {
       results: gradingResult.results,
@@ -86,7 +132,7 @@ exports.gradeTest = functions.https.onCall(async (data, context) => {
     };
 
   } catch (error) {
-    console.error('Error in gradeTest:', error);
+    console.error('❌ Error in gradeTest:', error);
     
     if (error instanceof functions.https.HttpsError) {
       throw error;

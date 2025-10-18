@@ -153,16 +153,74 @@ async function fetchQuestionsForGrading(questionIds) {
  */
 async function saveUserTestResults(userId, resultData) {
   try {
-    await admin.firestore()
+    // Validate userId exists
+    if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+      console.error('⚠️ SKIPPED: Attempting to save results with invalid userId:', userId);
+      console.error('   Result data would have been:', {
+        subject: resultData?.statistics?.subject,
+        score: resultData?.statistics?.marksAwarded,
+        timestamp: new Date().toISOString()
+      });
+      return; // Skip saving if no valid userId
+    }
+    
+    const statistics = resultData.statistics || {};
+    const metadata = resultData.metadata || {};
+
+    const subject = metadata.subject || statistics.subject || null;
+    const paper = metadata.paper || statistics.paper || null;
+    const mode = metadata.mode || statistics.mode || 'Practice';
+    const totalQuestions = metadata.totalQuestions || statistics.totalQuestions || (resultData.results ? resultData.results.length : 0);
+    const score = statistics.marksAwarded || 0;
+    const totalMarks = statistics.totalMarks || 0;
+    const grade = statistics.grade || 'F';
+    const percentage = statistics.percentage || 0;
+
+    console.log(`📊 Saving test results for user: ${userId}`);
+    console.log(`   Subject: ${subject || 'Unknown'} | Mode: ${mode}`);
+    console.log(`   Score: ${score}/${totalMarks} (${percentage}% - ${grade})`);
+
+    const serverTimestamp = admin.firestore.FieldValue.serverTimestamp();
+
+    const payload = {
+      userId,
+      subject,
+      paper,
+      mode,
+      totalQuestions,
+      score,
+      totalMarks,
+      percentage,
+      grade,
+      durationMinutes: metadata.durationMinutes ?? null,
+      sessionDurationSeconds: metadata.sessionDurationSeconds ?? null,
+      results: resultData.results || [],
+      statistics,
+      metadata,
+      gradedAt: resultData.gradedAt || metadata.submittedAt || new Date().toISOString(),
+      testDate: serverTimestamp,
+      savedAt: serverTimestamp,
+    };
+
+    const saveResult = await admin.firestore()
       .collection('users')
       .doc(userId)
       .collection('testResults')
-      .add(resultData);
+      .add(payload);
     
-    console.log(`Test results saved for user: ${userId}`);
+    console.log(`✅ Test results saved successfully for user: ${userId}`);
+    console.log(`   Document ID: ${saveResult.id}`);
+    console.log(`   Path: users/${userId}/testResults/${saveResult.id}`);
+    
   } catch (error) {
-    console.error('Error saving user test results:', error);
+    console.error(`❌ Error saving user test results for ${userId}:`, error);
+    console.error('   Error details:', {
+      code: error.code,
+      message: error.message,
+      path: `users/${userId}/testResults/`
+    });
     // Don't throw error - saving results is not critical for the grading process
+    // User still gets grading results even if storage fails
   }
 }
 

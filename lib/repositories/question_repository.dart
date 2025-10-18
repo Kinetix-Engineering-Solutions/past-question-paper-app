@@ -2,8 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:past_question_paper_v1/model/question.dart';
-import 'dart:convert';
-import 'package:flutter/services.dart';
 
 // Riverpod provider to make the repository available throughout the app
 final questionRepositoryProvider = Provider<QuestionRepository>((ref) {
@@ -124,6 +122,13 @@ class QuestionRepository {
     required Map<String, dynamic> userAnswers,
     required String subject,
     String? paper, // Paper might be optional for some test modes
+    String mode = 'Practice',
+    int? totalQuestions,
+    int? durationMinutes,
+    int? sessionDurationSeconds,
+    Map<String, dynamic>? sessionMetadata,
+    bool isPQPMode = false,
+    bool isSprintMode = false,
   }) async {
     try {
       // Wait for auth state to be ready and check if user is authenticated
@@ -141,6 +146,13 @@ class QuestionRepository {
         'submissions': userAnswers, // Use 'submissions' key for new format
         'subject': subject,
         'paper': paper,
+        'mode': mode,
+        'totalQuestions': totalQuestions,
+        'durationMinutes': durationMinutes,
+        'sessionDurationSeconds': sessionDurationSeconds,
+        'sessionMetadata': sessionMetadata,
+        'flags': {'isPQPMode': isPQPMode, 'isSprintMode': isSprintMode},
+        'userId': user.uid, // Pass userId so results are saved to Firestore
       });
 
       // Handle the response data safely
@@ -166,6 +178,7 @@ class QuestionRepository {
   }
 
   /// Validate PQP question chains and parent relationships (Option 3)
+  // ignore: unused_element
   void _validatePQPQuestionChains(List<Question> questions) {
     print('🔍 Validating PQP question parent relationships...');
 
@@ -190,6 +203,7 @@ class QuestionRepository {
   }
 
   /// Extract correct answer from question data based on question type
+  // ignore: unused_element
   String _extractCorrectAnswer(Map<String, dynamic> questionData) {
     final questionType =
         questionData['questionType']?.toString().toLowerCase() ?? '';

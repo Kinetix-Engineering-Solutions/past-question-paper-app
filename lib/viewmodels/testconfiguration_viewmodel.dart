@@ -22,10 +22,16 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
   Future<void> startTest(
     BuildContext context,
     Map<String, dynamic> options,
-    String buttonId, // Unique identifier for the button being pressed
-  ) async {
-    if (state != null)
+    String buttonId, { // Unique identifier for the button being pressed
+    bool isPQPMode = false,
+    bool isSprintMode = false,
+    int? durationMinutes,
+    String? modeKey,
+    Map<String, dynamic>? sessionMetadata,
+  }) async {
+    if (state != null) {
       return; // Prevent multiple taps while any button is loading
+    }
     state = buttonId; // Set the specific button as loading
     try {
       // Double check authentication state before proceeding
@@ -47,7 +53,19 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PracticeScreen(questions: questions),
+            builder: (context) => PracticeScreen(
+              questions: questions,
+              isPQPMode: isPQPMode,
+              isSprintMode: isSprintMode,
+              configuredDurationMinutes: durationMinutes,
+              modeKey: modeKey ?? options['mode']?.toString(),
+              sessionMetadata: {
+                'options': options,
+                if (sessionMetadata != null) ...sessionMetadata,
+                if (durationMinutes != null)
+                  'configuredDurationMinutes': durationMinutes,
+              },
+            ),
           ),
         );
       }

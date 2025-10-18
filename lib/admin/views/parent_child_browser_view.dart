@@ -129,6 +129,39 @@ class _ParentChildBrowserViewState
                       state.filterMode,
                       notifier.setFilterMode,
                     ),
+                    const Spacer(),
+                    // Year Filter Dropdown
+                    const Text(
+                      'Year: ',
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: DropdownButton<int?>(
+                        value: state.selectedYear,
+                        underline: const SizedBox(),
+                        hint: const Text('All Years'),
+                        items: [
+                          const DropdownMenuItem<int?>(
+                            value: null,
+                            child: Text('All Years'),
+                          ),
+                          ...notifier.availableYears.map((year) {
+                            return DropdownMenuItem<int?>(
+                              value: year,
+                              child: Text(year.toString()),
+                            );
+                          }),
+                        ],
+                        onChanged: notifier.setSelectedYear,
+                      ),
+                    ),
                   ],
                 ),
               ],

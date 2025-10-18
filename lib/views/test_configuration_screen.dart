@@ -28,9 +28,13 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
     String buttonId, { // Unique identifier for the button being pressed
     bool isPQPMode = false,
     bool isSprintMode = false,
+    int? durationMinutes,
+    String? modeKey,
+    Map<String, dynamic>? sessionMetadata,
   }) async {
-    if (state != null)
+    if (state != null) {
       return; // Prevent multiple taps while any button is loading
+    }
     state = buttonId; // Set the specific button as loading
     try {
       // Double check authentication state before proceeding
@@ -56,6 +60,14 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
               questions: questions,
               isPQPMode: isPQPMode,
               isSprintMode: isSprintMode,
+              configuredDurationMinutes: durationMinutes,
+              modeKey: modeKey ?? options['mode']?.toString(),
+              sessionMetadata: {
+                'options': options,
+                if (sessionMetadata != null) ...sessionMetadata,
+                if (durationMinutes != null)
+                  'configuredDurationMinutes': durationMinutes,
+              },
             ),
           ),
         );
@@ -75,6 +87,9 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
   }
 }
 
+// Enum for test modes
+enum TestMode { fullExam, quickPractice, byTopic }
+
 class TestConfigurationScreen extends StatefulWidget {
   final String subject;
   final int grade;
@@ -90,26 +105,12 @@ class TestConfigurationScreen extends StatefulWidget {
       _TestConfigurationScreenState();
 }
 
-class _TestConfigurationScreenState extends State<TestConfigurationScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
+class _TestConfigurationScreenState extends State<TestConfigurationScreen> {
+  TestMode? _selectedMode;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       backgroundColor: colorScheme.background,
@@ -118,27 +119,154 @@ class _TestConfigurationScreenState extends State<TestConfigurationScreen>
         backgroundColor: colorScheme.background,
         foregroundColor: colorScheme.onBackground,
         elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: colorScheme.primary,
-          unselectedLabelColor: textTheme.bodyMedium?.color?.withOpacity(0.7),
-          indicatorColor: colorScheme.primary,
-          tabs: const [
-            Tab(text: 'Full Exam'),
-            Tab(text: 'Quick Practice'),
-            Tab(text: 'By Topic'),
-          ],
+        leading: _selectedMode != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  setState(() {
+                    _selectedMode = null;
+                  });
+                },
+              )
+            : null,
+      ),
+      body: _selectedMode == null
+          ? _buildModeSelection()
+          : _buildModeConfiguration(_selectedMode!),
+    );
+  }
+
+  // Mode selection screen with three cards
+  Widget _buildModeSelection() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(
+          'Choose Practice Mode',
+          style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Select the type of practice that best suits your learning goals.',
+          style: textTheme.bodyMedium?.copyWith(
+            color:
+                textTheme.bodyMedium?.color?.withOpacity(0.75) ??
+                colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 32),
+        _buildModeCard(
+          icon: Icons.article,
+          title: 'Full Exam Mode',
+          description:
+              'Practice with authentic past exam papers. Questions appear exactly as they did in the original exam, with proper numbering and question chains.',
+          mode: TestMode.fullExam,
+          colorScheme: colorScheme,
+          textTheme: textTheme,
+        ),
+        const SizedBox(height: 16),
+        _buildModeCard(
+          icon: Icons.timer_outlined,
+          title: 'Quick Practice',
+          description:
+              'Fast-paced practice with mixed topics. Questions are simplified for learning, with hints available. Choose your own duration.',
+          mode: TestMode.quickPractice,
+          colorScheme: colorScheme,
+          textTheme: textTheme,
+        ),
+        const SizedBox(height: 16),
+        _buildModeCard(
+          icon: Icons.bookmark_border,
+          title: 'By Topic',
+          description:
+              'Focus on specific topics to strengthen weak areas. Select a topic to practice questions only from that section.',
+          mode: TestMode.byTopic,
+          colorScheme: colorScheme,
+          textTheme: textTheme,
+        ),
+      ],
+    );
+  }
+
+  // Individual mode card
+  Widget _buildModeCard({
+    required IconData icon,
+    required String title,
+    required String description,
+    required TestMode mode,
+    required ColorScheme colorScheme,
+    required TextTheme textTheme,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _selectedMode = mode;
+          });
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(icon, color: colorScheme.primary, size: 32),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: colorScheme.primary,
+                    size: 20,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                description,
+                style: textTheme.bodyMedium?.copyWith(
+                  color:
+                      textTheme.bodyMedium?.color?.withOpacity(0.75) ??
+                      colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _FullExamView(grade: widget.grade, subject: widget.subject),
-          _QuickPracticeView(grade: widget.grade, subject: widget.subject),
-          _ByTopicView(grade: widget.grade, subject: widget.subject),
-        ],
-      ),
     );
+  }
+
+  // Configuration screen based on selected mode
+  Widget _buildModeConfiguration(TestMode mode) {
+    switch (mode) {
+      case TestMode.fullExam:
+        return _FullExamView(grade: widget.grade, subject: widget.subject);
+      case TestMode.quickPractice:
+        return _QuickPracticeView(grade: widget.grade, subject: widget.subject);
+      case TestMode.byTopic:
+        return _ByTopicView(grade: widget.grade, subject: widget.subject);
+    }
   }
 }
 
@@ -166,8 +294,6 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
       (index) => currentYear - index - 1,
     ).where((year) => year > 2000).toList();
     const seasons = ['November', 'June', 'March'];
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final paper1Meta = AppConstants.getFullExamPaperMeta(
       widget.subject,
       widget.grade,
@@ -187,26 +313,10 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
       padding: const EdgeInsets.all(16),
       children: [
         Text(
-          'Full Exam Mode',
+          'Select Past Paper',
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Practice with authentic past exam papers. Questions appear exactly as they did in the original exam, with proper numbering and question chains.',
-          style: textTheme.bodyMedium?.copyWith(
-            color:
-                textTheme.bodyMedium?.color?.withOpacity(0.75) ??
-                colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'Find a Past Paper',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 16),
         // --- Dropdowns for year and season ---
@@ -257,6 +367,12 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
                   },
                   'paper1',
                   isPQPMode: true,
+                  modeKey: 'full_exam',
+                  sessionMetadata: {
+                    'year': _selectedYear,
+                    'season': _selectedSeason,
+                    'paper': 'p1',
+                  },
                 );
           },
         ),
@@ -281,6 +397,12 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
                   },
                   'paper2',
                   isPQPMode: true,
+                  modeKey: 'full_exam',
+                  sessionMetadata: {
+                    'year': _selectedYear,
+                    'season': _selectedSeason,
+                    'paper': 'Paper 2',
+                  },
                 );
           },
         ),
@@ -290,85 +412,80 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
 }
 
 // --- View for "Quick Practice" Tab ---
-class _QuickPracticeView extends ConsumerWidget {
+
+class _QuickPracticeView extends ConsumerStatefulWidget {
   final int grade;
   final String subject;
   const _QuickPracticeView({required this.grade, required this.subject});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_QuickPracticeView> createState() => _QuickPracticeViewState();
+}
+
+class _QuickPracticeViewState extends ConsumerState<_QuickPracticeView> {
+  double _selectedDuration = 15;
+
+  @override
+  Widget build(BuildContext context) {
     final loadingButtonId = ref.watch(testConfigurationViewModelProvider);
-    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         Text(
-          'Quick Practice Mode',
+          'Choose Duration',
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Fast-paced practice with mixed topics. Questions are simplified for learning, with hints available to help you understand concepts better.',
-          style: textTheme.bodyMedium?.copyWith(
-            color:
-                textTheme.bodyMedium?.color?.withOpacity(0.75) ??
-                colorScheme.onSurfaceVariant,
-          ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: Slider(
+                min: 5,
+                max: 60,
+                divisions: 11,
+                value: _selectedDuration,
+                label: '${_selectedDuration.round()} min',
+                onChanged: (value) {
+                  setState(() {
+                    _selectedDuration = value;
+                  });
+                },
+              ),
+            ),
+            SizedBox(width: 12),
+            Text(
+              '${_selectedDuration.round()} min',
+              style: textTheme.titleMedium,
+            ),
+          ],
         ),
         const SizedBox(height: 24),
-        Text(
-          'Start a Quick, Mixed-Topic Test',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 16),
         _buildStartCard(
           context,
-          title: '15 Minute Sprint',
-          subtitle: '~25 Marks',
+          title: 'Start Sprint',
+          subtitle: 'Custom duration: ${_selectedDuration.round()} min',
           icon: Icons.timer_outlined,
-          isLoading: loadingButtonId == 'quick15',
+          isLoading: loadingButtonId == 'quick_custom',
           onTap: () {
             ref
                 .read(testConfigurationViewModelProvider.notifier)
                 .startTest(
                   context,
                   {
-                    'grade': grade,
-                    'subject': subject,
+                    'grade': widget.grade,
+                    'subject': widget.subject,
                     'mode': 'quick_practice',
-                    'paper': 'p1', // Default to paper 1 for quick practice
-                    'duration': 15,
+                    'paper': 'p1',
+                    'duration': _selectedDuration.round(),
                   },
-                  'quick15',
+                  'quick_custom',
                   isSprintMode: true,
-                );
-          },
-        ),
-        _buildStartCard(
-          context,
-          title: '30 Minute Review',
-          subtitle: '~50 Marks',
-          icon: Icons.timer,
-          isLoading: loadingButtonId == 'quick30',
-          onTap: () {
-            ref
-                .read(testConfigurationViewModelProvider.notifier)
-                .startTest(
-                  context,
-                  {
-                    'grade': grade,
-                    'subject': subject,
-                    'mode': 'quick_practice',
-                    'paper': 'p1', // Default to paper 1 for quick practice
-                    'duration': 30,
-                  },
-                  'quick30',
-                  isSprintMode: true,
+                  modeKey: 'quick_practice',
+                  durationMinutes: _selectedDuration.round(),
+                  sessionMetadata: {'duration': _selectedDuration.round()},
                 );
           },
         ),
@@ -388,7 +505,6 @@ class _ByTopicView extends ConsumerWidget {
     final loadingButtonId = ref.watch(testConfigurationViewModelProvider);
     // Get the topics for the current subject from your constants file
     final topics = AppConstants.topicsBySubject[subject] ?? [];
-    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     return ListView.builder(
@@ -403,25 +519,16 @@ class _ByTopicView extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'By Topic Mode',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  'Select a Topic',
+                  style: textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Focus on specific topics to strengthen weak areas. Select a topic below to practice questions only from that section.',
+                  'Choose a topic to practice',
                   style: textTheme.bodyMedium?.copyWith(
-                    color:
-                        textTheme.bodyMedium?.color?.withOpacity(0.75) ??
-                        colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Select a Topic',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                    color: textTheme.bodyMedium?.color?.withOpacity(0.75),
                   ),
                 ),
               ],
@@ -439,17 +546,21 @@ class _ByTopicView extends ConsumerWidget {
           icon: Icons.bookmark_border,
           isLoading: loadingButtonId == buttonId,
           onTap: () {
-            ref.read(testConfigurationViewModelProvider.notifier).startTest(
-              context,
-              {
-                'grade': grade,
-                'subject': subject,
-                'mode': 'by_topic',
-                'topic': topic,
-                'paper': 'p1', // Default to paper 1 for topic practice
-              },
-              buttonId,
-            );
+            ref
+                .read(testConfigurationViewModelProvider.notifier)
+                .startTest(
+                  context,
+                  {
+                    'grade': grade,
+                    'subject': subject,
+                    'mode': 'by_topic',
+                    'topic': topic,
+                    'paper': 'p1', // Default to paper 1 for topic practice
+                  },
+                  buttonId,
+                  modeKey: 'by_topic',
+                  sessionMetadata: {'topic': topic},
+                );
           },
         );
       },

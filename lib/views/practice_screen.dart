@@ -17,12 +17,18 @@ class PracticeScreen extends ConsumerStatefulWidget {
   final List<Question> questions;
   final bool isPQPMode;
   final bool isSprintMode;
+  final String? modeKey;
+  final int? configuredDurationMinutes;
+  final Map<String, dynamic>? sessionMetadata;
 
   const PracticeScreen({
     super.key,
     required this.questions,
     this.isPQPMode = false,
     this.isSprintMode = false,
+    this.modeKey,
+    this.configuredDurationMinutes,
+    this.sessionMetadata,
   });
 
   @override
@@ -41,7 +47,14 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     Future.microtask(
       () => ref
           .read(practiceViewModelProvider.notifier)
-          .startSession(widget.questions),
+          .startSession(
+            widget.questions,
+            isPQPMode: widget.isPQPMode,
+            isSprintMode: widget.isSprintMode,
+            durationMinutes: widget.configuredDurationMinutes,
+            modeKey: widget.modeKey,
+            sessionMetadata: widget.sessionMetadata,
+          ),
     );
   }
 

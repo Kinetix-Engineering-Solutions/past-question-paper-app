@@ -15,6 +15,7 @@ class BottomNavigationNotifier extends StateNotifier<int> {
 
   void navigateToHome() => state = 0;
   void navigateToSubjects() => state = 1;
+  void navigateToHistory() => state = 1;
   void navigateToPractice() => state = 2;
   void navigateToProfile() => state = 3;
 

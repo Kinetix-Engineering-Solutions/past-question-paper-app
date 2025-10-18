@@ -10,6 +10,7 @@ class ParentChildBrowserState {
   final FilterMode filterMode;
   final String searchQuery;
   final Set<String> expandedParentIds;
+  final int? selectedYear; // null means "All Years"
 
   const ParentChildBrowserState({
     this.questions = const [],
@@ -18,6 +19,7 @@ class ParentChildBrowserState {
     this.filterMode = FilterMode.all,
     this.searchQuery = '',
     this.expandedParentIds = const {},
+    this.selectedYear,
   });
 
   ParentChildBrowserState copyWith({
@@ -27,6 +29,7 @@ class ParentChildBrowserState {
     FilterMode? filterMode,
     String? searchQuery,
     Set<String>? expandedParentIds,
+    int? selectedYear,
   }) {
     return ParentChildBrowserState(
       questions: questions ?? this.questions,
@@ -35,6 +38,7 @@ class ParentChildBrowserState {
       filterMode: filterMode ?? this.filterMode,
       searchQuery: searchQuery ?? this.searchQuery,
       expandedParentIds: expandedParentIds ?? this.expandedParentIds,
+      selectedYear: selectedYear ?? this.selectedYear,
     );
   }
 }
@@ -60,6 +64,7 @@ class ParentQuestionNode {
   String get topic => data['topic'] ?? '';
   String get contextText => data['contextText'] ?? '';
   bool get hasChildren => children.isNotEmpty;
+  int? get year => (data['year'] as num?)?.toInt();
 }
 
 /// Node representing a child question
@@ -188,6 +193,25 @@ class ParentChildBrowserViewModel
     state = state.copyWith(searchQuery: query);
   }
 
+  /// Update selected year filter
+  void setSelectedYear(int? year) {
+    state = state.copyWith(selectedYear: year);
+  }
+
+  /// Get unique years from all questions
+  List<int> get availableYears {
+    final yearsSet = <int>{};
+    for (final question in state.questions) {
+      final year = question.year;
+      if (year != null) {
+        yearsSet.add(year);
+      }
+    }
+    final yearsList = yearsSet.toList()
+      ..sort((a, b) => b.compareTo(a)); // Descending order
+    return yearsList;
+  }
+
   /// Get filtered questions based on current filter and search
   List<ParentQuestionNode> get filteredQuestions {
     var questions = state.questions;
@@ -239,6 +263,11 @@ class ParentChildBrowserViewModel
             contextMatch ||
             childMatch;
       }).toList();
+    }
+
+    // Apply year filter
+    if (state.selectedYear != null) {
+      questions = questions.where((q) => q.year == state.selectedYear).toList();
     }
 
     return questions;

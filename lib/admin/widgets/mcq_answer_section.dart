@@ -98,10 +98,7 @@ class MCQAnswerSection extends ConsumerWidget {
                   state.useImageOptions
                       ? 'Image-based options (diagrams, graphs, etc.)'
                       : 'Text-based options (A, B, C, D)',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.neutralMid,
-                  ),
+                  style: TextStyle(fontSize: 12, color: AppColors.neutralMid),
                 ),
               ],
             ),
@@ -166,10 +163,7 @@ class MCQAnswerSection extends ConsumerWidget {
       children: [
         Text(
           'Upload images for each option (A, B, C, D)',
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.neutralMid,
-          ),
+          style: TextStyle(fontSize: 12, color: AppColors.neutralMid),
         ),
         const SizedBox(height: 12),
 
@@ -258,7 +252,8 @@ class MCQAnswerSection extends ConsumerWidget {
     // For image options, validate that all images are uploaded
     if (state.useImageOptions) {
       final optionImages = state.mcqOptionImages;
-      final allImagesUploaded = optionImages.length >= 4 &&
+      final allImagesUploaded =
+          optionImages.length >= 4 &&
           optionImages.every((url) => url.isNotEmpty);
 
       if (!allImagesUploaded) {
@@ -276,10 +271,7 @@ class MCQAnswerSection extends ConsumerWidget {
               Expanded(
                 child: Text(
                   'Please upload all 4 option images before selecting the correct answer',
-                  style: TextStyle(
-                    color: Colors.orange.shade700,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.orange.shade700, fontSize: 12),
                 ),
               ),
             ],
@@ -300,8 +292,7 @@ class MCQAnswerSection extends ConsumerWidget {
       onChanged: (value) {
         if (value != null) notifier.updateCorrectAnswer(value);
       },
-      validator: (value) =>
-          value == null ? 'Correct answer is required' : null,
+      validator: (value) => value == null ? 'Correct answer is required' : null,
     );
   }
 }

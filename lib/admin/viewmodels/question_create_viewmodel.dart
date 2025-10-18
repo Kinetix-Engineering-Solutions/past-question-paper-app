@@ -312,12 +312,12 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
   /// Update MCQ option image at specific index
   void updateMcqOptionImage(int index, String imageUrl) {
     final updatedImages = List<String>.from(state.mcqOptionImages);
-    
+
     // Ensure list is large enough
     while (updatedImages.length <= index) {
       updatedImages.add('');
     }
-    
+
     updatedImages[index] = imageUrl;
     state = state.copyWith(mcqOptionImages: updatedImages);
   }
@@ -325,11 +325,11 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
   /// Remove MCQ option image at specific index
   void removeMcqOptionImage(int index) {
     final updatedImages = List<String>.from(state.mcqOptionImages);
-    
+
     if (index < updatedImages.length) {
       updatedImages[index] = '';
     }
-    
+
     state = state.copyWith(mcqOptionImages: updatedImages);
   }
 
@@ -535,15 +535,16 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
       List<String> mcqOptions = const ['', '', '', ''];
       List<String> mcqOptionImages = const [];
       bool useImageOptions = false;
-      
+
       if (formatValue.toLowerCase() == 'mcq') {
         // Check if this MCQ uses image options
-        if (data['hasImageOptions'] == true && data['optionImages'] is Iterable) {
+        if (data['hasImageOptions'] == true &&
+            data['optionImages'] is Iterable) {
           useImageOptions = true;
           mcqOptionImages = (data['optionImages'] as Iterable)
               .map((url) => url?.toString() ?? '')
               .toList();
-          
+
           // For image MCQs, correctAnswer is the image URL
           // We need to map it back to a letter (A/B/C/D)
           final correctImageUrl = data['correctAnswer']?.toString() ?? '';
@@ -676,7 +677,9 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
     if (state.format == 'MCQ') {
       if (state.useImageOptions) {
         // Validate image options
-        final imageUrls = state.mcqOptionImages.where((url) => url.isNotEmpty).toList();
+        final imageUrls = state.mcqOptionImages
+            .where((url) => url.isNotEmpty)
+            .toList();
         if (imageUrls.length < 4) {
           state = state.copyWith(
             errorMessage: 'All 4 image options are required for image MCQ',
@@ -864,17 +867,24 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
     if (state.format == 'MCQ') {
       if (state.useImageOptions) {
         // Image-based MCQ options
-        final imageUrls = state.mcqOptionImages.where((url) => url.isNotEmpty).toList();
+        final imageUrls = state.mcqOptionImages
+            .where((url) => url.isNotEmpty)
+            .toList();
         data['optionImages'] = imageUrls;
         data['hasImageOptions'] = true;
-        
+
         // For image MCQs, correctAnswer is the image URL (not letter)
         // Map letter (A/B/C/D) to corresponding image URL
-        final answerIndex = {'A': 0, 'B': 1, 'C': 2, 'D': 3}[state.correctAnswer];
+        final answerIndex = {
+          'A': 0,
+          'B': 1,
+          'C': 2,
+          'D': 3,
+        }[state.correctAnswer];
         if (answerIndex != null && answerIndex < imageUrls.length) {
           data['correctAnswer'] = imageUrls[answerIndex];
         }
-        
+
         // Remove text options
         if (isUpdate) {
           data['options'] = FieldValue.delete();
@@ -884,7 +894,7 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
         data['options'] = options;
         data['hasImageOptions'] = false;
         data['correctAnswer'] = state.correctAnswer; // Letter (A/B/C/D)
-        
+
         // Remove image options
         if (isUpdate) {
           data['optionImages'] = FieldValue.delete();

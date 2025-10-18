@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/providers/navigation_providers.dart';
 import 'package:past_question_paper_v1/views/home_screen.dart';
-import 'package:past_question_paper_v1/views/learning_aids_screen.dart';
+import 'package:past_question_paper_v1/viewmodels/session_history_viewmodel.dart';
+import 'package:past_question_paper_v1/views/history/pqp_history_screen.dart';
 import 'package:past_question_paper_v1/views/profile_screen.dart';
 
 class MainNavigationScreen extends ConsumerWidget {
@@ -17,7 +18,7 @@ class MainNavigationScreen extends ConsumerWidget {
         index: currentIndex,
         children: [
           const HomeScreen(),
-          const LearningAidsScreen(),
+          const PqpHistoryScreen(),
           const ProfileScreen(),
         ],
       ),
@@ -26,6 +27,9 @@ class MainNavigationScreen extends ConsumerWidget {
         currentIndex: currentIndex,
         onTap: (index) {
           ref.read(bottomNavigationProvider.notifier).setIndex(index);
+          if (index == 1) {
+            ref.read(sessionHistoryViewModelProvider.notifier).refresh();
+          }
         },
         items: const [
           BottomNavigationBarItem(
@@ -33,8 +37,8 @@ class MainNavigationScreen extends ConsumerWidget {
             label: 'PQP Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book),
-            label: 'PQP Resources',
+            icon: Icon(Icons.history_edu_outlined),
+            label: 'PQP History',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),

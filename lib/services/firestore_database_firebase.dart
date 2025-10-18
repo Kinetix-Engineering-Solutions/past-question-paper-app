@@ -310,6 +310,10 @@ class FirestoreDatabaseService {
   /// Gets user's test results from their sub-collection
   Future<List<Map<String, dynamic>>> getUserTestResults(String userId) async {
     try {
+      print(
+        '🔥 FirestoreDatabaseService.getUserTestResults: Fetching for userId: $userId',
+      );
+
       final snapshot = await _firestore
           .collection('users')
           .doc(userId)
@@ -317,15 +321,42 @@ class FirestoreDatabaseService {
           .orderBy('testDate', descending: true)
           .get();
 
+      print(
+        '📊 FirestoreDatabaseService: Found ${snapshot.docs.length} documents',
+      );
+
+      if (snapshot.docs.isEmpty) {
+        print('⚠️ No testResults found at path: users/$userId/testResults');
+      }
+
       return snapshot.docs.map((doc) {
         final data = doc.data();
+        final testDateRaw = data['testDate'];
+        final savedAtRaw = data['savedAt'];
+
+        DateTime? testDate;
+        if (testDateRaw is Timestamp) {
+          testDate = testDateRaw.toDate();
+        } else if (testDateRaw is DateTime) {
+          testDate = testDateRaw;
+        }
+
+        DateTime? savedAt;
+        if (savedAtRaw is Timestamp) {
+          savedAt = savedAtRaw.toDate();
+        } else if (savedAtRaw is DateTime) {
+          savedAt = savedAtRaw;
+        }
+
         return {
           'id': doc.id,
           ...data,
-          'testDate': (data['testDate'] as Timestamp?)?.toDate(),
+          'testDate': testDate,
+          'savedAt': savedAt,
         };
       }).toList();
     } catch (e) {
+      print('❌ Error in getUserTestResults: $e');
       rethrow;
     }
   }

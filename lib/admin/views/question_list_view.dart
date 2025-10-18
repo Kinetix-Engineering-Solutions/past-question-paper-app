@@ -235,7 +235,36 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
                 ],
                 onChanged: (value) => notifier.updateTopicFilter(value),
               ),
+              const SizedBox(height: 16),
             ],
+
+            // Year filter
+            const Text('Year', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            FutureBuilder<List<int>>(
+              future: notifier.getAvailableYears(),
+              builder: (context, snapshot) {
+                final years = snapshot.data ?? [];
+                return DropdownButtonFormField<int>(
+                  value: state.filterYear,
+                  decoration: const InputDecoration(
+                    hintText: 'All Years',
+                    isDense: true,
+                  ),
+                  items: [
+                    const DropdownMenuItem<int>(
+                      value: null,
+                      child: Text('All Years'),
+                    ),
+                    ...years.map(
+                      (y) =>
+                          DropdownMenuItem(value: y, child: Text(y.toString())),
+                    ),
+                  ],
+                  onChanged: (value) => notifier.updateYearFilter(value),
+                );
+              },
+            ),
           ],
         ),
       ),

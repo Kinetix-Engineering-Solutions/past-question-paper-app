@@ -18,6 +18,7 @@ class QuestionListState {
   final int? filterGrade;
   final String? filterFormat;
   final String? filterTopic;
+  final int? filterYear;
   final int currentPage;
   final int itemsPerPage;
   final int totalItems;
@@ -31,6 +32,7 @@ class QuestionListState {
     this.filterGrade,
     this.filterFormat,
     this.filterTopic,
+    this.filterYear,
     this.currentPage = 1,
     this.itemsPerPage = 50,
     this.totalItems = 0,
@@ -45,6 +47,7 @@ class QuestionListState {
     int? filterGrade,
     String? filterFormat,
     String? filterTopic,
+    int? filterYear,
     int? currentPage,
     int? itemsPerPage,
     int? totalItems,
@@ -58,6 +61,7 @@ class QuestionListState {
       filterGrade: filterGrade ?? this.filterGrade,
       filterFormat: filterFormat ?? this.filterFormat,
       filterTopic: filterTopic ?? this.filterTopic,
+      filterYear: filterYear ?? this.filterYear,
       currentPage: currentPage ?? this.currentPage,
       itemsPerPage: itemsPerPage ?? this.itemsPerPage,
       totalItems: totalItems ?? this.totalItems,
@@ -182,6 +186,9 @@ class QuestionListViewModel extends StateNotifier<QuestionListState> {
       if (state.filterTopic != null) {
         query = query.where('topic', isEqualTo: state.filterTopic);
       }
+      if (state.filterYear != null) {
+        query = query.where('year', isEqualTo: state.filterYear);
+      }
 
       // Note: We DON'T use orderBy('createdAt') because old questions
       // might not have this field and would be excluded from results.
@@ -269,6 +276,12 @@ class QuestionListViewModel extends StateNotifier<QuestionListState> {
     loadQuestions();
   }
 
+  /// Update year filter
+  void updateYearFilter(int? year) {
+    state = state.copyWith(filterYear: year, currentPage: 1);
+    loadQuestions();
+  }
+
   /// Clear all filters
   void clearFilters() {
     state = const QuestionListState(currentPage: 1);
@@ -318,5 +331,34 @@ class QuestionListViewModel extends StateNotifier<QuestionListState> {
   /// Refresh questions
   void refresh() {
     loadQuestions();
+  }
+
+  /// Get unique years from all questions
+  Future<List<int>> getAvailableYears() async {
+    try {
+      final snapshot = await _firestore.collection('questions').get();
+      final yearsSet = <int>{};
+
+      for (final doc in snapshot.docs) {
+        final yearValue = doc.data()['year'];
+        int? year;
+        if (yearValue is int) {
+          year = yearValue;
+        } else if (yearValue != null) {
+          year = int.tryParse(yearValue.toString());
+        }
+
+        if (year != null && year > 0) {
+          yearsSet.add(year);
+        }
+      }
+
+      final yearsList = yearsSet.toList()
+        ..sort((a, b) => b.compareTo(a)); // Descending
+      return yearsList;
+    } catch (e) {
+      debugPrint('❌ Error fetching years: $e');
+      return [];
+    }
   }
 }
