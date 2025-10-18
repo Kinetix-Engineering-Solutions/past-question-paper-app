@@ -42,14 +42,11 @@ class HomeScreen extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    final userGrade = user?.grade ?? 12;
-    final selectedSubjects = user?.selectedSubjects ?? const <String>[];
-    final subjects = AppConstants.allSubjects.where((subject) {
-      if (selectedSubjects.isEmpty) {
-        return true;
-      }
-      return selectedSubjects.contains(subject);
-    }).toList();
+    // 🚀 MVP: Lock to Grade 12 only
+    final userGrade = 12; // Force Grade 12 for MVP release
+
+    // 🚀 MVP: Show all subjects but mark unavailable ones as "Coming Soon"
+    final subjects = AppConstants.allSubjects;
 
     return Scaffold(
       backgroundColor: colorScheme.background,
@@ -80,6 +77,8 @@ class HomeScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 🚀 MVP Beta Banner
+              _BetaBanner(),
               const SizedBox(height: 8),
               _PracticeHero(
                 user: user,
@@ -396,6 +395,9 @@ class _SubjectList extends StatelessWidget {
       itemCount: subjects.length,
       itemBuilder: (context, index) {
         final subject = subjects[index];
+        // 🚀 MVP: Check if subject is available
+        final isAvailable = AppConstants.isSubjectAvailable(subject);
+
         return Card(
           elevation: 0,
           margin: const EdgeInsets.symmetric(vertical: 8),
@@ -403,39 +405,81 @@ class _SubjectList extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             side: BorderSide.none,
           ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 10,
-            ),
-            title: Text(
-              subject,
-              style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+          child: Opacity(
+            opacity: isAvailable ? 1.0 : 0.6,
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 10,
               ),
-            ),
-            subtitle: Text(
-              'Paper 1 & 2 Available',
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            trailing: Icon(
-              Icons.arrow_forward_ios,
-              color: colorScheme.primary,
-              size: 16,
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => TestConfigurationScreen(
-                    subject: subject,
-                    grade: selectedGrade,
+              title: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      subject,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: isAvailable
+                            ? null
+                            : colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   ),
+                  if (!isAvailable)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.accent.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        'COMING SOON',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.accent,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              subtitle: Text(
+                isAvailable
+                    ? 'Paper 1 & 2 Available'
+                    : 'Questions being prepared',
+                style: textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
                 ),
-              );
-            },
+              ),
+              trailing: Icon(
+                isAvailable ? Icons.arrow_forward_ios : Icons.lock_outline,
+                color: isAvailable
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+                size: 16,
+              ),
+              onTap: isAvailable
+                  ? () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TestConfigurationScreen(
+                            subject: subject,
+                            grade: selectedGrade,
+                          ),
+                        ),
+                      );
+                    }
+                  : null,
+            ),
           ),
         );
       },
@@ -515,4 +559,53 @@ String _initialFromWord(String word) {
     return '';
   }
   return word.substring(0, 1).toUpperCase();
+}
+
+// 🚀 MVP Beta Banner Widget
+class _BetaBanner extends StatelessWidget {
+  const _BetaBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.accent.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.accent.withOpacity(0.3), width: 1),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, color: AppColors.accent, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Beta Version 0.1',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.accent,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  AppConstants.betaMessage,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

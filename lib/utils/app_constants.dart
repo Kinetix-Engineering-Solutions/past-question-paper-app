@@ -53,19 +53,52 @@ class PaperMeta {
 }
 
 class AppConstants {
-  // This is the hardcoded list of all subjects your app will offer.
-  static const List<String> allSubjects = [
-    'mathematics',
+  // ========================================
+  // 🚀 MVP RELEASE CONFIGURATION
+  // ========================================
+  // Currently available: Mathematics Grade 12 only
+  // Other subjects/grades coming soon!
+
+  // Available subjects for MVP release
+  static const List<String> availableSubjects = ['mathematics'];
+
+  // Coming soon subjects (shown with badges)
+  static const List<String> comingSoonSubjects = [
     'physical sciences',
     'life sciences',
-    // Add more subjects here as needed
+  ];
+
+  // All subjects combined (for reference)
+  static const List<String> allSubjects = [
+    ...availableSubjects,
+    ...comingSoonSubjects,
   ];
 
   // Alias for subjects (for admin portal consistency)
   static const List<String> subjects = allSubjects;
 
-  // This is the hardcoded list of grades.
-  static const List<int> grades = [10, 11, 12];
+  // Available grades for MVP release (Mathematics Grade 12 only)
+  static const List<int> availableGrades = [12];
+
+  // Coming soon grades
+  static const List<int> comingSoonGrades = [10, 11];
+
+  // All grades combined
+  static const List<int> grades = [...availableGrades, ...comingSoonGrades];
+
+  // MVP Beta message
+  static const String betaMessage =
+      'Beta v0.1 - Mathematics Grade 12 only. More subjects and grades coming soon!';
+
+  // Check if subject is available
+  static bool isSubjectAvailable(String subject) {
+    return availableSubjects.contains(subject.toLowerCase());
+  }
+
+  // Check if grade is available
+  static bool isGradeAvailable(int grade) {
+    return availableGrades.contains(grade);
+  }
 
   // --- NEW: Hardcoded map of topics for each subject ---
   // This provides the data needed for the "By Topic" practice mode.
@@ -100,7 +133,8 @@ class AppConstants {
     // Add topic lists for other subjects here
   };
 
-  static const Map<String, Map<int, Map<String, PaperMeta>>> fullExamPaperMetadata = {
+  static const Map<String, Map<int, Map<String, PaperMeta>>>
+  fullExamPaperMetadata = {
     'mathematics': {
       12: {
         'p1': PaperMeta(marks: 150, durationMinutes: 180),

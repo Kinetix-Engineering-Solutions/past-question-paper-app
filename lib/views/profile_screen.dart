@@ -70,7 +70,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final authViewModel = ref.watch(authViewModelProvider.notifier);
     final themeState = ref.watch(themeViewModelProvider);
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;    return Scaffold(
+    final textTheme = Theme.of(context).textTheme;
+    return Scaffold(
       backgroundColor: colorScheme.background,
       appBar: AppBar(
         title: const Text('Profile & Settings'),
@@ -106,8 +107,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       children: [
                         CircleAvatar(
                           radius: 36,
-                          backgroundColor:
-                              colorScheme.primary.withOpacity(0.12),
+                          backgroundColor: colorScheme.primary.withOpacity(
+                            0.12,
+                          ),
                           child: Icon(
                             Icons.person,
                             size: 36,
@@ -157,7 +159,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         else
                           _buildInfoChip(
                             context,
-                            label: '${_selectedSubjects.length} ${_selectedSubjects.length == 1 ? 'subject' : 'subjects'} selected',
+                            label:
+                                '${_selectedSubjects.length} ${_selectedSubjects.length == 1 ? 'subject' : 'subjects'} selected',
                             icon: Icons.bookmark_added_outlined,
                           ),
                       ],
@@ -172,17 +175,90 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildSectionHeader(context, 'Grade level'),
+                    // 🚀 MVP: Show beta message for grade selection
+                    if (AppConstants.comingSoonGrades.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer.withOpacity(
+                              0.5,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                size: 16,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Currently: Grade 12 only. Other grades coming soon!',
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<int>(
                       value: _selectedGrade,
                       items: AppConstants.grades.map((grade) {
+                        // 🚀 MVP: Check if grade is available
+                        final isAvailable = AppConstants.isGradeAvailable(
+                          grade,
+                        );
                         return DropdownMenuItem(
                           value: grade,
-                          child: Text('Grade $grade'),
+                          enabled: isAvailable,
+                          child: Row(
+                            children: [
+                              Text(
+                                'Grade $grade',
+                                style: TextStyle(
+                                  color: isAvailable
+                                      ? null
+                                      : colorScheme.onSurfaceVariant
+                                            .withOpacity(0.5),
+                                ),
+                              ),
+                              if (!isAvailable) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.surfaceVariant,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'Soon',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         );
                       }).toList(),
                       onChanged: (value) {
-                        if (value != null) {
+                        // 🚀 MVP: Only allow changing to available grades
+                        if (value != null &&
+                            AppConstants.isGradeAvailable(value)) {
                           setState(() => _selectedGrade = value);
                         }
                       },
@@ -236,6 +312,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         color: colorScheme.onSurfaceVariant,
                       ),
                     ),
+                    // 🚀 MVP: Show beta message for subjects
+                    if (AppConstants.comingSoonSubjects.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer.withOpacity(
+                              0.5,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                size: 16,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Currently: Mathematics only. Other subjects coming soon!',
+                                  style: textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 16),
                     _buildSubjectSelection(context),
                   ],
@@ -328,19 +437,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ) ??
-            const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+        style:
+            Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold) ??
+            const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
     );
   }
 
-  Widget _buildInfoChip(BuildContext context,
-      {required String label, required IconData icon}) {
+  Widget _buildInfoChip(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     return Container(
@@ -382,23 +492,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _hasUnsavedChanges() {
     final userState = ref.read(profileViewModelProvider);
     return userState.whenOrNull(
-      data: (user) {
-        if (user == null) return false;
-        
-        // Check if grade changed
-        if (_selectedGrade != user.grade) return true;
-        
-        // Check if subjects changed
-        final currentSubjects = user.selectedSubjects ?? [];
-        if (_selectedSubjects.length != currentSubjects.length) return true;
-        
-        final normalizedCurrent = currentSubjects.map(_normalizeSubject).toSet();
-        final normalizedSelected = _selectedSubjects.map(_normalizeSubject).toSet();
-        
-        return !normalizedCurrent.containsAll(normalizedSelected) ||
-               !normalizedSelected.containsAll(normalizedCurrent);
-      },
-    ) ?? false;
+          data: (user) {
+            if (user == null) return false;
+
+            // Check if grade changed
+            if (_selectedGrade != user.grade) return true;
+
+            // Check if subjects changed
+            final currentSubjects = user.selectedSubjects ?? [];
+            if (_selectedSubjects.length != currentSubjects.length) return true;
+
+            final normalizedCurrent = currentSubjects
+                .map(_normalizeSubject)
+                .toSet();
+            final normalizedSelected = _selectedSubjects
+                .map(_normalizeSubject)
+                .toSet();
+
+            return !normalizedCurrent.containsAll(normalizedSelected) ||
+                !normalizedSelected.containsAll(normalizedCurrent);
+          },
+        ) ??
+        false;
   }
 
   Widget _buildSubjectSelection(BuildContext context) {
@@ -457,12 +572,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           children: AppConstants.allSubjects.map((subject) {
             final normalizedSubject = _normalizeSubject(subject);
             final isSelected = normalizedSelected.contains(normalizedSubject);
+            // 🚀 MVP: Check if subject is available
+            final isAvailable = AppConstants.isSubjectAvailable(subject);
 
             return FilterChip(
               label: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (isSelected)
+                  if (isSelected && isAvailable)
                     Padding(
                       padding: const EdgeInsets.only(right: 6),
                       child: Icon(
@@ -472,31 +589,63 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ),
                   Text(_formatSubjectLabel(subject)),
+                  // 🚀 MVP: Show "Coming Soon" badge
+                  if (!isAvailable) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceVariant,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'Soon',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
-              selected: isSelected,
-              onSelected: (selected) {
-                setState(() {
-                  if (selected) {
-                    if (!normalizedSelected.contains(normalizedSubject)) {
-                      _selectedSubjects.add(subject);
+              selected: isSelected && isAvailable,
+              onSelected: isAvailable
+                  ? (selected) {
+                      setState(() {
+                        if (selected) {
+                          if (!normalizedSelected.contains(normalizedSubject)) {
+                            _selectedSubjects.add(subject);
+                          }
+                        } else {
+                          _selectedSubjects.removeWhere(
+                            (item) =>
+                                _normalizeSubject(item) == normalizedSubject,
+                          );
+                        }
+                      });
                     }
-                  } else {
-                    _selectedSubjects.removeWhere(
-                      (item) => _normalizeSubject(item) == normalizedSubject,
-                    );
-                  }
-                });
-              },
+                  : null,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               visualDensity: VisualDensity.comfortable,
               showCheckmark: false,
               labelStyle: textTheme.bodyMedium?.copyWith(
-                color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: !isAvailable
+                    ? colorScheme.onSurfaceVariant.withOpacity(0.5)
+                    : isSelected
+                    ? colorScheme.onPrimary
+                    : colorScheme.onSurface,
+                fontWeight: isSelected && isAvailable
+                    ? FontWeight.w600
+                    : FontWeight.w500,
               ),
               backgroundColor: colorScheme.surface,
               selectedColor: colorScheme.primary,
+              disabledColor: colorScheme.surfaceVariant.withOpacity(0.3),
               side: BorderSide.none,
             );
           }).toList(),
@@ -545,11 +694,7 @@ class _ThemeToggle extends ConsumerWidget {
         label: 'Light mode',
         icon: Icons.wb_sunny_outlined,
       ),
-      (
-        mode: ThemeMode.dark,
-        label: 'Dark mode',
-        icon: Icons.nightlight_round,
-      ),
+      (mode: ThemeMode.dark, label: 'Dark mode', icon: Icons.nightlight_round),
     ];
 
     return _ProfileSectionCard(
@@ -562,8 +707,8 @@ class _ThemeToggle extends ConsumerWidget {
                 mode == ThemeMode.dark
                     ? Icons.nightlight_round
                     : mode == ThemeMode.light
-                        ? Icons.wb_sunny
-                        : Icons.brightness_auto,
+                    ? Icons.wb_sunny
+                    : Icons.brightness_auto,
                 color: colorScheme.primary,
               ),
               const SizedBox(width: 16),
@@ -572,18 +717,16 @@ class _ThemeToggle extends ConsumerWidget {
                 children: [
                   Text(
                     'Appearance',
-                    style:
-                        Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     _labelForMode(mode),
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: colorScheme.onSurfaceVariant),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -612,12 +755,11 @@ class _ThemeToggle extends ConsumerWidget {
                 },
                 showCheckmark: false,
                 labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: isSelected
-                          ? colorScheme.onPrimary
-                          : colorScheme.onSurface,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w500,
-                    ),
+                  color: isSelected
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSurface,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                ),
                 backgroundColor: colorScheme.surface,
                 selectedColor: colorScheme.primary,
                 side: BorderSide.none,
