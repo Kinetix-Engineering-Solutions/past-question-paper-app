@@ -67,7 +67,7 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
   Widget build(BuildContext context) {
     _colorScheme = Theme.of(context).colorScheme;
     _textTheme = Theme.of(context).textTheme;
-    // TEMPORARY: Skip validation check for debugging
+    
     if (!widget.question.hasDragDropData) {
       return Container(
         padding: const EdgeInsets.all(20),

@@ -202,10 +202,7 @@ class SessionHistoryViewModel
     );
     _currentUserId = userId;
 
-    print('🚀 SessionHistoryViewModel.build() - userId: $userId');
-
     if (userId == null || userId.isEmpty) {
-      print('⚠️ SessionHistoryViewModel: No userId, returning empty list');
       return <SessionHistoryEntry>[];
     }
 
@@ -225,23 +222,14 @@ class SessionHistoryViewModel
   }
 
   Future<List<SessionHistoryEntry>> _fetchHistory(String userId) async {
-    print('🔍 SessionHistoryViewModel: Fetching history for userId: $userId');
     final database = ref.read(firestoreDatabaseProvider);
     final rawResults = await database.getUserTestResults(userId);
-    print(
-      '📦 SessionHistoryViewModel: Received ${rawResults.length} raw results from Firestore',
-    );
-
-    if (rawResults.isNotEmpty) {
-      print('📄 First result sample: ${rawResults.first}');
-    }
 
     final entries = rawResults
         .map((result) => SessionHistoryEntry.fromMap(result))
         .where((entry) => entry.id.isNotEmpty)
         .toList();
 
-    print('✅ SessionHistoryViewModel: Parsed ${entries.length} valid entries');
     entries.sort((a, b) => b.completedAt.compareTo(a.completedAt));
     return entries;
   }

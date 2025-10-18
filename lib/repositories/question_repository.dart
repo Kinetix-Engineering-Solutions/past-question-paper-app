@@ -52,16 +52,8 @@ class QuestionRepository {
       // }
 
       // Wait for the ID token to ensure it's ready for the function call
-      // final token = await user.getIdToken(true); // Force refresh the token
-      // print('Got ID token: ${token?.isNotEmpty ?? false}'); // Debug
-
       // Get a reference to the Cloud Function
       final callable = _functions.httpsCallable('generateTest');
-
-      print('Calling generateTest with options: $options'); // Debug
-      print(
-        'Grade: ${options['grade']} (type: ${options['grade'].runtimeType}), Subject: ${options['subject']}',
-      ); // More detailed debug
 
       // Validate that required parameters are present
       if (options['grade'] == null || options['subject'] == null) {
@@ -70,9 +62,6 @@ class QuestionRepository {
 
       // Call the function with the user's selected options
       final result = await callable.call(options);
-
-      print('Cloud Function result type: ${result.data.runtimeType}'); // Debug
-      print('Cloud Function result: ${result.data}'); // Debug
 
       // The new modular function returns an object with questions array
       final Map<String, dynamic> responseData = _safeMapCast(result.data);
