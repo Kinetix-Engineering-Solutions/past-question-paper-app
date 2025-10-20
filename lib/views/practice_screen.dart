@@ -187,6 +187,12 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
             ),
           ),
 
+          if (questions.length > 1)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: _buildQuickNavigator(practiceState),
+            ),
+
           // --- Question Content ---
           Expanded(
             child: PageView.builder(
@@ -206,6 +212,86 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
           // --- Navigation Controls ---
           _buildBottomControls(context, questions.length),
         ],
+      ),
+    );
+  }
+
+  Widget _buildQuickNavigator(PracticeState practiceState) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final total = practiceState.questions.length;
+
+    return SizedBox(
+      height: 52,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        scrollDirection: Axis.horizontal,
+        itemCount: total,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final question = practiceState.questions[index];
+          final isCurrent = index == _currentPage;
+          final isAnswered =
+              practiceState.userAnswers.containsKey(question.id) &&
+              (practiceState.userAnswers[question.id]?.toString().isNotEmpty ??
+                  false);
+
+          final sequentialLabel = '${index + 1}';
+          final sequentialNumber =
+              practiceState.pqpDisplayNumbers[question.id] ?? (index + 1);
+          final examNumber = question.pqpData?.questionNumber;
+          final displayLabel = widget.isPQPMode
+              ? (examNumber != null && examNumber.isNotEmpty
+                    ? examNumber
+                    : '$sequentialNumber')
+              : sequentialLabel;
+
+          final backgroundColor = isCurrent
+              ? colorScheme.primary
+              : isAnswered
+              ? colorScheme.secondaryContainer
+              : colorScheme.surfaceVariant;
+
+          final foregroundColor = isCurrent
+              ? colorScheme.onPrimary
+              : isAnswered
+              ? colorScheme.onSecondaryContainer
+              : colorScheme.onSurfaceVariant;
+
+          return GestureDetector(
+            onTap: () {
+              _pageController.animateToPage(
+                index,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+              );
+            },
+            child: Container(
+              constraints: const BoxConstraints(minWidth: 44),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isCurrent
+                      ? colorScheme.primary
+                      : colorScheme.outlineVariant,
+                  width: isCurrent ? 1.5 : 1,
+                ),
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  displayLabel,
+                  style: TextStyle(
+                    color: foregroundColor,
+                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

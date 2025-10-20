@@ -134,16 +134,38 @@ async function executeQuestionQuery(query, params) {
  * @throws {HttpsError} - If questions not found
  */
 async function fetchQuestionsForGrading(questionIds) {
-  const questionsSnapshot = await admin.firestore()
-    .collection('questions')
-    .where(admin.firestore.FieldPath.documentId(), 'in', questionIds)
-    .get();
+  if (!Array.isArray(questionIds) || questionIds.length === 0) {
+    throw new functions.https.HttpsError('invalid-argument', 'No question IDs provided for grading.');
+  }
 
-  if (questionsSnapshot.empty) {
+  // Firestore limits 'in' queries to 10 elements per call. For larger tests,
+  // chunk the IDs and merge the results to avoid runtime failures on big exams.
+  const batches = [];
+  for (let i = 0; i < questionIds.length; i += 10) {
+    batches.push(questionIds.slice(i, i + 10));
+  }
+
+  const questionDocs = [];
+
+  for (const batch of batches) {
+    const snapshot = await admin.firestore()
+      .collection('questions')
+      .where(admin.firestore.FieldPath.documentId(), 'in', batch)
+      .get();
+
+    questionDocs.push(...snapshot.docs);
+  }
+
+  if (questionDocs.length === 0) {
     throw new functions.https.HttpsError('not-found', 'Questions not found for grading.');
   }
 
-  return questionsSnapshot.docs;
+  if (questionDocs.length !== questionIds.length) {
+    const missingIds = questionIds.filter(id => !questionDocs.find(doc => doc.id === id));
+    console.warn('⚠️ Missing question documents for grading:', missingIds);
+  }
+
+  return questionDocs;
 }
 
 /**
