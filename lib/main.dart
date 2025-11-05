@@ -12,10 +12,11 @@ import 'package:past_question_paper_v1/views/login.dart';
 import 'package:past_question_paper_v1/views/main_navigation_screen.dart';
 import 'package:past_question_paper_v1/views/onboarding_screen.dart';
 import 'package:past_question_paper_v1/views/signup_screen.dart';
+import 'package:past_question_paper_v1/views/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize Firebase with platform-specific options
+    // Initialize Firebase with platform-specific options
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Activate App Check
@@ -46,7 +47,10 @@ class MyApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeState.mode,
-      home: const AppInitializer(),
+
+      // ✅SplashScreen as the entry point
+      home: const SplashScreen(),
+
       routes: {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignUpScreen(),
@@ -57,6 +61,7 @@ class MyApp extends ConsumerWidget {
   }
 }
 
+// ✅ AppInitializer  — splash screen handles auth & deep links
 class AppInitializer extends ConsumerStatefulWidget {
   const AppInitializer({super.key});
 
