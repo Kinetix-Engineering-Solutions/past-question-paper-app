@@ -111,7 +111,6 @@ pubspec.lock.bak
 .packages.bak
 
 # Generated files that shouldn't be committed
-lib/generated_plugin_registrant.dart
 **/*.g.dart
 **/*.freezed.dart
 **/*.mocks.dart

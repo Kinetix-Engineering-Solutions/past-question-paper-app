@@ -341,6 +341,35 @@ class Question {
       map['options'] = options;
     }
 
+    // Add mode-specific data
+    if (pqpData != null) {
+      map['pqpData'] = {
+        'paper': pqpData!.paper,
+        'season': pqpData!.season,
+        'year': pqpData!.year,
+        'questionNumber': pqpData!.questionNumber,
+        'questionText': pqpData!.questionText,
+        'marks': pqpData!.marks,
+      };
+    }
+
+    if (sprintData != null) {
+      map['sprintData'] = {
+        'questionText': sprintData!.questionText,
+        'providedContext': sprintData!.providedContext,
+        'marks': sprintData!.marks,
+        'canRandomize': sprintData!.canRandomize,
+        'difficulty': sprintData!.difficulty,
+        'estimatedTime': sprintData!.estimatedTime,
+        'tags': sprintData!.tags,
+      };
+    }
+
+    // Add parent context if present
+    if (parentContext != null) {
+      map['parentContext'] = parentContext;
+    }
+
     return map;
   }
 
