@@ -79,7 +79,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     if (result != null && mounted) {
       // Safely cast the grading results
       final gradingResults = result['gradingResults'];
-      final questions = result['questions'];
+      // Note: questions come from widget.questions, not from grading result
 
       // Convert to proper types with null safety
       final Map<String, dynamic> safeGradingResults = {};
@@ -92,16 +92,60 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       }
 
       final List<Map<String, dynamic>> safeQuestions = [];
-      if (questions is List) {
-        for (final question in questions) {
-          if (question is Map) {
-            final Map<String, dynamic> safeQuestion = {};
-            question.forEach((key, value) {
-              safeQuestion[key.toString()] = value;
-            });
-            safeQuestions.add(safeQuestion);
-          }
+      // Use the original questions from widget.questions instead of result['questions']
+      // because grading result doesn't contain question data - only grading results
+      for (final question in widget.questions) {
+        final Map<String, dynamic> safeQuestion = {};
+        
+        // Convert Question object to Map, preserving all essential fields including ID
+        safeQuestion['id'] = question.id;
+        safeQuestion['questionText'] = question.questionText;
+        safeQuestion['format'] = question.format;
+        safeQuestion['questionType'] = question.questionType;
+        safeQuestion['subject'] = question.subject;
+        safeQuestion['paper'] = question.paper;
+        safeQuestion['grade'] = question.grade;
+        safeQuestion['topic'] = question.topic;
+        safeQuestion['cognitiveLevel'] = question.cognitiveLevel;
+        safeQuestion['marks'] = question.marks;
+        safeQuestion['year'] = question.year;
+        safeQuestion['season'] = question.season;
+        safeQuestion['correctOrder'] = question.correctOrder;
+        safeQuestion['correctAnswer'] = question.correctAnswer;
+        safeQuestion['explanation'] = question.explanation;
+        safeQuestion['options'] = question.options;
+        safeQuestion['imageUrl'] = question.imageUrl;
+        
+        // Handle complex objects - convert to simple maps
+        if (question.pqpData != null) {
+          safeQuestion['pqpData'] = {
+            'questionNumber': question.pqpData!.questionNumber,
+            'marks': question.pqpData!.marks,
+            'questionText': question.pqpData!.questionText,
+          };
         }
+        
+        if (question.sprintData != null) {
+          safeQuestion['sprintData'] = {
+            'questionText': question.sprintData!.questionText,
+            'marks': question.sprintData!.marks,
+            'difficulty': question.sprintData!.difficulty,
+          };
+        }
+        
+        if (question.parentContext != null) {
+          safeQuestion['parentContext'] = question.parentContext;
+        }
+        
+        // IMPORTANT: For drag-and-drop questions, preserve dragItems for step text mapping
+        if (question.dragItems != null) {
+          safeQuestion['dragItems'] = question.dragItems!.map((item) => {
+            'id': item.id,
+            'text': item.text,
+          }).toList();
+        }
+        
+        safeQuestions.add(safeQuestion);
       }
 
       // Clear session before navigation to prevent stale data
