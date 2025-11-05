@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/utils/loading_state.dart';
@@ -6,6 +7,7 @@ import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_v1/views/login.dart';
 import 'package:past_question_paper_v1/widgets/custom_snackbar.dart';
 import 'package:past_question_paper_v1/utils/form_validators.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -24,6 +26,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _navigateToLogin() {
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    }
   }
 
   void _handleSignUp() {
@@ -55,14 +65,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     });
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.ink, AppColors.ink],
-          ),
-        ),
+      backgroundColor: AppColors.paper,
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -77,18 +82,18 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     margin: const EdgeInsets.only(bottom: 40),
                     child: Column(
                       children: [
-                        Icon(
-                          Icons.person_add,
-                          size: 80,
-                          color: AppColors.chalkWhite,
+                        Image.asset(
+                          'assets/images/past question paper.png',
+                          height: 120,
+                          width: 120,
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'Create Account',
                           style: TextStyle(
-                            fontSize: 28,
+                            fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.chalkWhite,
+                            color: AppColors.ink,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -97,7 +102,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                           'Join us to start your STEM practice journey',
                           style: TextStyle(
                             fontSize: 16,
-                            color: AppColors.chalkWhite.withOpacity(0.8),
+                            color: AppColors.neutralMid,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -106,54 +111,30 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ),
                   TextFormField(
                     controller: _emailController,
-                    style: TextStyle(color: AppColors.chalkWhite),
+                    style: TextStyle(color: AppColors.ink),
                     decoration: InputDecoration(
                       labelText: 'Email',
-                      labelStyle: TextStyle(
-                        color: AppColors.chalkWhite.withOpacity(0.7),
-                      ),
-                      errorStyle: TextStyle(
-                        color: Colors.red.shade300,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      labelStyle: TextStyle(color: AppColors.neutralMid),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: AppColors.chalkWhite.withOpacity(0.3),
-                        ),
+                        borderSide: BorderSide(color: AppColors.neutralBorder),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: AppColors.chalkWhite.withOpacity(0.3),
-                        ),
+                        borderSide: BorderSide(color: AppColors.neutralBorder),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
-                          color: AppColors.chalkWhite,
-                          width: 2,
-                        ),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.red.shade300,
-                          width: 2,
-                        ),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.red.shade300,
+                          color: AppColors.accent,
                           width: 2,
                         ),
                       ),
                       prefixIcon: Icon(
                         Icons.email_outlined,
-                        color: AppColors.chalkWhite.withOpacity(0.7),
+                        color: AppColors.neutralMid,
                       ),
-                      fillColor: AppColors.ink.withOpacity(0.3),
+                      fillColor: AppColors.neutralCard,
                       filled: true,
                     ),
                     keyboardType: TextInputType.emailAddress,
@@ -164,54 +145,30 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _passwordController,
-                    style: TextStyle(color: AppColors.chalkWhite),
+                    style: TextStyle(color: AppColors.ink),
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      labelStyle: TextStyle(
-                        color: AppColors.chalkWhite.withOpacity(0.7),
-                      ),
-                      errorStyle: TextStyle(
-                        color: Colors.red.shade300,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      labelStyle: TextStyle(color: AppColors.neutralMid),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: AppColors.chalkWhite.withOpacity(0.3),
-                        ),
+                        borderSide: BorderSide(color: AppColors.neutralBorder),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: AppColors.chalkWhite.withOpacity(0.3),
-                        ),
+                        borderSide: BorderSide(color: AppColors.neutralBorder),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
-                          color: AppColors.chalkWhite,
-                          width: 2,
-                        ),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.red.shade300,
-                          width: 2,
-                        ),
-                      ),
-                      focusedErrorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.red.shade300,
+                          color: AppColors.accent,
                           width: 2,
                         ),
                       ),
                       prefixIcon: Icon(
                         Icons.lock_outline,
-                        color: AppColors.chalkWhite.withOpacity(0.7),
+                        color: AppColors.neutralMid,
                       ),
-                      fillColor: AppColors.ink.withOpacity(0.3),
+                      fillColor: AppColors.neutralCard,
                       filled: true,
                     ),
                     obscureText: true,
@@ -226,13 +183,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         ? null
                         : _handleSignUp,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.chalkWhite,
-                      foregroundColor: AppColors.ink,
+                      backgroundColor: AppColors.accent,
+                      foregroundColor: AppColors.neutralCard,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      elevation: 4,
+                      elevation: 2,
                     ),
                     child: ref.watch(loadingStateProvider)
                         ? SizedBox(
@@ -241,7 +198,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                AppColors.ink,
+                                AppColors.neutralCard,
                               ),
                             ),
                           )
@@ -250,26 +207,68 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              color: AppColors.ink,
+                              color: AppColors.neutralCard,
                             ),
                           ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Privacy Policy Notice
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.neutralMid,
+                          height: 1.5,
+                        ),
+                        children: [
+                          const TextSpan(
+                            text: 'By signing up, you agree to our ',
+                          ),
+                          TextSpan(
+                            text: 'Privacy Policy',
+                            style: TextStyle(
+                              color: AppColors.accent,
+                              decoration: TextDecoration.underline,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () async {
+                                try {
+                                  final uri = Uri.parse(
+                                    'https://pqp.kinetixes.com/privacy-policy/',
+                                  );
+                                  await launchUrl(
+                                    uri,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                } catch (e) {
+                                  if (mounted) {
+                                    CustomSnackBar.show(
+                                      context: context,
+                                      message: 'Could not open Privacy Policy',
+                                      isError: true,
+                                    );
+                                  }
+                                }
+                              },
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   if (!ref.watch(loadingStateProvider)) ...[
                     const SizedBox(height: 16),
                     TextButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const LoginScreen(),
-                          ),
-                        );
-                      },
+                      onPressed: _navigateToLogin,
                       style: TextButton.styleFrom(
-                        foregroundColor: AppColors.chalkWhite,
+                        foregroundColor: AppColors.ink,
                       ),
                       child: Text(
                         'Already have an account? Log in',
-                        style: TextStyle(color: AppColors.chalkWhite),
+                        style: TextStyle(color: AppColors.ink),
                       ),
                     ),
                   ],

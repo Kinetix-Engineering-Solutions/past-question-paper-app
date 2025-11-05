@@ -97,7 +97,9 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
                   if (wasUnanswered) {
                     bg = Colors.grey.withOpacity(0.15);
                   } else {
-                    bg = (isCorrect ? Colors.green : Colors.red).withOpacity(0.15);
+                    bg = (isCorrect ? Colors.green : Colors.red).withOpacity(
+                      0.15,
+                    );
                   }
                   final selected = index == _currentQuestionIndex;
                   return InkWell(
@@ -108,19 +110,28 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
                     ),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
-                        color: selected ? AppColors.accent.withOpacity(0.15) : bg,
+                        color: selected
+                            ? AppColors.accent.withOpacity(0.15)
+                            : bg,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: selected ? AppColors.accent : bg.withOpacity(0.5),
+                          color: selected
+                              ? AppColors.accent
+                              : bg.withOpacity(0.5),
                         ),
                       ),
                       child: Text(
                         label,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: selected ? AppColors.accent : Theme.of(context).colorScheme.onSurface,
+                          color: selected
+                              ? AppColors.accent
+                              : Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -240,7 +251,8 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
           const SizedBox(height: 20),
 
           // Parent context (if any)
-          if (question != null && _extractMap(question['parentContext']) != null) ...[
+          if (question != null &&
+              _extractMap(question['parentContext']) != null) ...[
             _buildParentContext(question),
             const SizedBox(height: 12),
           ],
@@ -268,9 +280,13 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
           ],
 
           // Question image
-          if (question != null && (question['imageUrl'] != null || _extractMap(question['parentContext'])?['imageUrl'] != null)) ...[
+          if (question != null &&
+              (question['imageUrl'] != null ||
+                  _extractMap(question['parentContext'])?['imageUrl'] !=
+                      null)) ...[
             Image.network(
-              question['imageUrl'] ?? _extractMap(question['parentContext'])?['imageUrl'],
+              question['imageUrl'] ??
+                  _extractMap(question['parentContext'])?['imageUrl'],
               width: double.infinity,
               height: 200,
               fit: BoxFit.cover,
@@ -311,7 +327,10 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
                 padding: const EdgeInsets.only(bottom: 4),
                 child: LatexText(
                   '$optionLabel) $option',
-                  textStyle: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+                  textStyle: TextStyle(
+                    fontSize: 14,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
               );
             }).toList(),
@@ -376,9 +395,18 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
     final normalizedFormat = format.toLowerCase();
     // Robust detection for drag-drop variants and fallbacks
     final subFormat = (result['subFormat']?.toString().toLowerCase() ?? '');
-    final isDragDrop = normalizedFormat.contains('drag') && normalizedFormat.contains('drop');
-    final isOrdering = isDragDrop && (subFormat == 'ordering' || normalizedFormat.contains('ordering') || (result['correctOrder'] != null));
-    final isMatching = isDragDrop && (subFormat == 'matching' || normalizedFormat.contains('matching') || (result['detailedResults'] != null));
+    final isDragDrop =
+        normalizedFormat.contains('drag') && normalizedFormat.contains('drop');
+    final isOrdering =
+        isDragDrop &&
+        (subFormat == 'ordering' ||
+            normalizedFormat.contains('ordering') ||
+            (result['correctOrder'] != null));
+    final isMatching =
+        isDragDrop &&
+        (subFormat == 'matching' ||
+            normalizedFormat.contains('matching') ||
+            (result['detailedResults'] != null));
     if (isOrdering) {
       return _buildOrderingComparison(result, question, colorScheme);
     }
@@ -393,7 +421,7 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
       if (question != null && (format == 'mcq' || format == 'multiplechoice')) {
         final opts = _extractList(question['options']) ?? [];
         int? idx;
-  if (raw.length == 1 && RegExp(r'^[A-Za-z]$').hasMatch(raw)) {
+        if (raw.length == 1 && RegExp(r'^[A-Za-z]$').hasMatch(raw)) {
           idx = raw.toUpperCase().codeUnitAt(0) - 65; // A->0
         } else {
           idx = int.tryParse(raw);
@@ -403,10 +431,80 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
           return '$label) ${opts[idx].toString()}';
         }
       }
-      if (normalizedFormat == 'true_false' || raw.toLowerCase() == 'true' || raw.toLowerCase() == 'false') {
+      if (normalizedFormat == 'true_false' ||
+          raw.toLowerCase() == 'true' ||
+          raw.toLowerCase() == 'false') {
         return raw[0].toUpperCase() + raw.substring(1).toLowerCase();
       }
       return raw;
+    }
+
+    // Helper to check if answer is an image URL
+    bool isImageUrl(String text) {
+      if (text.isEmpty) return false;
+      // Extract the actual URL if format is "A) https://..."
+      String urlPart = text;
+      if (text.contains(') ')) {
+        urlPart = text.split(') ').last;
+      }
+      return urlPart.startsWith('http') &&
+          (urlPart.contains('.jpg') ||
+              urlPart.contains('.jpeg') ||
+              urlPart.contains('.png') ||
+              urlPart.contains('.gif') ||
+              urlPart.contains('.webp'));
+    }
+
+    // Helper to build answer widget (text or image)
+    Widget buildAnswerWidget(String text, TextStyle style) {
+      if (isImageUrl(text)) {
+        // Extract option letter (e.g., "A") and URL
+        String optionLetter = '';
+        String imageUrl = text;
+        if (text.contains(') ')) {
+          final parts = text.split(') ');
+          optionLetter = parts.first;
+          imageUrl = parts.last;
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (optionLetter.isNotEmpty)
+              Text(
+                '$optionLetter)',
+                style: style.copyWith(fontWeight: FontWeight.bold),
+              ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Text(
+                    'Failed to load image',
+                    style: style.copyWith(color: Colors.red),
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                          : null,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      } else {
+        return LatexText(text, textStyle: style);
+      }
     }
 
     return Column(
@@ -431,9 +529,9 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
                 ),
               ),
               const SizedBox(height: 4),
-              LatexText(
+              buildAnswerWidget(
                 renderAnswer(userAnswer),
-                textStyle: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+                TextStyle(fontSize: 14, color: colorScheme.onSurface),
               ),
             ],
           ),
@@ -459,11 +557,11 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
                 ),
               ),
               const SizedBox(height: 4),
-              LatexText(
+              buildAnswerWidget(
                 renderAnswer(correctAnswer) == 'No answer'
                     ? (correctAnswer?.toString() ?? 'N/A')
                     : renderAnswer(correctAnswer),
-                textStyle: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+                TextStyle(fontSize: 14, color: colorScheme.onSurface),
               ),
             ],
           ),
@@ -478,39 +576,61 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
     ColorScheme colorScheme,
   ) {
     final detailedResults = _extractList(result['detailedResults']) ?? [];
-    
+
     // Extract correctOrder from result or from detailedResults
     List<String> correctOrder = [];
     if (result['correctOrder'] != null) {
-      correctOrder = _extractList(result['correctOrder'])?.map((e) => e.toString()).toList() ?? [];
+      correctOrder =
+          _extractList(
+            result['correctOrder'],
+          )?.map((e) => e.toString()).toList() ??
+          [];
     } else if (detailedResults.isNotEmpty) {
       // Fallback: extract from detailedResults
-      correctOrder = detailedResults.map((detail) {
-        final detailMap = _extractMap(detail) ?? {};
-        return detailMap['correctAnswer']?.toString() ?? '';
-      }).where((s) => s.isNotEmpty).toList();
+      correctOrder = detailedResults
+          .map((detail) {
+            final detailMap = _extractMap(detail) ?? {};
+            return detailMap['correctAnswer']?.toString() ?? '';
+          })
+          .where((s) => s.isNotEmpty)
+          .toList();
     } else if (question != null && question['correctOrder'] != null) {
-      correctOrder = _extractList(question['correctOrder'])?.map((e) => e.toString()).toList() ?? [];
+      correctOrder =
+          _extractList(
+            question['correctOrder'],
+          )?.map((e) => e.toString()).toList() ??
+          [];
     } else if (question != null && question['dragTargets'] != null) {
       correctOrder = (_extractList(question['dragTargets']) ?? [])
           .map((detail) => _extractMap(detail)?['id']?.toString() ?? '')
           .where((s) => s.isNotEmpty)
           .toList();
     }
-    
+
     // Extract userOrder from result
     List<String> userOrder = [];
     if (result['userAnswers'] != null) {
-      userOrder = _extractList(result['userAnswers'])?.map((e) => e.toString()).toList() ?? [];
+      userOrder =
+          _extractList(
+            result['userAnswers'],
+          )?.map((e) => e.toString()).toList() ??
+          [];
     } else if (result['userAnswer'] != null) {
       final rawAnswer = result['userAnswer'].toString();
-      userOrder = rawAnswer.split(',').map((e) => e.trim()).where((s) => s.isNotEmpty).toList();
+      userOrder = rawAnswer
+          .split(',')
+          .map((e) => e.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
     } else if (detailedResults.isNotEmpty) {
       // Fallback: extract from detailedResults
-      userOrder = detailedResults.map((detail) {
-        final detailMap = _extractMap(detail) ?? {};
-        return detailMap['userAnswer']?.toString() ?? '';
-      }).where((s) => s.isNotEmpty).toList();
+      userOrder = detailedResults
+          .map((detail) {
+            final detailMap = _extractMap(detail) ?? {};
+            return detailMap['userAnswer']?.toString() ?? '';
+          })
+          .where((s) => s.isNotEmpty)
+          .toList();
     }
 
     // Create a mapping from step IDs to step text for better display
@@ -526,7 +646,7 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
         }
       }
     }
-    
+
     // Helper function to get step display text
     String getStepDisplayText(String stepId) {
       return stepIdToText[stepId] ?? stepId; // Fallback to ID if text not found
@@ -546,7 +666,14 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Your Order', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.accent)),
+              Text(
+                'Your Order',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.accent,
+                ),
+              ),
               const SizedBox(height: 4),
               if (userOrder.isNotEmpty) ...[
                 ...userOrder.asMap().entries.map((entry) {
@@ -557,7 +684,10 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
                     padding: const EdgeInsets.only(bottom: 4),
                     child: LatexText(
                       '${index + 1}. $stepText',
-                      textStyle: TextStyle(fontSize: 13, color: colorScheme.onSurface),
+                      textStyle: TextStyle(
+                        fontSize: 13,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
                   );
                 }),
@@ -580,7 +710,14 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Correct Order', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.green)),
+              const Text(
+                'Correct Order',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
               const SizedBox(height: 4),
               if (correctOrder.isNotEmpty) ...[
                 ...correctOrder.asMap().entries.map((entry) {
@@ -591,7 +728,10 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
                     padding: const EdgeInsets.only(bottom: 4),
                     child: LatexText(
                       '${index + 1}. $stepText',
-                      textStyle: TextStyle(fontSize: 13, color: colorScheme.onSurface),
+                      textStyle: TextStyle(
+                        fontSize: 13,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
                   );
                 }),
@@ -860,14 +1000,28 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.3)),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withOpacity(0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Context:', style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface)),
+          Text(
+            'Context:',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
           const SizedBox(height: 6),
-          Text(text.toString(), style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+          LatexText(
+            text.toString(),
+            textStyle: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
+              height: 1.4,
+            ),
+          ),
         ],
       ),
     );
@@ -880,7 +1034,8 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
     String base = 'Question ${_currentQuestionIndex + 1} of ${items.length}';
     final pqpNumber = _extractMap(q?['pqpData'])?['questionNumber']?.toString();
     if (pqpNumber != null && pqpNumber.isNotEmpty) {
-      base = 'Question $pqpNumber • ${_currentQuestionIndex + 1}/${items.length}';
+      base =
+          'Question $pqpNumber • ${_currentQuestionIndex + 1}/${items.length}';
     }
     return Text(base);
   }
