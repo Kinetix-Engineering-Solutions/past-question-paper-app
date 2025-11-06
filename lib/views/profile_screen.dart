@@ -4,6 +4,7 @@ import 'package:past_question_paper_v1/utils/app_constants.dart';
 import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_v1/viewmodels/profile_viewmodel.dart';
 import 'package:past_question_paper_v1/viewmodels/theme_viewmodel.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -420,6 +421,55 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                         child: const Text('Sign out'),
                       ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Privacy Policy & Terms
+              _ProfileSectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionHeader(context, 'Legal'),
+                    const SizedBox(height: 8),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        Icons.privacy_tip_outlined,
+                        color: colorScheme.primary,
+                      ),
+                      title: Text(
+                        'Privacy Policy',
+                        style: textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      trailing: Icon(
+                        Icons.open_in_new,
+                        size: 20,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      onTap: () async {
+                        try {
+                          final uri = Uri.parse(
+                            'https://pqp.kinetixes.com/privacy-policy/',
+                          );
+                          await launchUrl(
+                            uri,
+                            mode: LaunchMode.externalApplication,
+                          );
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Could not open Privacy Policy'),
+                              ),
+                            );
+                          }
+                        }
+                      },
                     ),
                   ],
                 ),

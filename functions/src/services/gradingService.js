@@ -14,6 +14,7 @@ const { gradeShortAnswer, gradeShortAnswerSubmissions } = require('./shortAnswer
  */
 function gradeMultipleChoice(question, userAnswer) {
   const isCorrect = userAnswer === question.correctAnswer;
+  const maxMarks = question.maxMarks || question.marks || 2;
   
   return {
     questionId: question.id,
@@ -21,8 +22,8 @@ function gradeMultipleChoice(question, userAnswer) {
     userAnswer: userAnswer,
     correctAnswer: question.correctAnswer,
     isCorrect: isCorrect,
-    marksAwarded: isCorrect ? (question.maxMarks || 2) : 0,
-    maxMarks: question.maxMarks || 2
+    marksAwarded: isCorrect ? maxMarks : 0,
+    maxMarks: maxMarks
   };
 }
 
@@ -34,6 +35,7 @@ function gradeMultipleChoice(question, userAnswer) {
  */
 function gradeTrueFalse(question, userAnswer) {
   const isCorrect = userAnswer === question.correctAnswer;
+  const maxMarks = question.maxMarks || question.marks || 1;
   
   return {
     questionId: question.id,
@@ -41,8 +43,8 @@ function gradeTrueFalse(question, userAnswer) {
     userAnswer: userAnswer,
     correctAnswer: question.correctAnswer,
     isCorrect: isCorrect,
-    marksAwarded: isCorrect ? (question.maxMarks || 1) : 0,
-    maxMarks: question.maxMarks || 1
+    marksAwarded: isCorrect ? maxMarks : 0,
+    maxMarks: maxMarks
   };
 }
 
@@ -292,12 +294,14 @@ function gradeSingleQuestion(question, submission) {
 
   switch (normalizedFormat) {
     case 'multiplechoice':
+    case 'mcq':
       return gradeMultipleChoice(question, submission.answer);
       
     case 'truefalse':
       return gradeTrueFalse(question, submission.answer);
       
     case 'draganddrop':
+    case 'dragdrop':  // Handle drag_drop format (becomes dragdrop after normalization)
       return gradeDragAndDrop(question, submission.answers || submission.answer);
       
     case 'fillinblanks':
@@ -386,9 +390,17 @@ async function gradeTestSubmission(params) {
     const submissionValue = submissions[questionId];
     
     if (question) {
-      // Handle unanswered questions (null, undefined, or empty string)
-      if (submissionValue === undefined || submissionValue === null || submissionValue === '') {
+      // Handle truly unanswered questions (null or undefined only)
+      // Empty string ("") is treated as a valid answer (e.g., for drag-drop with no items selected)
+      if (submissionValue === undefined || submissionValue === null) {
         console.warn(`⚠️ Unanswered question: ${questionId} - Grading as 0 marks`);
+        
+        // DEBUG: Check what marks field is available in question
+        console.log(`Question ${questionId} marks fields:`, {
+          maxMarks: question.maxMarks,
+          marks: question.marks,
+          availableFields: Object.keys(question)
+        });
         
         // Create a "no answer" result for unanswered questions
         const format = (question.format || 'multipleChoice').toLowerCase().replace(/[-_]/g, '');
@@ -399,7 +411,7 @@ async function gradeTestSubmission(params) {
           correctAnswer: question.correctAnswer,
           isCorrect: false,
           marksAwarded: 0,
-          maxMarks: question.maxMarks || 2,
+          maxMarks: question.maxMarks || question.marks || 2,
           wasUnanswered: true
         };
         

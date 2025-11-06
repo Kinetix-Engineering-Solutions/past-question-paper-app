@@ -1,0 +1,21 @@
+{
+  "subject": "mathematics",
+  "paper": "p1",
+  "grade": 12,
+  "totalMarks": 150,
+  "macroQuestionCount": 11,
+  "topics": {
+    "Pattern & Sequences": 20,
+    "Functions & Graphs": 35,
+    "Finance, Growth & Decay": 20,
+    "Algebra, Equations & Inequalities": 35,
+    "Differential Calculus": 30,
+    "Probability": 10
+  },
+  "cognitiveLevels": {
+    "Level 1": 0.2,
+    "Level 2": 0.35,
+    "Level 3": 0.3,
+    "Level 4": 0.15
+  }
+}

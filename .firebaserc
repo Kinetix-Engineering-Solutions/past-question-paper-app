@@ -1,0 +1,13 @@
+{
+  "projects": {},
+  "targets": {
+    "vibe-code-4c59f": {
+      "hosting": {
+        "admin": [
+          "vibe-code-4c59f"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

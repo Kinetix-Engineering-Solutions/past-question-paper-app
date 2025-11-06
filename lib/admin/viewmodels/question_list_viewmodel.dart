@@ -68,7 +68,12 @@ class QuestionListState {
     );
   }
 
-  int get totalPages => (totalItems / itemsPerPage).ceil();
+  int get totalPages {
+    if (totalItems == 0) {
+      return 1;
+    }
+    return (totalItems / itemsPerPage).ceil();
+  }
 }
 
 /// Question List Item (simplified for table display)
@@ -194,20 +199,16 @@ class QuestionListViewModel extends StateNotifier<QuestionListState> {
       // might not have this field and would be excluded from results.
       // Instead, we'll sort client-side after fetching.
 
-      // Get total count (for pagination)
-      final countSnapshot = await query.count().get();
-      final totalItems = countSnapshot.count ?? 0;
-
-      // Apply pagination
-      query = query.limit(state.itemsPerPage);
-
-      // Execute query
+      // Execute query (fetch all records matching filters; pagination handled client-side)
       final snapshot = await query.get();
 
       // Convert to list items
       var questions = snapshot.docs
           .map((doc) => QuestionListItem.fromFirestore(doc))
           .toList();
+
+      // Remove parent/placeholder questions from the listing
+      questions = questions.where((question) => !question.isParent).toList();
 
       // Sort by creation date client-side (handles missing createdAt)
       questions.sort((a, b) {
@@ -229,10 +230,25 @@ class QuestionListViewModel extends StateNotifier<QuestionListState> {
                   q.id.toLowerCase().contains(query);
             }).toList();
 
+      final filteredTotal = filteredQuestions.length;
+      final totalPages = filteredTotal == 0
+          ? 1
+          : (filteredTotal / state.itemsPerPage).ceil();
+      final adjustedCurrentPage = filteredTotal == 0
+          ? 1
+          : state.currentPage.clamp(1, totalPages);
+
+      final startIndex = (adjustedCurrentPage - 1) * state.itemsPerPage;
+      final pagedQuestions = filteredQuestions
+          .skip(startIndex)
+          .take(state.itemsPerPage)
+          .toList();
+
       state = state.copyWith(
-        questions: filteredQuestions,
+        questions: pagedQuestions,
         isLoading: false,
-        totalItems: totalItems,
+        totalItems: filteredTotal,
+        currentPage: adjustedCurrentPage,
       );
     } catch (e) {
       debugPrint('❌ Error loading questions: $e');

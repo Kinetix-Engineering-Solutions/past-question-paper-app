@@ -30,6 +30,22 @@ exports.generateTest = functions.https.onCall(async (data, context) => {
     // Remove sensitive data before sending to client
     const sanitizedQuestions = testData.questions.map(question => {
       const { correctAnswer, explanation, correctAnswers, ...sanitized } = question;
+      
+      // IMPORTANT: Explicitly preserve the question ID for review screen mapping
+      sanitized.id = question.id;
+      
+      // IMPORTANT: For drag-and-drop ordering questions, preserve correctOrder 
+      // for the review screen to display correct answers
+      const format = (question.format || question.questionType || '').toLowerCase();
+      if (format.includes('drag') && question.correctOrder) {
+        sanitized.correctOrder = question.correctOrder;
+      }
+      
+      // IMPORTANT: For drag-and-drop questions, preserve dragItems for step text mapping
+      if (format.includes('drag') && question.dragItems) {
+        sanitized.dragItems = question.dragItems;
+      }
+      
       return sanitized;
     });
     

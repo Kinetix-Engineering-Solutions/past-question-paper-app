@@ -3,11 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 
-/// PQP Typography: Montserrat for headings/titles, Inter for body/labels.
+/// PQP Typography: Poppins for headings/titles, Inter for body/labels.
 class AppTypography {
   static TextTheme textTheme([TextTheme? seed, bool isDark = false]) {
     final seedTheme = seed ?? ThemeData.light().textTheme;
-    final mont = GoogleFonts.montserratTextTheme(seedTheme);
+    final poppins = GoogleFonts.poppinsTextTheme(seedTheme);
     final inter = GoogleFonts.interTextTheme(seedTheme);
     // Slightly reduce overall font sizes for a tighter, denser UI.
     const fontScale = 0.94;
@@ -15,34 +15,36 @@ class AppTypography {
     // Select colors based on theme brightness
     final ink = isDark ? AppColorsDark.ink : AppColors.ink;
     final neutralMid = isDark ? AppColorsDark.neutralMid : AppColors.neutralMid;
-    final neutralSoft = isDark ? AppColorsDark.neutralSoft : AppColors.neutralSoft;
+    final neutralSoft = isDark
+        ? AppColorsDark.neutralSoft
+        : AppColors.neutralSoft;
 
     final composed = TextTheme(
-      // Headings & titles (Montserrat)
-      headlineLarge: mont.headlineLarge?.copyWith(
+      // Headings & titles (Poppins)
+      headlineLarge: poppins.headlineLarge?.copyWith(
         color: ink,
         fontWeight: FontWeight.w700,
         letterSpacing: -1.0,
       ),
-      headlineMedium: mont.headlineMedium?.copyWith(
+      headlineMedium: poppins.headlineMedium?.copyWith(
         color: ink,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.5,
       ),
-      headlineSmall: mont.headlineSmall?.copyWith(
+      headlineSmall: poppins.headlineSmall?.copyWith(
         color: ink,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.3,
       ),
-      titleLarge: mont.titleLarge?.copyWith(
+      titleLarge: poppins.titleLarge?.copyWith(
         color: ink,
         fontWeight: FontWeight.w600,
       ),
-      titleMedium: mont.titleMedium?.copyWith(
+      titleMedium: poppins.titleMedium?.copyWith(
         color: ink,
         fontWeight: FontWeight.w500,
       ),
-      titleSmall: mont.titleSmall?.copyWith(
+      titleSmall: poppins.titleSmall?.copyWith(
         color: ink,
         fontWeight: FontWeight.w500,
       ),

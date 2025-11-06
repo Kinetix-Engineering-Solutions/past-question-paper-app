@@ -29,7 +29,7 @@ function buildLocalEnhancedQuestionQuery(params) {
  * @param {number} tolerance - Tolerance percentage for marks deviation (default 0.15 = 15%)
  * @returns {Array} - Selected questions for this topic
  */
-async function selectQuestionsForTopic(topicName, marksNeeded, params, tolerance = 0.15) {
+async function selectQuestionsForTopic(topicName, marksNeeded, params, tolerance = 0.30) {
   console.log(`Selecting questions for topic: ${topicName} (${marksNeeded} marks needed, ±${(tolerance * 100).toFixed(1)}% tolerance)`);
   
   // Query more questions to have better selection pool
@@ -43,6 +43,8 @@ async function selectQuestionsForTopic(topicName, marksNeeded, params, tolerance
     const questionDocs = await executeQuestionQuery(query, params);
     const questionData = questionDocs.map(doc => mapQuestionData(doc));
     
+    console.log(`📥 Retrieved ${questionData.length} total questions for ${topicName}`);
+    
     // IMPORTANT: Filter out parent questions (they're context providers, not answerable questions)
     const answerableQuestions = questionData.filter(q => !q.isParent);
     
@@ -50,14 +52,22 @@ async function selectQuestionsForTopic(topicName, marksNeeded, params, tolerance
       console.log(`🚫 Filtered out ${questionData.length - answerableQuestions.length} parent questions from ${topicName}`);
     }
     
+    console.log(`✅ ${answerableQuestions.length} answerable questions for ${topicName}`);
+    
     // Use knapsack-style selection for precise marks fitting
     const selectedQuestions = selectQuestionsKnapsackStyle(answerableQuestions, marksNeeded, tolerance);
     
-    console.log(`Selected ${selectedQuestions.length} questions for ${topicName} (${selectedQuestions.reduce((sum, q) => sum + Number(q.maxMarks || q.marks || 0), 0)} marks)`);
+    const selectedMarks = selectedQuestions.reduce((sum, q) => sum + Number(q.maxMarks || q.marks || 0), 0);
+    console.log(`✅ Selected ${selectedQuestions.length} questions for ${topicName} (${selectedMarks} marks)`);
+    
+    if (selectedQuestions.length === 0) {
+      console.warn(`⚠️ WARNING: No questions selected for ${topicName}! Available: ${answerableQuestions.length}, Marks needed: ${marksNeeded}`);
+    }
+    
     return selectedQuestions;
     
   } catch (error) {
-    console.warn(`Failed to get questions for topic ${topicName}:`, error.message);
+    console.error(`❌ Failed to get questions for topic ${topicName}:`, error.message);
     return [];
   }
 }
@@ -70,11 +80,16 @@ async function selectQuestionsForTopic(topicName, marksNeeded, params, tolerance
  * @returns {Array} - Optimally selected questions
  */
 function selectQuestionsKnapsackStyle(availableQuestions, targetMarks, tolerance) {
-  if (availableQuestions.length === 0) return [];
+  if (availableQuestions.length === 0) {
+    console.warn(`⚠️ No available questions for knapsack selection`);
+    return [];
+  }
   
   const maxDeviation = targetMarks * tolerance;
-  const minMarks = targetMarks - maxDeviation;
+  const minMarks = Math.max(1, targetMarks - maxDeviation); // Don't go below 1 mark
   const maxMarks = targetMarks + maxDeviation;
+  
+  console.log(`🎯 Knapsack target: ${targetMarks}m (range: ${minMarks.toFixed(1)}m - ${maxMarks.toFixed(1)}m)`);
   
   // Sort questions by marks (descending) for greedy approach
   const sortedQuestions = availableQuestions
@@ -82,15 +97,23 @@ function selectQuestionsKnapsackStyle(availableQuestions, targetMarks, tolerance
     .filter(q => q.marks > 0)
     .sort((a, b) => b.marks - a.marks);
   
+  if (sortedQuestions.length === 0) {
+    console.warn(`⚠️ No questions with marks > 0 available`);
+    return [];
+  }
+  
+  console.log(`📊 Available questions: ${sortedQuestions.length} (total marks: ${sortedQuestions.reduce((s,q)=>s+q.marks,0)})`);
+  
   // Greedy knapsack: pick questions until we're close to target
   let selectedQuestions = [];
   let currentMarks = 0;
   let remainingQuestions = [...sortedQuestions];
   
-  // Phase 1: Greedy selection
+  // Phase 1: Greedy selection - pick questions that fit
   for (let i = 0; i < remainingQuestions.length && currentMarks < minMarks; i++) {
     const question = remainingQuestions[i];
-    if (currentMarks + question.marks <= maxMarks) {
+    // More lenient: allow going over maxMarks if we're still under minMarks
+    if (currentMarks + question.marks <= maxMarks || currentMarks < minMarks) {
       selectedQuestions.push(question);
       currentMarks += question.marks;
       remainingQuestions.splice(i, 1);
@@ -98,9 +121,28 @@ function selectQuestionsKnapsackStyle(availableQuestions, targetMarks, tolerance
     }
   }
   
+  console.log(`📦 Phase 1 complete: ${selectedQuestions.length} questions, ${currentMarks}m`);
+  
   // Phase 2: Fine-tuning through swaps if we're outside tolerance
   if (currentMarks < minMarks || currentMarks > maxMarks) {
+    console.log(`🔄 Phase 2: Optimizing (current: ${currentMarks}m, target: ${minMarks}-${maxMarks}m)`);
     selectedQuestions = optimizeMarksWithSwaps(selectedQuestions, remainingQuestions, targetMarks, tolerance);
+    currentMarks = selectedQuestions.reduce((sum, q) => sum + q.marks, 0);
+    console.log(`✅ Phase 2 complete: ${selectedQuestions.length} questions, ${currentMarks}m`);
+  }
+  
+  // If still no questions, just take as many as we can up to maxMarks
+  if (selectedQuestions.length === 0) {
+    console.warn(`⚠️ Knapsack failed to select questions, falling back to simple selection`);
+    let fallbackMarks = 0;
+    for (const q of sortedQuestions) {
+      if (fallbackMarks + q.marks <= maxMarks) {
+        selectedQuestions.push(q);
+        fallbackMarks += q.marks;
+      }
+      if (fallbackMarks >= minMarks) break;
+    }
+    console.log(`🔄 Fallback: selected ${selectedQuestions.length} questions, ${fallbackMarks}m`);
   }
   
   return selectedQuestions;
@@ -558,16 +600,80 @@ async function generateBlueprintCompliantTest(params) {
 
   // Step 1: Parallel topic selection for better performance
   const topicSelectionPromises = Object.entries(effectiveBlueprint.topics).map(async ([topicName, marksAllocated]) => {
-    const topicQuestions = await selectQuestionsForTopic(topicName, marksAllocated, params);
+    const topicQuestions = await selectQuestionsForTopic(topicName, marksAllocated, params, 0.30);
     
     return {
       topicName,
       marksAllocated,
+      marksAchieved: topicQuestions.reduce((sum, q) => sum + Number(q.maxMarks || q.marks || 0), 0),
       questions: topicQuestions
     };
   });
 
   const topicResults = await Promise.all(topicSelectionPromises);
+  
+  // Step 1.5: SMART COMPENSATION - Check for shortfalls and redistribute
+  let totalAchieved = topicResults.reduce((sum, tr) => sum + tr.marksAchieved, 0);
+  const targetTotal = Object.values(effectiveBlueprint.topics).reduce((sum, m) => sum + m, 0);
+  const shortfall = targetTotal - totalAchieved;
+  
+  console.log(`📊 Initial marks: ${totalAchieved}/${targetTotal} (${((totalAchieved/targetTotal)*100).toFixed(1)}%)`);
+  
+  if (shortfall > 0 && shortfall > targetTotal * 0.1) {
+    // Significant shortfall (>10%), try smart compensation
+    console.log(`⚠️ Significant shortfall detected: ${shortfall} marks (${((shortfall/targetTotal)*100).toFixed(1)}%)`);
+    console.log(`🔄 Attempting smart compensation...`);
+    
+    // Find topics with surplus
+    const topicsWithSurplus = topicResults.filter(tr => tr.marksAchieved > tr.marksAllocated);
+    const topicsWithShortfall = topicResults.filter(tr => tr.marksAchieved < tr.marksAllocated);
+    
+    console.log(`   Surplus topics: ${topicsWithSurplus.length}`);
+    console.log(`   Shortfall topics: ${topicsWithShortfall.length}`);
+    
+    // For each topic with shortfall, try to get more questions
+    for (const topicResult of topicsWithShortfall) {
+      const topicShortfall = topicResult.marksAllocated - topicResult.marksAchieved;
+      console.log(`   📉 ${topicResult.topicName}: ${topicResult.marksAchieved}/${topicResult.marksAllocated} (need ${topicShortfall} more)`);
+      
+      // Get ALL available questions for this topic (not just within tolerance)
+      const query = buildEnhancedQuestionQuery({
+        ...params,
+        topic: topicResult.topicName,
+        limit: 100
+      });
+      
+      try {
+        const questionDocs = await executeQuestionQuery(query, params);
+        const questionData = questionDocs.map(doc => mapQuestionData(doc));
+        const answerableQuestions = questionData.filter(q => !q.isParent);
+        
+        // Get questions we haven't already selected
+        const alreadySelectedIds = new Set(topicResult.questions.map(q => q.id));
+        const additionalQuestions = answerableQuestions.filter(q => !alreadySelectedIds.has(q.id));
+        
+        if (additionalQuestions.length > 0) {
+          // Add questions up to the allocated marks
+          let addedMarks = 0;
+          for (const q of additionalQuestions) {
+            const qMarks = Number(q.maxMarks || q.marks || 0);
+            if (topicResult.marksAchieved + addedMarks + qMarks <= topicResult.marksAllocated * 1.5) { // Allow 50% over
+              topicResult.questions.push(q);
+              addedMarks += qMarks;
+              totalAchieved += qMarks;
+              if (addedMarks >= topicShortfall) break;
+            }
+          }
+          topicResult.marksAchieved += addedMarks;
+          console.log(`   ✅ Added ${addedMarks} marks to ${topicResult.topicName} (now ${topicResult.marksAchieved})`);
+        }
+      } catch (err) {
+        console.warn(`   ❌ Failed to get additional questions for ${topicResult.topicName}:`, err.message);
+      }
+    }
+    
+    console.log(`📊 After compensation: ${totalAchieved}/${targetTotal} (${((totalAchieved/targetTotal)*100).toFixed(1)}%)`);
+  }
   
   // Combine all topic questions
   topicResults.forEach(({ topicName, marksAllocated, questions }) => {
@@ -581,23 +687,13 @@ async function generateBlueprintCompliantTest(params) {
     allSelectedQuestions.push(...numberedQuestions);
   });
 
-  console.log(`📊 Initial selection: ${allSelectedQuestions.length} questions`);
+  console.log(`📊 Final selection: ${allSelectedQuestions.length} questions, ${totalAchieved} marks`);
 
-  // Step 2: Balance cognitive levels with score-based optimization
-  const requiredCognitiveLevels = {};
-  Object.entries(effectiveBlueprint.cognitiveLevels || blueprint.cognitiveLevels).forEach(([level, percentage]) => {
-    requiredCognitiveLevels[level] = Math.round(allSelectedQuestions.length * percentage);
-  });
-
-  const balancedQuestions = await balanceCognitiveLevels(
-    allSelectedQuestions,
-    requiredCognitiveLevels,
-    params,
-    {
-      tolerancePct: 0.2,
-      blueprintTopics: effectiveBlueprint.topics
-    }
-  );
+  // Step 2: Skip cognitive level balancing - marks-based selection is sufficient
+  // Cognitive levels are already balanced in original papers (for PQP)
+  // and variety from different years provides natural balance (for Sprint/ByTopic)
+  const balancedQuestions = allSelectedQuestions;
+  console.log('✅ Using marks-based selection (cognitive balancing disabled for performance)');
 
   console.log(`✅ Generated ${balancedQuestions.length} blueprint-compliant questions`);
 

@@ -140,22 +140,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ),
           const SizedBox(height: 32),
-          ...AppConstants.grades.map(
-            (grade) => _buildSelectionChip(
+          ...AppConstants.grades.map((grade) {
+            final isAvailable = AppConstants.availableGrades.contains(grade);
+            return _buildSelectionChip(
               text: 'Grade $grade',
               isSelected: _selectedGrade == grade,
-              onTap: () {
-                setState(() {
-                  _selectedGrade = grade;
-                });
-                // Automatically move to the next page after selection
-                Future.delayed(
-                  const Duration(milliseconds: 200),
-                  () => _nextPage(),
-                );
-              },
-            ),
-          ),
+              isLocked: !isAvailable,
+              onTap: isAvailable
+                  ? () {
+                      setState(() {
+                        _selectedGrade = grade;
+                      });
+                      // Automatically move to the next page after selection
+                      Future.delayed(
+                        const Duration(milliseconds: 200),
+                        () => _nextPage(),
+                      );
+                    }
+                  : null,
+            );
+          }),
         ],
       ),
     );
@@ -187,18 +191,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: ListView(
               children: AppConstants.allSubjects.map((subject) {
                 final isSelected = _selectedSubjects.contains(subject);
+                final isAvailable = AppConstants.availableSubjects.contains(
+                  subject.toLowerCase(),
+                );
                 return _buildSelectionChip(
-                  text: subject,
+                  text:
+                      subject.substring(0, 1).toUpperCase() +
+                      subject.substring(1),
                   isSelected: isSelected,
-                  onTap: () {
-                    setState(() {
-                      if (isSelected) {
-                        _selectedSubjects.remove(subject);
-                      } else {
-                        _selectedSubjects.add(subject);
-                      }
-                    });
-                  },
+                  isLocked: !isAvailable,
+                  onTap: isAvailable
+                      ? () {
+                          setState(() {
+                            if (isSelected) {
+                              _selectedSubjects.remove(subject);
+                            } else {
+                              _selectedSubjects.add(subject);
+                            }
+                          });
+                        }
+                      : null,
                 );
               }).toList(),
             ),
@@ -212,33 +224,67 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget _buildSelectionChip({
     required String text,
     required bool isSelected,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
+    bool isLocked = false,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isLocked ? null : onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.accentSoft : AppColors.neutralCard,
+          color: isLocked
+              ? AppColors.neutralBorder.withOpacity(0.3)
+              : (isSelected ? AppColors.accentSoft : AppColors.neutralCard),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.accent : AppColors.neutralBorder,
+            color: isLocked
+                ? AppColors.neutralBorder
+                : (isSelected ? AppColors.accent : AppColors.neutralBorder),
             width: 2,
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              text,
-              style: TextStyle(
-                color: AppColors.ink,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                fontSize: 16,
-              ),
+            Row(
+              children: [
+                Text(
+                  text,
+                  style: TextStyle(
+                    color: isLocked ? AppColors.neutralSoft : AppColors.ink,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    fontSize: 16,
+                  ),
+                ),
+                if (isLocked) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.neutralMid,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Coming Soon',
+                      style: TextStyle(
+                        color: AppColors.neutralCard,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
-            if (isSelected)
+            if (isLocked)
+              Icon(Icons.lock_outline, color: AppColors.neutralSoft, size: 20)
+            else if (isSelected)
               const Icon(Icons.check_circle, color: AppColors.accent),
           ],
         ),
