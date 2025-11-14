@@ -32,6 +32,9 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+pubspec.lock
+package-lock.json
+**/package-lock.json
 
 #CLAUDE: Exclude generated plugin registrant
 CLAUDE.md
