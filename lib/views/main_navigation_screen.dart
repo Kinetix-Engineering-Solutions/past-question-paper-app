@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:past_question_paper_v1/providers/navigation_providers.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/views/home_screen.dart';
@@ -43,11 +42,7 @@ class MainNavigationScreen extends ConsumerWidget {
               scale: currentIndex == 0 ? 1.1 : 1.0,
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOut,
-              child: SvgPicture.asset(
-                'assets/icons/home_icon.svg',
-                width: 32,
-                height: 32,
-              ),
+              child: const Icon(Icons.home, size: 32),
             ),
             label: 'PQP Home',
           ),
