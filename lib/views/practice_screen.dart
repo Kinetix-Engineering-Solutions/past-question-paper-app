@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/model/question.dart';
+import 'package:past_question_paper_v1/utils/haptic_feedback.dart';
 import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
 import 'package:past_question_paper_v1/views/practice_results_screen.dart';
 import 'package:past_question_paper_v1/widgets/latex_text.dart';
@@ -37,12 +38,14 @@ class PracticeScreen extends ConsumerStatefulWidget {
 
 class _PracticeScreenState extends ConsumerState<PracticeScreen> {
   late final PageController _pageController;
+  late final ScrollController _navigatorScrollController;
   int _currentPage = 0;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    _navigatorScrollController = ScrollController();
     // Initialize the ViewModel with the questions for this session
     Future.microtask(
       () => ref
@@ -61,6 +64,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
   @override
   void dispose() {
     _pageController.dispose();
+    _navigatorScrollController.dispose();
     // Session cleanup is now handled automatically by autoDispose provider
     // No need to manually call clearSession() here to avoid "ref after dispose" error
     super.dispose();
@@ -70,6 +74,26 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     setState(() {
       _currentPage = page;
     });
+    _scrollNavigatorToCurrentPage();
+  }
+
+  void _scrollNavigatorToCurrentPage() {
+    if (!_navigatorScrollController.hasClients) return;
+    
+    // Calculate the position to scroll to
+    // Each item is ~52 (minWidth 44 + padding) + 8 (separator)
+    const itemWidth = 52.0 + 8.0;
+    final targetOffset = (_currentPage * itemWidth) - 100; // Center the item
+    
+    // Clamp the offset to valid scroll range
+    final maxScroll = _navigatorScrollController.position.maxScrollExtent;
+    final scrollTo = targetOffset.clamp(0.0, maxScroll);
+    
+    _navigatorScrollController.animateTo(
+      scrollTo,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   void _submitTest() async {
@@ -267,6 +291,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     return SizedBox(
       height: 52,
       child: ListView.separated(
+        controller: _navigatorScrollController,
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         scrollDirection: Axis.horizontal,
         itemCount: total,
@@ -303,6 +328,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
 
           return GestureDetector(
             onTap: () {
+              AppHaptics.selection();
               _pageController.animateToPage(
                 index,
                 duration: const Duration(milliseconds: 250),
@@ -355,6 +381,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
             onPressed: _currentPage == 0
                 ? null
                 : () {
+                    AppHaptics.light();
                     _pageController.previousPage(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeIn,
@@ -374,8 +401,12 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
             ),
             onPressed: isLastPage
-                ? (practiceState.isSubmitting ? null : _submitTest)
+                ? (practiceState.isSubmitting ? null : () {
+                    AppHaptics.medium();
+                    _submitTest();
+                  })
                 : () {
+                    AppHaptics.light();
                     _pageController.nextPage(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeIn,
