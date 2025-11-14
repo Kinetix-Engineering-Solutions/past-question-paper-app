@@ -372,7 +372,12 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.fromLTRB(
+        16.0,
+        16.0,
+        16.0,
+        16.0 + MediaQuery.of(context).padding.bottom, // Add bottom safe area padding
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
