@@ -351,25 +351,16 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
   }
 
   Color _getScoreColor(int percentage, ColorScheme colorScheme) {
-    final isDark = colorScheme.brightness == Brightness.dark;
-
     if (percentage >= 80) return AppColors.accent; // Great score - accent color
-    if (percentage >= 60) {
-      // Good score - lighter gray
-      return isDark
-          ? Color.lerp(colorScheme.surface, Colors.white, 0.15)!
-          : colorScheme.surfaceContainerHighest;
-    }
-    // Needs improvement - even lighter for better contrast
-    return isDark
-        ? Color.lerp(colorScheme.surface, Colors.white, 0.12)!
-        : colorScheme.inverseSurface;
+    if (percentage >= 60) return AppColors.neutralCard; // Good score - white/light card
+    return AppColors.neutralMid; // Needs improvement - medium gray
   }
 
   Color _getTextColor(int percentage, ColorScheme colorScheme) {
-    // Return white for accent/dark backgrounds, theme color for lighter backgrounds
+    // Return white for accent background, dark text for light backgrounds
     if (percentage >= 80) return Colors.white;
-    return colorScheme.onSurface;
+    if (percentage >= 60) return AppColors.ink; // Dark text on light background
+    return Colors.white; // White text on gray background
   }
 
   String _getGrade(int percentage) {
