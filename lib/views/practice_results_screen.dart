@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/views/question_review_screen.dart';
+import 'package:confetti/confetti.dart';
 
-class PracticeResultsScreen extends StatelessWidget {
+class PracticeResultsScreen extends StatefulWidget {
   final Map<String, dynamic> gradingResults;
   final List<Map<String, dynamic>> questions;
 
@@ -13,15 +14,43 @@ class PracticeResultsScreen extends StatelessWidget {
   });
 
   @override
+  State<PracticeResultsScreen> createState() => _PracticeResultsScreenState();
+}
+
+class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
+  late ConfettiController _confettiController;
+
+  @override
+  void initState() {
+    super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    
+    // Play confetti if score is >= 70%
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final statistics = _extractMap(widget.gradingResults['statistics']) ?? {};
+      final percentage = _extractInt(statistics['percentage']) ?? 0;
+      if (percentage >= 70) {
+        _confettiController.play();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     // Safely extract statistics with type checking
-    final statistics = _extractMap(gradingResults['statistics']) ?? {};
+    final statistics = _extractMap(widget.gradingResults['statistics']) ?? {};
 
     // Create a map for easy question lookup (used by the review screen)
     final questionMap = <String, Map<String, dynamic>>{};
-    for (var q in questions) {
+    for (var q in widget.questions) {
       final id = q['id']?.toString();
       if (id != null) {
         questionMap[id] = q;
@@ -32,15 +61,17 @@ class PracticeResultsScreen extends StatelessWidget {
     final score = _extractInt(statistics['marksAwarded']) ?? 0;
     final totalMarks = _extractInt(statistics['totalMarks']) ?? 0;
 
-    return Scaffold(
-      backgroundColor: colorScheme.background,
-      appBar: AppBar(
-        title: const Text('Test Results'),
-        backgroundColor: colorScheme.background,
-        foregroundColor: colorScheme.onBackground,
-        elevation: 0,
-      ),
-      body: Column(
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: colorScheme.background,
+          appBar: AppBar(
+            title: const Text('Test Results'),
+            backgroundColor: colorScheme.background,
+            foregroundColor: colorScheme.onBackground,
+            elevation: 0,
+          ),
+          body: Column(
         children: [
           // Overall Statistics Card
           Container(
@@ -197,8 +228,8 @@ class PracticeResultsScreen extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => QuestionReviewScreen(
-                            gradingResults: gradingResults,
-                            questions: questions,
+                            gradingResults: widget.gradingResults,
+                            questions: widget.questions,
                           ),
                         ),
                       );
@@ -263,6 +294,28 @@ class PracticeResultsScreen extends StatelessWidget {
           ),
         ],
       ),
+        ),
+        // Confetti widget overlay
+        Align(
+          alignment: Alignment.topCenter,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirectionality: BlastDirectionality.explosive,
+            colors: const [
+              AppColors.accent,
+              Color(0xFF00BCD4), // Cyan
+              Color(0xFFE91E63), // Magenta
+              Color(0xFF4CAF50), // Green
+              Color(0xFFFFC107), // Amber
+            ],
+            createParticlePath: (size) {
+              final path = Path();
+              path.addOval(Rect.fromCircle(center: Offset.zero, radius: size.width / 2));
+              return path;
+            },
+          ),
+        ),
+      ],
     );
   }
 
