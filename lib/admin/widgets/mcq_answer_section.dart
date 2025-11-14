@@ -280,8 +280,16 @@ class MCQAnswerSection extends ConsumerWidget {
       }
     }
 
+    // Ensure the value exists in the dropdown items or reset to null
+    final validAnswers = ['A', 'B', 'C', 'D'];
+    final currentValue =
+        state.correctAnswer.isEmpty ||
+            !validAnswers.contains(state.correctAnswer)
+        ? null
+        : state.correctAnswer;
+
     return DropdownButtonFormField<String>(
-      value: state.correctAnswer.isEmpty ? null : state.correctAnswer,
+      value: currentValue,
       decoration: const InputDecoration(labelText: 'Correct Answer *'),
       items: const [
         DropdownMenuItem(value: 'A', child: Text('A')),

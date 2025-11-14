@@ -8,6 +8,7 @@ import 'package:past_question_paper_v1/services/navigation_service.dart';
 import 'package:past_question_paper_v1/Exceptions/auth_exception.dart';
 import 'package:past_question_paper_v1/widgets/custom_snackbar.dart';
 import 'package:past_question_paper_v1/utils/loading_state.dart';
+import 'package:past_question_paper_v1/views/email_verification_screen.dart';
 
 // Auth View Model Provider
 final authViewModelProvider =
@@ -62,16 +63,35 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
         await NavigationService.navigateToOnboarding();
       }
     } on AuthException catch (e) {
-      // Update auth state with error
-      state = AsyncValue.error(e.message, StackTrace.current);
+      final isVerificationNotice = e.code == 'email-not-verified';
 
-      // Show error message
+      if (isVerificationNotice) {
+        state = const AsyncValue.data(null);
+      } else {
+        // Update auth state with error
+        state = AsyncValue.error(e.message, StackTrace.current);
+      }
+
+      // Show message to user
       if (context.mounted) {
         CustomSnackBar.show(
           context: context,
           message: e.message,
-          isError: true,
+          isError: !isVerificationNotice,
         );
+
+        // Navigate to email verification screen for better UX
+        if (isVerificationNotice) {
+          // Delay navigation slightly so snackbar is visible
+          await Future.delayed(const Duration(milliseconds: 1500));
+          if (context.mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => EmailVerificationScreen(email: email),
+              ),
+            );
+          }
+        }
       }
     } catch (e) {
       // Handle unexpected errors
@@ -127,16 +147,35 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
         await NavigationService.navigateToOnboarding();
       }
     } on AuthException catch (e) {
-      // Update auth state with error
-      state = AsyncValue.error(e.message, StackTrace.current);
+      final isVerificationNotice = e.code == 'email-not-verified';
 
-      // Show error message
+      if (isVerificationNotice) {
+        state = const AsyncValue.data(null);
+      } else {
+        // Update auth state with error
+        state = AsyncValue.error(e.message, StackTrace.current);
+      }
+
+      // Show message to user
       if (context.mounted) {
         CustomSnackBar.show(
           context: context,
           message: e.message,
-          isError: true,
+          isError: !isVerificationNotice,
         );
+
+        // Navigate to email verification screen for better UX
+        if (isVerificationNotice) {
+          // Delay navigation slightly so snackbar is visible
+          await Future.delayed(const Duration(milliseconds: 1500));
+          if (context.mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => EmailVerificationScreen(email: email),
+              ),
+            );
+          }
+        }
       }
     } catch (e) {
       // Handle unexpected errors

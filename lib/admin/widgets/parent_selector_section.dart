@@ -35,7 +35,10 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
   }
 
   Future<void> _loadParentQuestions() async {
-    setState(() => _isLoading = true);
+    if (!mounted) return;
+    if (mounted) {
+      setState(() => _isLoading = true);
+    }
 
     try {
       // Query without orderBy to avoid composite index requirement
@@ -131,7 +134,9 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
       _applyFilters();
     } catch (e) {
       debugPrint('❌ Error loading parent questions: $e');
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -172,9 +177,11 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
       return aNumber.compareTo(bNumber);
     });
 
-    setState(() {
-      _filteredParentQuestions = filtered;
-    });
+    if (mounted) {
+      setState(() {
+        _filteredParentQuestions = filtered;
+      });
+    }
   }
 
   Map<String, dynamic>? _findParentById(String id) {
@@ -189,12 +196,14 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
   bool get _hasActiveFilters => _searchTerm.isNotEmpty || _selectedYear != null;
 
   void _clearFilters() {
-    setState(() {
-      _searchTerm = '';
-      _selectedYear = null;
-      _searchController.clear();
-    });
-    _applyFilters();
+    if (mounted) {
+      setState(() {
+        _searchTerm = '';
+        _selectedYear = null;
+        _searchController.clear();
+      });
+      _applyFilters();
+    }
   }
 
   @override
@@ -371,10 +380,12 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
                   prefixIcon: Icon(Icons.search),
                 ),
                 onChanged: (value) {
-                  setState(() {
-                    _searchTerm = value.trim().toLowerCase();
-                  });
-                  _applyFilters();
+                  if (mounted) {
+                    setState(() {
+                      _searchTerm = value.trim().toLowerCase();
+                    });
+                    _applyFilters();
+                  }
                 },
               ),
             ),
@@ -400,10 +411,12 @@ class _ParentSelectorSectionState extends ConsumerState<ParentSelectorSection> {
                     ),
                   ],
                   onChanged: (value) {
-                    setState(() {
-                      _selectedYear = value;
-                    });
-                    _applyFilters();
+                    if (mounted) {
+                      setState(() {
+                        _selectedYear = value;
+                      });
+                      _applyFilters();
+                    }
                   },
                 ),
               ),

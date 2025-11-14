@@ -1,4 +1,5 @@
 const functions = require('firebase-functions');
+const {onCall, HttpsError} = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 const cors = require('cors')({ origin: true });
 
@@ -14,17 +15,19 @@ admin.initializeApp();
  * Cloud Function to generate a test paper
  * Generates questions based on parameters and blueprints
  */
-exports.generateTest = functions
-  .runWith({
-    memory: '256MB',
+exports.generateTest = onCall(
+  {
+    memory: '256MiB',
     timeoutSeconds: 30,
     maxInstances: 100 // Limit concurrent executions to control costs
-  })
-  .https.onCall(async (data, context) => {
+  },
+  async (request) => {
+  const context = request;
+  const data = request.data;
   try {
     // SECURITY: Require authentication
     if (!context.auth) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'unauthenticated',
         'You must be logged in to generate tests.'
       );
@@ -44,7 +47,7 @@ exports.generateTest = functions
       
       // Limit to 1 test generation every 3 seconds
       if (lastGeneration && (now - lastGeneration) < 3000) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           'resource-exhausted',
           'Please wait a moment before generating another test.'
         );
@@ -68,7 +71,7 @@ exports.generateTest = functions
     // SECURITY: Validate request size
     const requestedQuestions = params.numQuestions || 50;
     if (requestedQuestions > 100) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'invalid-argument',
         'Cannot generate more than 100 questions at once.'
       );
@@ -111,11 +114,11 @@ exports.generateTest = functions
   } catch (error) {
     console.error('Error in generateTest:', error);
     
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
     
-    throw new functions.https.HttpsError('internal', 'Failed to generate test. Please try again.');
+    throw new HttpsError('internal', 'Failed to generate test. Please try again.');
   }
 });
 
@@ -123,17 +126,19 @@ exports.generateTest = functions
  * Cloud Function to grade a test submission
  * Grades answers and returns detailed results with statistics
  */
-exports.gradeTest = functions
-  .runWith({
-    memory: '256MB',
+exports.gradeTest = onCall(
+  {
+    memory: '256MiB',
     timeoutSeconds: 30,
     maxInstances: 100 // Limit concurrent executions to control costs
-  })
-  .https.onCall(async (data, context) => {
+  },
+  async (request) => {
+  const context = request;
+  const data = request.data;
   try {
     // SECURITY: Require authentication
     if (!context.auth) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'unauthenticated',
         'You must be logged in to submit tests for grading.'
       );
@@ -162,7 +167,7 @@ exports.gradeTest = functions
     const submissionCount = Object.keys(submissionsData || {}).length;
     
     if (submissionCount > 100) {
-      throw new functions.https.HttpsError(
+      throw new HttpsError(
         'invalid-argument',
         'Cannot grade more than 100 questions at once.'
       );
@@ -171,7 +176,7 @@ exports.gradeTest = functions
     // Validate answer text length
     for (const [questionId, answer] of Object.entries(submissionsData || {})) {
       if (typeof answer === 'string' && answer.length > 50000) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
           'invalid-argument',
           'Answer text is too long. Maximum 50,000 characters per answer.'
         );
@@ -229,10 +234,10 @@ exports.gradeTest = functions
   } catch (error) {
     console.error('❌ Error in gradeTest:', error);
     
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
     
-    throw new functions.https.HttpsError('internal', 'Failed to grade test. Please try again.');
+    throw new HttpsError('internal', 'Failed to grade test. Please try again.');
   }
 });

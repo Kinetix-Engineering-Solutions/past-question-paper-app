@@ -49,6 +49,9 @@ dependencies:
   # Math rendering
   flutter_math_fork: ^0.7.2
   
+  # SVG rendering
+  flutter_svg: ^2.0.10
+  
   # Image handling
   image_picker: ^1.0.7
   
@@ -80,6 +83,7 @@ flutter:
   assets:
     - .env
     - assets/images/
+    - assets/icons/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
