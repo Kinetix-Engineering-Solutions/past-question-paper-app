@@ -5,11 +5,15 @@ import 'package:past_question_paper_v1/views/question_review_screen.dart';
 class PracticeResultsScreen extends StatelessWidget {
   final Map<String, dynamic> gradingResults;
   final List<Map<String, dynamic>> questions;
+  final bool isPQPMode;
+  final bool isSprintMode;
 
   const PracticeResultsScreen({
     super.key,
     required this.gradingResults,
     required this.questions,
+    this.isPQPMode = false,
+    this.isSprintMode = false,
   });
 
   @override
@@ -199,6 +203,8 @@ class PracticeResultsScreen extends StatelessWidget {
                           builder: (context) => QuestionReviewScreen(
                             gradingResults: gradingResults,
                             questions: questions,
+                            isPQPMode: isPQPMode,
+                            isSprintMode: isSprintMode,
                           ),
                         ),
                       );

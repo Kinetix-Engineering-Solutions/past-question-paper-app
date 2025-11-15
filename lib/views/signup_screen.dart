@@ -6,6 +6,7 @@ import 'package:past_question_paper_v1/utils/loading_state.dart';
 import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_v1/views/login.dart';
 import 'package:past_question_paper_v1/widgets/custom_snackbar.dart';
+import 'package:past_question_paper_v1/widgets/message_banner.dart';
 import 'package:past_question_paper_v1/utils/form_validators.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -20,12 +21,49 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  String _passwordStrength = '';
+  Color _passwordStrengthColor = Colors.grey;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _checkPasswordStrength(String password) {
+    if (password.isEmpty) {
+      setState(() {
+        _passwordStrength = '';
+        _passwordStrengthColor = Colors.grey;
+      });
+      return;
+    }
+
+    int strength = 0;
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+    if (RegExp(r'[A-Z]').hasMatch(password)) strength++;
+    if (RegExp(r'[a-z]').hasMatch(password)) strength++;
+    if (RegExp(r'[0-9]').hasMatch(password)) strength++;
+    if (RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) strength++;
+
+    setState(() {
+      if (strength <= 2) {
+        _passwordStrength = 'Weak';
+        _passwordStrengthColor = Colors.red;
+      } else if (strength <= 4) {
+        _passwordStrength = 'Medium';
+        _passwordStrengthColor = Colors.orange;
+      } else {
+        _passwordStrength = 'Strong';
+        _passwordStrengthColor = Colors.green;
+      }
+    });
   }
 
   void _navigateToLogin() {
@@ -49,21 +87,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Listen for auth state changes and errors
-    ref.listen(authViewModelProvider, (previous, current) {
-      current.whenOrNull(
-        error: (error, stackTrace) {
-          if (mounted) {
-            CustomSnackBar.show(
-              context: context,
-              message: error.toString(),
-              isError: true,
-            );
-          }
-        },
-      );
-    });
-
     return Scaffold(
       backgroundColor: AppColors.paper,
       body: GestureDetector(
@@ -109,6 +132,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       ],
                     ),
                   ),
+                  // Error message display
+                  ref.watch(authViewModelProvider).whenOrNull(
+                    error: (error, stackTrace) => MessageBanner(
+                      message: error.toString(),
+                      isError: true,
+                    ),
+                  ) ?? const SizedBox.shrink(),
                   TextFormField(
                     controller: _emailController,
                     style: TextStyle(color: AppColors.ink),
@@ -168,11 +198,109 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                         Icons.lock_outline,
                         color: AppColors.neutralMid,
                       ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          color: AppColors.neutralMid,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
                       fillColor: AppColors.neutralCard,
                       filled: true,
                     ),
-                    obscureText: true,
-                    validator: FormValidators.validatePassword,
+                    obscureText: _obscurePassword,
+                    validator: (value) {
+                      // First run the standard password validation
+                      final standardValidation = FormValidators.validatePassword(value);
+                      if (standardValidation != null) return standardValidation;
+
+                      // Then check password strength
+                      if (_passwordStrength == 'Weak') {
+                        return 'Please use a stronger password with uppercase, lowercase, numbers, and special characters';
+                      }
+                      return null;
+                    },
+                    enabled: !ref.watch(loadingStateProvider),
+                    textInputAction: TextInputAction.next,
+                    onChanged: _checkPasswordStrength,
+                  ),
+                  if (_passwordStrength.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const SizedBox(width: 12),
+                        Text(
+                          'Password strength: ',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.neutralMid,
+                          ),
+                        ),
+                        Text(
+                          _passwordStrength,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: _passwordStrengthColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _confirmPasswordController,
+                    style: TextStyle(color: AppColors.ink),
+                    decoration: InputDecoration(
+                      labelText: 'Confirm Password',
+                      labelStyle: TextStyle(color: AppColors.neutralMid),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.neutralBorder),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppColors.neutralBorder),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.accent,
+                          width: 2,
+                        ),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.lock_outline,
+                        color: AppColors.neutralMid,
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          color: AppColors.neutralMid,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscureConfirmPassword = !_obscureConfirmPassword;
+                          });
+                        },
+                      ),
+                      fillColor: AppColors.neutralCard,
+                      filled: true,
+                    ),
+                    obscureText: _obscureConfirmPassword,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please confirm your password';
+                      }
+                      if (value != _passwordController.text) {
+                        return 'Passwords do not match';
+                      }
+                      return null;
+                    },
                     enabled: !ref.watch(loadingStateProvider),
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _handleSignUp(),

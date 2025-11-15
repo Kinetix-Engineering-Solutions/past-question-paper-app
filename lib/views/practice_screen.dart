@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/model/question.dart';
@@ -38,11 +39,20 @@ class PracticeScreen extends ConsumerStatefulWidget {
 class _PracticeScreenState extends ConsumerState<PracticeScreen> {
   late final PageController _pageController;
   int _currentPage = 0;
+  Timer? _countdownTimer;
+  int _remainingSeconds = 0;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+
+    // Initialize countdown timer if duration is configured
+    if (widget.configuredDurationMinutes != null) {
+      _remainingSeconds = widget.configuredDurationMinutes! * 60;
+      _startCountdownTimer();
+    }
+
     // Initialize the ViewModel with the questions for this session
     Future.microtask(
       () => ref
@@ -58,8 +68,28 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     );
   }
 
+  void _startCountdownTimer() {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      setState(() {
+        if (_remainingSeconds > 0) {
+          _remainingSeconds--;
+        } else {
+          timer.cancel();
+          // Auto-submit when time expires
+          _submitTest();
+        }
+      });
+    });
+  }
+
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _pageController.dispose();
     // Session cleanup is now handled automatically by autoDispose provider
     // No need to manually call clearSession() here to avoid "ref after dispose" error
@@ -159,6 +189,8 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
           builder: (context) => PracticeResultsScreen(
             gradingResults: safeGradingResults,
             questions: safeQuestions,
+            isPQPMode: widget.isPQPMode,
+            isSprintMode: widget.isSprintMode,
           ),
         ),
       );
@@ -170,6 +202,50 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
         ),
       );
     }
+  }
+
+  /// Builds the timer display widget for timed practice modes
+  Widget _buildTimerDisplay(ColorScheme colorScheme) {
+    final minutes = _remainingSeconds ~/ 60;
+    final seconds = _remainingSeconds % 60;
+    final timeString = '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+
+    // Change color to warning when less than 5 minutes remain
+    final isWarning = _remainingSeconds < 300; // 5 minutes
+    final isCritical = _remainingSeconds < 60; // 1 minute
+
+    Color timerColor;
+    if (isCritical) {
+      timerColor = Colors.red;
+    } else if (isWarning) {
+      timerColor = Colors.orange;
+    } else {
+      timerColor = colorScheme.primary;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: timerColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: timerColor, width: 1.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.timer, color: timerColor, size: 18),
+          const SizedBox(width: 6),
+          Text(
+            timeString,
+            style: TextStyle(
+              color: timerColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Gets the appropriate question title based on mode and question data
@@ -218,6 +294,12 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
         foregroundColor: colorScheme.onBackground,
         title: Text(_getQuestionTitle(practiceState)),
         centerTitle: true,
+        actions: widget.configuredDurationMinutes != null
+            ? [
+                _buildTimerDisplay(colorScheme),
+                const SizedBox(width: 16),
+              ]
+            : null,
       ),
       body: Column(
         children: [
@@ -344,9 +426,10 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     final isLastPage = _currentPage == totalQuestions - 1;
     final practiceState = ref.watch(practiceViewModelProvider);
     final colorScheme = Theme.of(context).colorScheme;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 16.0 + bottomPadding),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
