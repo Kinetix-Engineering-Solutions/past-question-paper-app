@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/utils/app_constants.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -74,10 +75,52 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
       }
     } catch (e) {
       if (context.mounted) {
+        // Determine if it's an offline/connectivity error
+        final errorMessage = e.toString().replaceFirst('Exception: ', '');
+        final isNetworkError = errorMessage.toLowerCase().contains('network') ||
+            errorMessage.toLowerCase().contains('internet') ||
+            errorMessage.toLowerCase().contains('connection');
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error starting test: ${e.toString()}'),
-            backgroundColor: Colors.redAccent,
+            content: Row(
+              children: [
+                Icon(
+                  isNetworkError ? Icons.wifi_off : Icons.error_outline,
+                  color: AppColors.neutralCard,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    errorMessage,
+                    style: const TextStyle(color: AppColors.neutralCard),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: isNetworkError ? AppColors.ink : Colors.redAccent,
+            duration: const Duration(seconds: 5),
+            behavior: SnackBarBehavior.floating,
+            action: isNetworkError
+                ? SnackBarAction(
+                    label: 'Retry',
+                    textColor: AppColors.accent,
+                    onPressed: () {
+                      // Retry the same action
+                      startTest(
+                        context,
+                        options,
+                        buttonId,
+                        isPQPMode: isPQPMode,
+                        isSprintMode: isSprintMode,
+                        durationMinutes: durationMinutes,
+                        modeKey: modeKey,
+                        sessionMetadata: sessionMetadata,
+                      );
+                    },
+                  )
+                : null,
           ),
         );
       }

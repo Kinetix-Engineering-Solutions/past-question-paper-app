@@ -256,16 +256,9 @@ class _DragAndDropOrderingWidgetState
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
-              border: Border.all(
-                color: _colorScheme.outline,
-                width: 1.5,
-              ),
+              border: Border.all(color: _colorScheme.outline, width: 1.5),
             ),
-            child: Icon(
-              Icons.close,
-              color: _colorScheme.error,
-              size: 18,
-            ),
+            child: Icon(Icons.close, color: _colorScheme.error, size: 18),
           ),
         ),
         title: _buildItemContent(item),

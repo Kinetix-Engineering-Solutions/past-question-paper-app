@@ -79,16 +79,16 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
 
   void _scrollNavigatorToCurrentPage() {
     if (!_navigatorScrollController.hasClients) return;
-    
+
     // Calculate the position to scroll to
     // Each item is ~52 (minWidth 44 + padding) + 8 (separator)
     const itemWidth = 52.0 + 8.0;
     final targetOffset = (_currentPage * itemWidth) - 100; // Center the item
-    
+
     // Clamp the offset to valid scroll range
     final maxScroll = _navigatorScrollController.position.maxScrollExtent;
     final scrollTo = targetOffset.clamp(0.0, maxScroll);
-    
+
     _navigatorScrollController.animateTo(
       scrollTo,
       duration: const Duration(milliseconds: 300),
@@ -120,7 +120,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       // because grading result doesn't contain question data - only grading results
       for (final question in widget.questions) {
         final Map<String, dynamic> safeQuestion = {};
-        
+
         // Convert Question object to Map, preserving all essential fields including ID
         safeQuestion['id'] = question.id;
         safeQuestion['questionText'] = question.questionText;
@@ -139,7 +139,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
         safeQuestion['explanation'] = question.explanation;
         safeQuestion['options'] = question.options;
         safeQuestion['imageUrl'] = question.imageUrl;
-        
+
         // Handle complex objects - convert to simple maps
         if (question.pqpData != null) {
           safeQuestion['pqpData'] = {
@@ -148,7 +148,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
             'questionText': question.pqpData!.questionText,
           };
         }
-        
+
         if (question.sprintData != null) {
           safeQuestion['sprintData'] = {
             'questionText': question.sprintData!.questionText,
@@ -156,19 +156,18 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
             'difficulty': question.sprintData!.difficulty,
           };
         }
-        
+
         if (question.parentContext != null) {
           safeQuestion['parentContext'] = question.parentContext;
         }
-        
+
         // IMPORTANT: For drag-and-drop questions, preserve dragItems for step text mapping
         if (question.dragItems != null) {
-          safeQuestion['dragItems'] = question.dragItems!.map((item) => {
-            'id': item.id,
-            'text': item.text,
-          }).toList();
+          safeQuestion['dragItems'] = question.dragItems!
+              .map((item) => {'id': item.id, 'text': item.text})
+              .toList();
         }
-        
+
         safeQuestions.add(safeQuestion);
       }
 
@@ -376,7 +375,10 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
         16.0,
         16.0,
         16.0,
-        16.0 + MediaQuery.of(context).padding.bottom, // Add bottom safe area padding
+        16.0 +
+            MediaQuery.of(
+              context,
+            ).padding.bottom, // Add bottom safe area padding
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -406,10 +408,12 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
             ),
             onPressed: isLastPage
-                ? (practiceState.isSubmitting ? null : () {
-                    AppHaptics.medium();
-                    _submitTest();
-                  })
+                ? (practiceState.isSubmitting
+                      ? null
+                      : () {
+                          AppHaptics.medium();
+                          _submitTest();
+                        })
                 : () {
                     AppHaptics.light();
                     _pageController.nextPage(

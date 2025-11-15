@@ -102,16 +102,83 @@ class QuestionRepository {
       print(
         'FirebaseFunctionsException: ${e.code} - ${e.message} - ${e.details}',
       );
-      if (e.code == 'unauthenticated') {
-        throw Exception(
-          'Authentication failed. Please log out and log back in.',
-        );
+      
+      // Extract more details from the error for user-friendly messages
+      final year = options['year'];
+      final season = options['season'];
+      final paper = options['paper'];
+      final subject = options['subject'];
+      final mode = options['mode'];
+      
+      // Provide user-friendly error messages based on error code
+      switch (e.code) {
+        case 'unauthenticated':
+          throw Exception(
+            'Authentication failed. Please log out and log back in.',
+          );
+        case 'not-found':
+          // Question paper not available
+          if (mode == 'full_exam' && year != null && season != null) {
+            throw Exception(
+              'The $season $year $subject $paper past paper is not yet available in our database. Please try a different year or season.',
+            );
+          } else if (mode == 'by_topic') {
+            final topic = options['topic'];
+            throw Exception(
+              'No questions found for the topic "$topic". This topic may not have questions available yet.',
+            );
+          } else {
+            throw Exception(
+              'No questions found for your selection. Please try different criteria.',
+            );
+          }
+        case 'invalid-argument':
+          throw Exception(
+            'Invalid selection. Please check your choices and try again.',
+          );
+        case 'unavailable':
+        case 'deadline-exceeded':
+          throw Exception(
+            'Server is taking too long to respond. Please check your internet connection and try again.',
+          );
+        case 'resource-exhausted':
+          throw Exception(
+            'Too many requests. Please wait a moment and try again.',
+          );
+        default:
+          // Check if error message contains helpful info
+          if (e.message?.toLowerCase().contains('blueprint') ?? false) {
+            throw Exception(
+              'This past paper configuration is not yet available. Our team is working on adding more papers.',
+            );
+          } else if (e.message?.toLowerCase().contains('no questions') ?? false) {
+            if (mode == 'full_exam' && year != null && season != null) {
+              throw Exception(
+                'The $season $year past paper for $subject is not available yet. Try a different year or season.',
+              );
+            } else {
+              throw Exception(
+                'No questions available for your selection. Please try different options.',
+              );
+            }
+          }
+          throw Exception(
+            e.message ?? 'Failed to load questions. Please try again.',
+          );
       }
-      throw Exception('Failed to generate test. Please try again.');
     } catch (e) {
       // Handle any other errors
       print('An unexpected error occurred while generating test: $e');
-      throw Exception('An unexpected error occurred.');
+      
+      // Check if it's a network error
+      if (e.toString().toLowerCase().contains('socket') ||
+          e.toString().toLowerCase().contains('network')) {
+        throw Exception(
+          'Network connection problem. Please check your internet and try again.',
+        );
+      }
+      
+      throw Exception('An unexpected error occurred: ${e.toString()}');
     }
   }
 
