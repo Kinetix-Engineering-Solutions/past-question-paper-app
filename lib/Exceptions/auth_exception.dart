@@ -40,6 +40,15 @@ class AuthException implements Exception {
       case 'user-creation-failed':
         message = 'Failed to create user profile.';
         break;
+      case 'network-request-failed':
+        message = 'Network error. Please check your internet connection and try again.';
+        break;
+      case 'invalid-credential':
+        message = 'Invalid email or password. Please try again.';
+        break;
+      case 'account-exists-with-different-credential':
+        message = 'An account already exists with the same email but different sign-in credentials.';
+        break;
       default:
         message = e.message ?? 'An error occurred. Please try again.';
     }

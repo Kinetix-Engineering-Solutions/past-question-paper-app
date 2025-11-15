@@ -159,6 +159,58 @@ class _DragAndDropOrderingWidgetState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Instructions
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _colorScheme.primary.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.reorder, color: _colorScheme.primary, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Arrange steps in the correct order',
+                      style: _textTheme.bodyMedium?.copyWith(
+                            color: _colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ) ??
+                          TextStyle(
+                            color: _colorScheme.primary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.info_outline, color: _colorScheme.primary, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Tap a step below to add it, then drag to reorder',
+                      style: TextStyle(
+                        color: _colorScheme.primary,
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
         // Ordered Steps Area
         Text(
           'Your Solution Steps (in order):',

@@ -54,6 +54,15 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
       // Update auth state with user data
       state = AsyncValue.data(user);
 
+      // Show success message
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: 'Login successful! Welcome back.',
+          isError: false,
+        );
+      }
+
       // Navigate based on profile completion
       if (!context.mounted) return;
 
@@ -99,14 +108,6 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
         'An unexpected error occurred',
         StackTrace.current,
       );
-
-      if (context.mounted) {
-        CustomSnackBar.show(
-          context: context,
-          message: 'An unexpected error occurred',
-          isError: true,
-        );
-      }
     } finally {
       // Reset loading state
       _ref.read(loadingStateProvider.notifier).state = false;
@@ -138,6 +139,15 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
       // Update auth state with user data
       state = AsyncValue.data(user);
 
+      // Show success message
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: 'Account created successfully! Welcome to Past Question Papers.',
+          isError: false,
+        );
+      }
+
       // Navigate based on profile completion
       if (!context.mounted) return;
 
@@ -183,14 +193,6 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
         'An unexpected error occurred',
         StackTrace.current,
       );
-
-      if (context.mounted) {
-        CustomSnackBar.show(
-          context: context,
-          message: 'An unexpected error occurred',
-          isError: true,
-        );
-      }
     } finally {
       // Reset loading state
       _ref.read(loadingStateProvider.notifier).state = false;
@@ -281,7 +283,7 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
       // Update auth state with error
       state = AsyncValue.error(e.message, StackTrace.current);
 
-      // Show error message
+      // Keep snackbar for forgot password errors since it's triggered from a button
       if (context.mounted) {
         CustomSnackBar.show(
           context: context,
@@ -332,6 +334,15 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
 
       // Update auth state with user data
       state = AsyncValue.data(user);
+
+      // Show success message
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: 'Sign-in successful! Welcome back.',
+          isError: false,
+        );
+      }
 
       // Navigate based on profile completion
       if (!context.mounted) return;
