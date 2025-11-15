@@ -300,43 +300,21 @@ class _DragAndDropOrderingWidgetState
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
-        leading: Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: _colorScheme.primary,
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text(
-              '${index + 1}',
-              style: TextStyle(
-                color: _colorScheme.onPrimary,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
+        leading: GestureDetector(
+          onTap: () => _removeStep(index),
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: _colorScheme.outline, width: 1.5),
             ),
+            child: Icon(Icons.close, color: _colorScheme.error, size: 18),
           ),
         ),
         title: _buildItemContent(item),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.drag_handle, color: _colorScheme.onSurfaceVariant),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: () => _removeStep(index),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: _colorScheme.errorContainer,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.close, color: _colorScheme.error, size: 16),
-              ),
-            ),
-          ],
-        ),
+        trailing: Icon(Icons.drag_handle, color: _colorScheme.onSurfaceVariant),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/model/user.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/utils/app_constants.dart';
+import 'package:past_question_paper_v1/utils/haptic_feedback.dart';
 import 'package:past_question_paper_v1/viewmodels/home_viewmodel.dart';
 import 'package:past_question_paper_v1/views/profile_screen.dart';
 import 'package:past_question_paper_v1/views/test_configuration_screen.dart';
@@ -468,6 +469,7 @@ class _SubjectList extends StatelessWidget {
               ),
               onTap: isAvailable
                   ? () {
+                      AppHaptics.light();
                       Navigator.push(
                         context,
                         MaterialPageRoute(

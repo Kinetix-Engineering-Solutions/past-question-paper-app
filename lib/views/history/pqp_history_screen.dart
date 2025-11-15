@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/viewmodels/session_history_viewmodel.dart';
+import 'package:past_question_paper_v1/widgets/shimmer_loading.dart';
+import 'package:past_question_paper_v1/widgets/empty_state.dart';
 
 class PqpHistoryScreen extends ConsumerWidget {
   const PqpHistoryScreen({super.key});
@@ -37,7 +39,14 @@ class _HistoryLoadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(child: CircularProgressIndicator());
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: ListView.separated(
+        itemCount: 6,
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) => const HistoryCardShimmer(),
+      ),
+    );
   }
 }
 
@@ -49,38 +58,12 @@ class _HistoryErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 48,
-            color: Theme.of(context).colorScheme.error,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Could not load your history',
-            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            message,
-            style: textTheme.bodyMedium?.copyWith(
-              color: textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Try again'),
-          ),
-        ],
-      ),
+    return EmptyState(
+      icon: Icons.error_outline,
+      title: 'Could not load your history',
+      message: message,
+      actionLabel: 'Try again',
+      onAction: onRetry,
     );
   }
 }
@@ -475,37 +458,13 @@ class _EmptyHistoryState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 32),
-        Icon(
-          Icons.history_edu_outlined,
-          size: 48,
-          color: colorScheme.onSurfaceVariant,
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'No practice history yet',
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        Text(
+    return EmptyState(
+      icon: Icons.history_edu_outlined,
+      title: 'No practice history yet',
+      message:
           'Complete a session in any mode and your results will appear here. Past papers and sprints are saved automatically.',
-          style: textTheme.bodyMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 24),
-        ElevatedButton.icon(
-          onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(Icons.arrow_back),
-          label: const Text('Back to subjects'),
-        ),
-      ],
+      actionLabel: 'Back to subjects',
+      onAction: () => Navigator.of(context).maybePop(),
     );
   }
 }

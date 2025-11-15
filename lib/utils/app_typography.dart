@@ -3,12 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 
-/// PQP Typography: Poppins for headings/titles, Inter for body/labels.
+/// PQP Typography: Poppins across the entire interface for a unified voice.
 class AppTypography {
   static TextTheme textTheme([TextTheme? seed, bool isDark = false]) {
     final seedTheme = seed ?? ThemeData.light().textTheme;
     final poppins = GoogleFonts.poppinsTextTheme(seedTheme);
-    final inter = GoogleFonts.interTextTheme(seedTheme);
     // Slightly reduce overall font sizes for a tighter, denser UI.
     const fontScale = 0.94;
 
@@ -49,32 +48,32 @@ class AppTypography {
         fontWeight: FontWeight.w500,
       ),
 
-      // Body & labels (Inter)
-      bodyLarge: inter.bodyLarge?.copyWith(
+      // Body & labels (Poppins for consistency)
+      bodyLarge: poppins.bodyLarge?.copyWith(
         color: ink,
         fontWeight: FontWeight.w400,
         height: 1.5,
       ),
-      bodyMedium: inter.bodyMedium?.copyWith(
+      bodyMedium: poppins.bodyMedium?.copyWith(
         color: ink,
         fontWeight: FontWeight.w400,
         height: 1.5,
       ),
-      bodySmall: inter.bodySmall?.copyWith(
+      bodySmall: poppins.bodySmall?.copyWith(
         color: neutralSoft,
         fontWeight: FontWeight.w400,
         height: 1.4,
       ),
-      labelLarge: inter.labelLarge?.copyWith(
+      labelLarge: poppins.labelLarge?.copyWith(
         color: ink,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
       ),
-      labelMedium: inter.labelMedium?.copyWith(
+      labelMedium: poppins.labelMedium?.copyWith(
         color: neutralMid,
         letterSpacing: 0.2,
       ),
-      labelSmall: inter.labelSmall?.copyWith(
+      labelSmall: poppins.labelSmall?.copyWith(
         color: neutralSoft,
         letterSpacing: 0.3,
       ),
