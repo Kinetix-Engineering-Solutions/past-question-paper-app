@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 
 /// Reusable empty state widget for displaying placeholder content
-/// 
+///
 /// Supports both light and dark themes, with optional action button.
 /// Commonly used for empty lists, error states, and offline scenarios.
 class EmptyState extends StatelessWidget {
@@ -22,9 +22,7 @@ class EmptyState extends StatelessWidget {
   });
 
   /// Factory constructor for offline state
-  factory EmptyState.offline({
-    VoidCallback? onRetry,
-  }) {
+  factory EmptyState.offline({VoidCallback? onRetry}) {
     return EmptyState(
       icon: Icons.wifi_off_rounded,
       title: 'No internet connection',
@@ -43,7 +41,8 @@ class EmptyState extends StatelessWidget {
     return EmptyState(
       icon: Icons.cloud_off_rounded,
       title: 'Connection problem',
-      message: customMessage ??
+      message:
+          customMessage ??
           'Unable to connect to the server. Please try again in a moment.',
       actionLabel: onRetry != null ? 'Try again' : null,
       onAction: onRetry,
@@ -68,11 +67,7 @@ class EmptyState extends StatelessWidget {
                 color: isDark ? AppColorsDark.accentSoft : AppColors.accentSoft,
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 64,
-                color: AppColors.accent,
-              ),
+              child: Icon(icon, size: 64, color: AppColors.accent),
             ),
             const SizedBox(height: 24),
             Text(
@@ -110,9 +105,7 @@ class EmptyState extends StatelessWidget {
                 ),
                 child: Text(
                   actionLabel!,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
             ],

@@ -48,7 +48,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
   void initState() {
     super.initState();
     _pageController = PageController();
-<<<<<<< HEAD
+    _navigatorScrollController = ScrollController();
 
     // Initialize countdown timer if duration is configured
     if (widget.configuredDurationMinutes != null) {
@@ -56,9 +56,6 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       _startCountdownTimer();
     }
 
-=======
-    _navigatorScrollController = ScrollController();
->>>>>>> feature/ui-ux-polish
     // Initialize the ViewModel with the questions for this session
     Future.microtask(
       () => ref
@@ -234,7 +231,8 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
   Widget _buildTimerDisplay(ColorScheme colorScheme) {
     final minutes = _remainingSeconds ~/ 60;
     final seconds = _remainingSeconds % 60;
-    final timeString = '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    final timeString =
+        '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
 
     // Change color to warning when less than 5 minutes remain
     final isWarning = _remainingSeconds < 300; // 5 minutes
@@ -321,10 +319,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
         title: Text(_getQuestionTitle(practiceState)),
         centerTitle: true,
         actions: widget.configuredDurationMinutes != null
-            ? [
-                _buildTimerDisplay(colorScheme),
-                const SizedBox(width: 16),
-              ]
+            ? [_buildTimerDisplay(colorScheme), const SizedBox(width: 16)]
             : null,
       ),
       body: Column(
@@ -457,19 +452,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
-<<<<<<< HEAD
       padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 16.0 + bottomPadding),
-=======
-      padding: EdgeInsets.fromLTRB(
-        16.0,
-        16.0,
-        16.0,
-        16.0 +
-            MediaQuery.of(
-              context,
-            ).padding.bottom, // Add bottom safe area padding
-      ),
->>>>>>> feature/ui-ux-polish
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
