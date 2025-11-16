@@ -1,28 +1,29 @@
-🎨 What's New in Version 0.1.3
+🎨 What's New in Version 0.1.5
 
-FRESH NEW LOOK
-• Redesigned authentication screens with modern, clean interface
-• Improved app branding and visual polish throughout
-• Better readability with optimized typography
-• Smoother navigation and user experience
+ENHANCED USER EXPERIENCE
+🌐 Smart Offline Detection - Know when you're offline with helpful retry options
+🔒 Improved Authentication - Password visibility toggles and strength indicators
+🌙 Perfect Dark Mode - Fixed shimmer loading effects for seamless dark theme
+📱 Mobile Navigation Fix - Practice buttons no longer hidden under nav bars
+⏱️ Timed Practice Mode - Real countdown timers with color-coded warnings
 
-NEW QUESTION TYPES
-✅ Drag & Drop Ordering - Arrange mathematical steps in correct sequence
-✅ Short Answer - Write and submit your own solutions
-✅ Essay Questions - Demonstrate deep understanding with detailed responses
-✅ True/False - Quick concept verification
-✅ Multiple Choice - Enhanced with better image support
-(Expanding beyond just multiple choice!)
+BETTER ERROR HANDLING
+❌ Clear Error Messages - Know exactly what's wrong when papers aren't available
+🔄 Retry Actions - Smart retry buttons for network and loading issues
+📊 App Version Display - See current version in profile for better support
 
-ENHANCED FEATURES
-✅ Three Practice Modes: PQP (exam-authentic), Sprint (quick practice), By Topic
-✅ Detailed review screen with step-by-step explanations
-✅ Full mathematical notation support with LaTeX rendering
-✅ Accurate scoring and performance tracking
-✅ Smart onboarding showing available content clearly
+ENHANCED DRAG & DROP
+👆 Long-press to Drag - More intuitive mobile interaction (no accidental drags!)
+📋 Clear Instructions - Helpful banners explain how to use drag-and-drop questions
+🎯 Better Visual Feedback - Improved touch indicators and drag animations
+
+BEHIND THE SCENES
+⚡ Faster Question Loading - Optimized test generation and grading
+🎯 Better Answer Matching - Improved grading accuracy (case/whitespace tolerant)
+🔧 Bug Fixes - Scroll controller initialization and various stability improvements
 
 AVAILABLE NOW
-� Grade 12 Mathematics - Complete curriculum coverage
+📚 Grade 12 Mathematics - Complete curriculum coverage
 🔒 More grades and STEM subjects coming soon!
 
-Master your exams with Past Question Papers! 🎓
+Study smarter with Past Question Papers! 🎓
