@@ -44,6 +44,9 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: TextButton.icon(
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.primary,
+              ),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -55,11 +58,8 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
                   ),
                 );
               },
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text(
-                'Create Question',
-                style: TextStyle(color: Colors.white),
-              ),
+              icon: const Icon(Icons.add),
+              label: const Text('Create Question'),
             ),
           ),
         ],
@@ -67,28 +67,28 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
       body: Row(
         children: [
           // Filter Sidebar
-          _buildFilterSidebar(state, notifier),
+          _buildFilterSidebar(context, state, notifier),
 
           // Main Content
           Expanded(
             child: Column(
               children: [
                 // Search bar and stats
-                _buildSearchBar(state, notifier),
+                _buildSearchBar(context, state, notifier),
 
                 // Questions table
                 Expanded(
                   child: state.isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : state.errorMessage != null
-                      ? _buildErrorView(state.errorMessage!)
+                      ? _buildErrorView(context, state.errorMessage!)
                       : state.questions.isEmpty
-                      ? _buildEmptyView()
-                      : _buildQuestionTable(state, notifier),
+                      ? _buildEmptyView(context)
+                      : _buildQuestionTable(context, state, notifier),
                 ),
 
                 // Pagination
-                _buildPagination(state, notifier),
+                _buildPagination(context, state, notifier),
               ],
             ),
           ),
@@ -98,16 +98,24 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
   }
 
   Widget _buildFilterSidebar(
+    BuildContext context,
     QuestionListState state,
     QuestionListViewModel notifier,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final borderColor = colorScheme.borderColor.withOpacity(
+      colorScheme.brightness == Brightness.dark ? 0.6 : 0.3,
+    );
+    final headingStyle = TextStyle(
+      fontWeight: FontWeight.bold,
+      color: colorScheme.onSurface,
+    );
+
     return Container(
       width: 280,
       decoration: BoxDecoration(
-        color: AppColors.paper,
-        border: Border(
-          right: BorderSide(color: AppColors.neutralMid.withOpacity(0.3)),
-        ),
+        color: colorScheme.surface,
+        border: Border(right: BorderSide(color: borderColor)),
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -117,10 +125,7 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Filters',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                Text('Filters', style: headingStyle.copyWith(fontSize: 18)),
                 TextButton(
                   onPressed: () => notifier.clearFilters(),
                   child: const Text('Clear All'),
@@ -130,10 +135,7 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
             const Divider(height: 24),
 
             // Subject filter
-            const Text(
-              'Subject',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            Text('Subject', style: headingStyle),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               value: state.filterSubject,
@@ -156,7 +158,7 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
             const SizedBox(height: 16),
 
             // Grade filter
-            const Text('Grade', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text('Grade', style: headingStyle),
             const SizedBox(height: 8),
             DropdownButtonFormField<int>(
               value: state.filterGrade,
@@ -179,7 +181,7 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
             const SizedBox(height: 16),
 
             // Format filter
-            const Text('Format', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text('Format', style: headingStyle),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               value: state.filterFormat,
@@ -214,10 +216,7 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
 
             // Topic filter (conditional)
             if (state.filterSubject != null) ...[
-              const Text(
-                'Topic',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+              Text('Topic', style: headingStyle),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: state.filterTopic,
@@ -239,7 +238,7 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
             ],
 
             // Year filter
-            const Text('Year', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text('Year', style: headingStyle),
             const SizedBox(height: 8),
             FutureBuilder<List<int>>(
               future: notifier.getAvailableYears(),
@@ -272,16 +271,20 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
   }
 
   Widget _buildSearchBar(
+    BuildContext context,
     QuestionListState state,
     QuestionListViewModel notifier,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final borderColor = colorScheme.borderColor.withOpacity(
+      colorScheme.brightness == Brightness.dark ? 0.6 : 0.3,
+    );
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: AppColors.neutralMid.withOpacity(0.3)),
-        ),
+        color: colorScheme.surface,
+        border: Border(bottom: BorderSide(color: borderColor)),
       ),
       child: Row(
         children: [
@@ -313,15 +316,15 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.paper,
+              color: colorScheme.cardBackground,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.neutralMid.withOpacity(0.3)),
+              border: Border.all(color: borderColor),
             ),
             child: Text(
               '${state.totalItems} questions',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: AppColors.ink,
+                color: colorScheme.onSurface,
               ),
             ),
           ),
@@ -331,67 +334,32 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
   }
 
   Widget _buildQuestionTable(
+    BuildContext context,
     QuestionListState state,
     QuestionListViewModel notifier,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final headerStyle = TextStyle(
+      fontWeight: FontWeight.bold,
+      color: colorScheme.onSurface,
+    );
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
         child: DataTable(
           columnSpacing: 24,
-          headingRowColor: MaterialStateProperty.all(AppColors.paper),
-          columns: const [
-            DataColumn(
-              label: Text('ID', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            DataColumn(
-              label: Text(
-                'Question',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Subject',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Grade',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Topic',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Format',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Marks',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'PQP #',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Actions',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
+          headingRowColor: MaterialStateProperty.all(colorScheme.surface),
+          columns: [
+            DataColumn(label: Text('ID', style: headerStyle)),
+            DataColumn(label: Text('Question', style: headerStyle)),
+            DataColumn(label: Text('Subject', style: headerStyle)),
+            DataColumn(label: Text('Grade', style: headerStyle)),
+            DataColumn(label: Text('Topic', style: headerStyle)),
+            DataColumn(label: Text('Format', style: headerStyle)),
+            DataColumn(label: Text('Marks', style: headerStyle)),
+            DataColumn(label: Text('PQP #', style: headerStyle)),
+            DataColumn(label: Text('Actions', style: headerStyle)),
           ],
           rows: state.questions.map((question) {
             return DataRow(
@@ -428,7 +396,7 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
                     ),
                   ),
                 ),
-                DataCell(_buildFormatBadge(question.format)),
+                DataCell(_buildFormatBadge(context, question.format)),
                 DataCell(Text('${question.marks}')),
                 DataCell(Text(question.pqpNumber ?? '—')),
                 DataCell(
@@ -468,47 +436,46 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
     );
   }
 
-  Widget _buildFormatBadge(String format) {
-    Color color;
-    String label;
+  Widget _buildFormatBadge(BuildContext context, String format) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = colorScheme.brightness == Brightness.dark;
+    final accent = colorScheme.accentOrange;
+    final background = accent.withOpacity(isDark ? 0.18 : 0.1);
+    final borderColor = accent.withOpacity(isDark ? 0.6 : 0.4);
+    final textColor = isDark ? accent : colorScheme.onSurface;
 
+    String label;
     switch (format.toLowerCase()) {
       case 'mcq':
-        color = Colors.blue;
         label = 'MCQ';
         break;
       case 'short_answer':
-        color = Colors.green;
         label = 'Short Answer';
         break;
       case 'drag_drop':
-        color = Colors.orange;
         label = 'Drag & Drop';
         break;
       case 'true_false':
-        color = Colors.purple;
         label = 'True/False';
         break;
       case 'essay':
-        color = Colors.pink;
         label = 'Essay';
         break;
       default:
-        color = Colors.grey;
         label = format;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: background,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: borderColor),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: color.withOpacity(0.9),
+          color: textColor,
           fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
@@ -517,16 +484,20 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
   }
 
   Widget _buildPagination(
+    BuildContext context,
     QuestionListState state,
     QuestionListViewModel notifier,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final borderColor = colorScheme.borderColor.withOpacity(
+      colorScheme.brightness == Brightness.dark ? 0.6 : 0.3,
+    );
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: AppColors.neutralMid.withOpacity(0.3)),
-        ),
+        color: colorScheme.surface,
+        border: Border(top: BorderSide(color: borderColor)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -554,32 +525,38 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
     );
   }
 
-  Widget _buildEmptyView() {
+  Widget _buildEmptyView(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final secondaryColor = colorScheme.textSecondary;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.inbox, size: 80, color: AppColors.neutralMid),
+          Icon(Icons.inbox, size: 80, color: secondaryColor),
           const SizedBox(height: 16),
           Text(
             'No questions found',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.neutralMid,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'Try adjusting your filters or create a new question',
-            style: TextStyle(color: AppColors.neutralMid),
+            style: TextStyle(color: secondaryColor),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildErrorView(String error) {
+  Widget _buildErrorView(BuildContext context, String error) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final secondaryColor = colorScheme.textSecondary;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -591,11 +568,11 @@ class _QuestionListViewState extends ConsumerState<QuestionListView> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.red.shade700,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
-          Text(error, style: TextStyle(color: AppColors.neutralMid)),
+          Text(error, style: TextStyle(color: secondaryColor)),
         ],
       ),
     );

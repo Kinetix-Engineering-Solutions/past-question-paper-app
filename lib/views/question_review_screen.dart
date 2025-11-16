@@ -5,11 +5,15 @@ import 'package:past_question_paper_v1/widgets/latex_text.dart';
 class QuestionReviewScreen extends StatefulWidget {
   final Map<String, dynamic> gradingResults;
   final List<Map<String, dynamic>> questions;
+  final bool isPQPMode;
+  final bool isSprintMode;
 
   const QuestionReviewScreen({
     super.key,
     required this.gradingResults,
     required this.questions,
+    this.isPQPMode = false,
+    this.isSprintMode = false,
   });
 
   @override
@@ -346,39 +350,6 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
             colorScheme,
             question,
           ),
-
-          // Explanation
-          if (question != null && question['explanation'] != null) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '💡 Explanation',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.accent,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  LatexText(
-                    question['explanation'],
-                    textStyle: TextStyle(
-                      fontSize: 13,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -1032,19 +1003,29 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
     final item = items[_currentQuestionIndex];
     final q = item['question'] as Map<String, dynamic>?;
     String base = 'Question ${_currentQuestionIndex + 1} of ${items.length}';
-    final pqpNumber = _extractMap(q?['pqpData'])?['questionNumber']?.toString();
-    if (pqpNumber != null && pqpNumber.isNotEmpty) {
-      base =
-          'Question $pqpNumber • ${_currentQuestionIndex + 1}/${items.length}';
+
+    // Only show PQP numbers if in PQP mode
+    if (widget.isPQPMode) {
+      final pqpNumber = _extractMap(q?['pqpData'])?['questionNumber']?.toString();
+      if (pqpNumber != null && pqpNumber.isNotEmpty) {
+        base = 'Question $pqpNumber • ${_currentQuestionIndex + 1}/${items.length}';
+      }
     }
+
     return Text(base);
   }
 
   String _questionLabel(List<Map<String, dynamic>> items, int index) {
-    final q = items[index]['question'] as Map<String, dynamic>?;
-    final pqpNumber = _extractMap(q?['pqpData'])?['questionNumber']?.toString();
-    return pqpNumber != null && pqpNumber.isNotEmpty
-        ? pqpNumber
-        : '${index + 1}';
+    // Only show PQP numbers if in PQP mode
+    if (widget.isPQPMode) {
+      final q = items[index]['question'] as Map<String, dynamic>?;
+      final pqpNumber = _extractMap(q?['pqpData'])?['questionNumber']?.toString();
+      if (pqpNumber != null && pqpNumber.isNotEmpty) {
+        return pqpNumber;
+      }
+    }
+
+    // For Sprint/By Topic mode, always use sequential numbering
+    return '${index + 1}';
   }
 }

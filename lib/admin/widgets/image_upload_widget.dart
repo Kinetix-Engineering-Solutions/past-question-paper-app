@@ -53,7 +53,9 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
       );
 
       if (pickedFile == null) {
-        setState(() => _isUploading = false);
+        if (mounted) {
+          setState(() => _isUploading = false);
+        }
         return;
       }
 
@@ -70,10 +72,12 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
       debugPrint('✅ Upload successful: $downloadUrl');
       debugPrint('✅ URL starts with https: ${downloadUrl.startsWith('https')}');
 
-      setState(() {
-        _imageUrl = downloadUrl;
-        _isUploading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _imageUrl = downloadUrl;
+          _isUploading = false;
+        });
+      }
 
       // Notify parent
       widget.onImageUploaded(downloadUrl);
@@ -87,10 +91,12 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
         );
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed to upload image: $e';
-        _isUploading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to upload image: $e';
+          _isUploading = false;
+        });
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -126,9 +132,11 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
     );
 
     if (confirmed == true) {
-      setState(() {
-        _imageUrl = null;
-      });
+      if (mounted) {
+        setState(() {
+          _imageUrl = null;
+        });
+      }
 
       if (widget.onImageRemoved != null) {
         widget.onImageRemoved!();

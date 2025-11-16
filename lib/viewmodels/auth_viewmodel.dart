@@ -8,6 +8,7 @@ import 'package:past_question_paper_v1/services/navigation_service.dart';
 import 'package:past_question_paper_v1/Exceptions/auth_exception.dart';
 import 'package:past_question_paper_v1/widgets/custom_snackbar.dart';
 import 'package:past_question_paper_v1/utils/loading_state.dart';
+import 'package:past_question_paper_v1/views/email_verification_screen.dart';
 
 // Auth View Model Provider
 final authViewModelProvider =
@@ -53,6 +54,15 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
       // Update auth state with user data
       state = AsyncValue.data(user);
 
+      // Show success message
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: 'Login successful! Welcome back.',
+          isError: false,
+        );
+      }
+
       // Navigate based on profile completion
       if (!context.mounted) return;
 
@@ -62,16 +72,35 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
         await NavigationService.navigateToOnboarding();
       }
     } on AuthException catch (e) {
-      // Update auth state with error
-      state = AsyncValue.error(e.message, StackTrace.current);
+      final isVerificationNotice = e.code == 'email-not-verified';
 
-      // Show error message
+      if (isVerificationNotice) {
+        state = const AsyncValue.data(null);
+      } else {
+        // Update auth state with error
+        state = AsyncValue.error(e.message, StackTrace.current);
+      }
+
+      // Show message to user
       if (context.mounted) {
         CustomSnackBar.show(
           context: context,
           message: e.message,
-          isError: true,
+          isError: !isVerificationNotice,
         );
+
+        // Navigate to email verification screen for better UX
+        if (isVerificationNotice) {
+          // Delay navigation slightly so snackbar is visible
+          await Future.delayed(const Duration(milliseconds: 1500));
+          if (context.mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => EmailVerificationScreen(email: email),
+              ),
+            );
+          }
+        }
       }
     } catch (e) {
       // Handle unexpected errors
@@ -79,14 +108,6 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
         'An unexpected error occurred',
         StackTrace.current,
       );
-
-      if (context.mounted) {
-        CustomSnackBar.show(
-          context: context,
-          message: 'An unexpected error occurred',
-          isError: true,
-        );
-      }
     } finally {
       // Reset loading state
       _ref.read(loadingStateProvider.notifier).state = false;
@@ -118,6 +139,15 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
       // Update auth state with user data
       state = AsyncValue.data(user);
 
+      // Show success message
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: 'Account created successfully! Welcome to Past Question Papers.',
+          isError: false,
+        );
+      }
+
       // Navigate based on profile completion
       if (!context.mounted) return;
 
@@ -127,16 +157,35 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
         await NavigationService.navigateToOnboarding();
       }
     } on AuthException catch (e) {
-      // Update auth state with error
-      state = AsyncValue.error(e.message, StackTrace.current);
+      final isVerificationNotice = e.code == 'email-not-verified';
 
-      // Show error message
+      if (isVerificationNotice) {
+        state = const AsyncValue.data(null);
+      } else {
+        // Update auth state with error
+        state = AsyncValue.error(e.message, StackTrace.current);
+      }
+
+      // Show message to user
       if (context.mounted) {
         CustomSnackBar.show(
           context: context,
           message: e.message,
-          isError: true,
+          isError: !isVerificationNotice,
         );
+
+        // Navigate to email verification screen for better UX
+        if (isVerificationNotice) {
+          // Delay navigation slightly so snackbar is visible
+          await Future.delayed(const Duration(milliseconds: 1500));
+          if (context.mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => EmailVerificationScreen(email: email),
+              ),
+            );
+          }
+        }
       }
     } catch (e) {
       // Handle unexpected errors
@@ -144,14 +193,6 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
         'An unexpected error occurred',
         StackTrace.current,
       );
-
-      if (context.mounted) {
-        CustomSnackBar.show(
-          context: context,
-          message: 'An unexpected error occurred',
-          isError: true,
-        );
-      }
     } finally {
       // Reset loading state
       _ref.read(loadingStateProvider.notifier).state = false;
@@ -242,7 +283,7 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
       // Update auth state with error
       state = AsyncValue.error(e.message, StackTrace.current);
 
-      // Show error message
+      // Keep snackbar for forgot password errors since it's triggered from a button
       if (context.mounted) {
         CustomSnackBar.show(
           context: context,
@@ -293,6 +334,15 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
 
       // Update auth state with user data
       state = AsyncValue.data(user);
+
+      // Show success message
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: 'Sign-in successful! Welcome back.',
+          isError: false,
+        );
+      }
 
       // Navigate based on profile completion
       if (!context.mounted) return;

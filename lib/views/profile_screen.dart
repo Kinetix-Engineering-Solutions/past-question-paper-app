@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/utils/app_constants.dart';
 import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_v1/viewmodels/profile_viewmodel.dart';
@@ -18,6 +20,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   int? _selectedGrade;
   List<String> _selectedSubjects = [];
   bool _isSaving = false;
+  PackageInfo? _packageInfo;
 
   @override
   void didChangeDependencies() {
@@ -32,6 +35,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         });
       }
     });
+    
+    // Load package info
+    if (_packageInfo == null) {
+      _loadPackageInfo();
+    }
+  }
+
+  Future<void> _loadPackageInfo() async {
+    final info = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() {
+        _packageInfo = info;
+      });
+    }
   }
 
   Future<void> _savePreferences() async {
@@ -47,15 +64,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Preferences saved successfully!'),
-          backgroundColor: Theme.of(context).colorScheme.primary,
+          content: const Text(
+            'Preferences saved successfully!',
+            style: TextStyle(color: AppColors.neutralCard),
+          ),
+          backgroundColor: AppColors.accent,
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error saving preferences: $e'),
-          backgroundColor: Colors.redAccent,
+          content: Text(
+            'Error saving preferences: $e',
+            style: const TextStyle(color: AppColors.neutralCard),
+          ),
+          backgroundColor: AppColors.ink,
         ),
       );
     } finally {
@@ -73,16 +96,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      backgroundColor: colorScheme.background,
+      backgroundColor: colorScheme.paperBackground,
       appBar: AppBar(
         title: const Text('Profile & Settings'),
-        backgroundColor: colorScheme.background,
+        backgroundColor: colorScheme.paperBackground,
         elevation: 0,
         foregroundColor: colorScheme.onBackground,
       ),
       body: userState.when(
         loading: () => Center(
-          child: CircularProgressIndicator(color: colorScheme.primary),
+          child: CircularProgressIndicator(color: colorScheme.accentOrange),
         ),
         error: (error, stack) => Center(child: Text('Error: $error')),
         data: (user) {
@@ -108,13 +131,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       children: [
                         CircleAvatar(
                           radius: 36,
-                          backgroundColor: colorScheme.primary.withOpacity(
-                            0.12,
-                          ),
+                          backgroundColor: colorScheme.cardBackground,
                           child: Icon(
                             Icons.person,
                             size: 36,
-                            color: colorScheme.primary,
+                            color: colorScheme.textSecondary,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -132,7 +153,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               Text(
                                 user.email ?? '',
                                 style: textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
+                                  color: colorScheme.textSecondary,
                                 ),
                               ),
                             ],
@@ -183,24 +204,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: colorScheme.primaryContainer.withOpacity(
-                              0.5,
-                            ),
+                            color: colorScheme.brightness == Brightness.dark
+                                ? AppColorsDark.accentSoft
+                                : AppColors.accentSoft,
                             borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.accent.withOpacity(0.3),
+                            ),
                           ),
                           child: Row(
                             children: [
                               Icon(
                                 Icons.info_outline,
                                 size: 16,
-                                color: colorScheme.onSurfaceVariant,
+                                color: AppColors.accent,
                               ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   'Currently: Grade 12 only. Other grades coming soon!',
                                   style: textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
+                                    color: colorScheme.onBackground,
                                     fontSize: 11,
                                   ),
                                 ),
@@ -227,8 +251,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 style: TextStyle(
                                   color: isAvailable
                                       ? null
-                                      : colorScheme.onSurfaceVariant
-                                            .withOpacity(0.5),
+                                      : colorScheme.textSecondary.withOpacity(
+                                          0.5,
+                                        ),
                                 ),
                               ),
                               if (!isAvailable) ...[
@@ -239,15 +264,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: colorScheme.surfaceVariant,
+                                    color: colorScheme.cardBackground,
                                     borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: colorScheme.borderColor,
+                                    ),
                                   ),
                                   child: Text(
                                     'Soon',
                                     style: TextStyle(
                                       fontSize: 9,
                                       fontWeight: FontWeight.bold,
-                                      color: colorScheme.onSurfaceVariant,
+                                      color: colorScheme.textSecondary,
                                     ),
                                   ),
                                 ),
@@ -266,11 +294,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       borderRadius: BorderRadius.circular(12),
                       icon: Icon(
                         Icons.keyboard_arrow_down_rounded,
-                        color: colorScheme.onSurfaceVariant,
+                        color: colorScheme.textSecondary,
                       ),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: colorScheme.surface,
+                        fillColor: colorScheme.cardBackground,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 14,
@@ -280,7 +308,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           borderSide: BorderSide.none,
                         ),
                       ),
-                      dropdownColor: colorScheme.surface,
+                      dropdownColor: colorScheme.cardBackground,
                     ),
                   ],
                 ),
@@ -296,7 +324,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         Icon(
                           Icons.library_books_outlined,
                           size: 20,
-                          color: colorScheme.primary,
+                          color: colorScheme.textSecondary,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -310,7 +338,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     Text(
                       'Select subjects to personalize your home screen',
                       style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
+                        color: colorScheme.textSecondary,
                       ),
                     ),
                     // 🚀 MVP: Show beta message for subjects
@@ -320,24 +348,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: colorScheme.primaryContainer.withOpacity(
-                              0.5,
-                            ),
+                            color: colorScheme.brightness == Brightness.dark
+                                ? AppColorsDark.accentSoft
+                                : AppColors.accentSoft,
                             borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: AppColors.accent.withOpacity(0.3),
+                            ),
                           ),
                           child: Row(
                             children: [
                               Icon(
                                 Icons.info_outline,
                                 size: 16,
-                                color: colorScheme.onSurfaceVariant,
+                                color: AppColors.accent,
                               ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   'Currently: Mathematics only. Other subjects coming soon!',
                                   style: textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
+                                    color: colorScheme.onBackground,
                                     fontSize: 11,
                                   ),
                                 ),
@@ -366,22 +397,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
+                          color: colorScheme.brightness == Brightness.dark
+                              ? AppColorsDark.accentSoft
+                              : AppColors.accentSoft,
                           borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppColors.accent.withOpacity(0.3),
+                          ),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               Icons.info_outline,
                               size: 20,
-                              color: colorScheme.onPrimaryContainer,
+                              color: AppColors.accent,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
                                 'Don\'t forget to save your preferences',
                                 style: textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.onPrimaryContainer,
+                                  color: colorScheme.onBackground,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -390,10 +426,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                       ),
                     const SizedBox(height: 12),
-                    FilledButton(
+                    ElevatedButton(
                       onPressed: _isSaving ? null : _savePreferences,
-                      style: FilledButton.styleFrom(
+                      style: ElevatedButton.styleFrom(
                         minimumSize: const Size.fromHeight(52),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: AppColors.accent,
+                        foregroundColor: AppColors.neutralCard,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       child: _isSaving
                           ? SizedBox(
@@ -402,7 +445,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation(
-                                  colorScheme.onPrimary,
+                                  AppColors.neutralCard,
                                 ),
                               ),
                             )
@@ -417,7 +460,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         onPressed: () async => await authViewModel
                             .signOutUserInUI(context: context),
                         style: TextButton.styleFrom(
-                          foregroundColor: colorScheme.error,
+                          foregroundColor: colorScheme.textSecondary,
                         ),
                         child: const Text('Sign out'),
                       ),
@@ -438,7 +481,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       contentPadding: EdgeInsets.zero,
                       leading: Icon(
                         Icons.privacy_tip_outlined,
-                        color: colorScheme.primary,
+                        color: colorScheme.textSecondary,
                       ),
                       title: Text(
                         'Privacy Policy',
@@ -449,7 +492,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       trailing: Icon(
                         Icons.open_in_new,
                         size: 20,
-                        color: colorScheme.onSurfaceVariant,
+                        color: colorScheme.textSecondary,
                       ),
                       onTap: () async {
                         try {
@@ -475,6 +518,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 24),
+              
+              // App Version Footer
+              if (_packageInfo != null)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Column(
+                      children: [
+                        Text(
+                          'PQP App',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Version ${_packageInfo!.version} (${_packageInfo!.buildNumber})',
+                          style: textTheme.bodySmall?.copyWith(
+                            color: colorScheme.textSecondary.withOpacity(0.7),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
             ],
           );
         },
@@ -490,8 +560,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         style:
             Theme.of(
               context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold) ??
-            const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600) ??
+            const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -506,18 +576,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: colorScheme.primary.withOpacity(0.08),
+        color: colorScheme.cardBackground,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colorScheme.borderColor, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: colorScheme.primary),
+          Icon(icon, size: 16, color: colorScheme.textSecondary),
           const SizedBox(width: 6),
           Text(
             label,
             style: textTheme.bodyMedium?.copyWith(
-              color: colorScheme.primary,
+              color: colorScheme.onBackground,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -573,13 +644,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (AppConstants.allSubjects.isEmpty) {
       return Text(
         'No subjects available yet.',
-        style: textTheme.bodyMedium?.copyWith(
-          color: colorScheme.onSurfaceVariant,
-        ),
+        style: textTheme.bodyMedium?.copyWith(color: colorScheme.textSecondary),
       );
     }
 
     final normalizedSelected = _selectedSubjects.map(_normalizeSubject).toSet();
+    final accentSoft = colorScheme.brightness == Brightness.dark
+        ? AppColorsDark.accentSoft
+        : AppColors.accentSoft;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -591,22 +663,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: colorScheme.primaryContainer,
+                color: accentSoft,
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.accent.withOpacity(0.3)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.check_circle,
                     size: 16,
-                    color: colorScheme.onPrimaryContainer,
+                    color: AppColors.accent,
                   ),
                   const SizedBox(width: 6),
                   Text(
                     '${_selectedSubjects.length} selected',
                     style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onPrimaryContainer,
+                      color: colorScheme.onBackground,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -624,18 +697,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             final isSelected = normalizedSelected.contains(normalizedSubject);
             // 🚀 MVP: Check if subject is available
             final isAvailable = AppConstants.isSubjectAvailable(subject);
+            final canSelect = isSelected && isAvailable;
 
             return FilterChip(
               label: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (isSelected && isAvailable)
+                  if (canSelect)
                     Padding(
                       padding: const EdgeInsets.only(right: 6),
                       child: Icon(
                         Icons.check,
                         size: 16,
-                        color: colorScheme.onPrimary,
+                        color: AppColors.neutralCard,
                       ),
                     ),
                   Text(_formatSubjectLabel(subject)),
@@ -648,22 +722,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: colorScheme.surfaceVariant,
+                        color: colorScheme.cardBackground,
                         borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: colorScheme.borderColor),
                       ),
                       child: Text(
                         'Soon',
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurfaceVariant,
+                          color: colorScheme.textSecondary,
                         ),
                       ),
                     ),
                   ],
                 ],
               ),
-              selected: isSelected && isAvailable,
+              selected: canSelect,
               onSelected: isAvailable
                   ? (selected) {
                       setState(() {
@@ -685,18 +760,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               showCheckmark: false,
               labelStyle: textTheme.bodyMedium?.copyWith(
                 color: !isAvailable
-                    ? colorScheme.onSurfaceVariant.withOpacity(0.5)
-                    : isSelected
-                    ? colorScheme.onPrimary
-                    : colorScheme.onSurface,
-                fontWeight: isSelected && isAvailable
-                    ? FontWeight.w600
-                    : FontWeight.w500,
+                    ? colorScheme.textSecondary.withOpacity(0.5)
+                    : canSelect
+                    ? AppColors.neutralCard
+                    : colorScheme.onBackground,
+                fontWeight: canSelect ? FontWeight.w600 : FontWeight.w500,
               ),
-              backgroundColor: colorScheme.surface,
-              selectedColor: colorScheme.primary,
-              disabledColor: colorScheme.surfaceVariant.withOpacity(0.3),
-              side: BorderSide.none,
+              backgroundColor: colorScheme.cardBackground,
+              selectedColor: AppColors.accent,
+              disabledColor: colorScheme.cardBackground,
+              side: BorderSide(
+                color: canSelect ? AppColors.accent : colorScheme.borderColor,
+              ),
             );
           }).toList(),
         ),
@@ -716,8 +791,9 @@ class _ProfileSectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
+        color: colorScheme.cardBackground,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colorScheme.borderColor, width: 1),
       ),
       child: child,
     );
@@ -759,7 +835,7 @@ class _ThemeToggle extends ConsumerWidget {
                     : mode == ThemeMode.light
                     ? Icons.wb_sunny
                     : Icons.brightness_auto,
-                color: colorScheme.primary,
+                color: colorScheme.textSecondary,
               ),
               const SizedBox(width: 16),
               Column(
@@ -775,7 +851,7 @@ class _ThemeToggle extends ConsumerWidget {
                   Text(
                     _labelForMode(mode),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
+                      color: colorScheme.textSecondary,
                     ),
                   ),
                 ],
@@ -794,8 +870,8 @@ class _ThemeToggle extends ConsumerWidget {
                   option.icon,
                   size: 16,
                   color: isSelected
-                      ? colorScheme.onPrimary
-                      : colorScheme.onSurfaceVariant,
+                      ? AppColors.neutralCard
+                      : colorScheme.textSecondary,
                 ),
                 selected: isSelected,
                 onSelected: (_) {
@@ -806,13 +882,17 @@ class _ThemeToggle extends ConsumerWidget {
                 showCheckmark: false,
                 labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: isSelected
-                      ? colorScheme.onPrimary
-                      : colorScheme.onSurface,
+                      ? AppColors.neutralCard
+                      : colorScheme.onBackground,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                 ),
-                backgroundColor: colorScheme.surface,
-                selectedColor: colorScheme.primary,
-                side: BorderSide.none,
+                backgroundColor: colorScheme.cardBackground,
+                selectedColor: AppColors.accent,
+                side: BorderSide(
+                  color: isSelected
+                      ? AppColors.accent
+                      : colorScheme.borderColor,
+                ),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 10,

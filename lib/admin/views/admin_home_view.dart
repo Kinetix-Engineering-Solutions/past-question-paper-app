@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/admin/views/question_create_view.dart';
 import 'package:past_question_paper_v1/admin/views/parent_question_create_view.dart';
 import 'package:past_question_paper_v1/admin/views/question_list_view.dart';
@@ -6,13 +8,25 @@ import 'package:past_question_paper_v1/admin/views/parent_child_browser_view.dar
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 
 /// Admin Home View - Simple landing page with quick actions
-class AdminHomeView extends StatelessWidget {
+class AdminHomeView extends ConsumerWidget {
   const AdminHomeView({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: const Text('PQP Admin Portal'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('PQP Admin Portal'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            tooltip: 'Sign out',
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+            },
+            icon: const Icon(Icons.logout),
+          ),
+        ],
+      ),
       body: Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 800),

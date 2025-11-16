@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:past_question_paper_v1/model/user.dart';
 import 'package:past_question_paper_v1/services/firestore_database_firebase.dart';
@@ -28,12 +29,25 @@ class AuthServiceFirebase implements IAuthService {
 
   @override
   Stream<AppUser?> get authStateChanges {
-    return _auth.authStateChanges().map(_userFromFirebaseUser);
+    return _auth.authStateChanges().map((user) {
+      if (user == null) return null;
+      if (!user.emailVerified) {
+        return null;
+      }
+      return _userFromFirebaseUser(user);
+    });
   }
 
   /// Get the current user from Firebase Auth
   @override
-  AppUser? get currentUser => _userFromFirebaseUser(_auth.currentUser);
+  AppUser? get currentUser {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+    if (!user.emailVerified) {
+      return null;
+    }
+    return _userFromFirebaseUser(user);
+  }
 
   @override
   Future<UserCredential> signInWithEmailAndPassword(
@@ -45,6 +59,30 @@ class AuthServiceFirebase implements IAuthService {
         email: email,
         password: password,
       );
+
+      final user = result.user;
+      if (user != null && !user.emailVerified) {
+        try {
+          await user.sendEmailVerification();
+        } catch (verificationError) {
+          if (kDebugMode) {
+            debugPrint(
+              '⚠️ Failed to send verification email: $verificationError',
+            );
+          }
+        }
+
+        await _auth.signOut();
+
+        throw AuthException(
+          '⚠️ Email Not Verified\n\n'
+          'Please verify your email address first.\n\n'
+          'We\'ve sent a verification link to ${user.email ?? 'your email'}. '
+          'Check your inbox (and spam folder), click the link, then sign in again.',
+          code: 'email-not-verified',
+        );
+      }
+
       return result;
     } on FirebaseAuthException catch (e) {
       throw AuthException.fromFirebaseAuth(e);
@@ -76,6 +114,18 @@ class AuthServiceFirebase implements IAuthService {
 
       // Save the user to Firestore
       await _database.saveUser(appUser);
+
+      if (result.user != null && !(result.user!.emailVerified)) {
+        try {
+          await result.user!.sendEmailVerification();
+        } catch (verificationError) {
+          if (kDebugMode) {
+            debugPrint(
+              '⚠️ Failed to send verification email after sign up: $verificationError',
+            );
+          }
+        }
+      }
 
       return result;
     } on FirebaseAuthException catch (e) {
@@ -158,12 +208,16 @@ class AuthServiceFirebase implements IAuthService {
   /// Checks if a user is currently logged in
   /// This persists across app restarts automatically via Firebase
   bool isUserLoggedIn() {
-    return _auth.currentUser != null;
+    final user = _auth.currentUser;
+    return user != null && user.emailVerified;
   }
 
   /// Gets the current authentication state
   /// Returns true if user is authenticated, false otherwise
-  bool get isAuthenticated => _auth.currentUser != null;
+  bool get isAuthenticated {
+    final user = _auth.currentUser;
+    return user != null && user.emailVerified;
+  }
 
   /// Wait for the initial auth state to be determined
   /// Useful for splash screens or app initialization

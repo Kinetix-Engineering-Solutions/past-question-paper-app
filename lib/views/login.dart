@@ -4,7 +4,8 @@ import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/utils/loading_state.dart';
 import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_v1/views/signup_screen.dart';
-import 'package:past_question_paper_v1/widgets/custom_snackbar.dart';
+import 'package:past_question_paper_v1/views/forgot_password_screen.dart';
+import 'package:past_question_paper_v1/widgets/message_banner.dart';
 import 'package:past_question_paper_v1/utils/form_validators.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -18,6 +19,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -46,32 +48,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _handleForgotPassword() {
-    ref
-        .read(authViewModelProvider.notifier)
-        .sendPasswordResetEmailInUI(
-          email: _emailController.text.trim(),
-          context: context,
-          formKey: _formKey,
-        );
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const ForgotPasswordScreen(),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Listen for auth state changes and errors
-    ref.listen(authViewModelProvider, (previous, current) {
-      current.whenOrNull(
-        error: (error, stackTrace) {
-          if (mounted) {
-            CustomSnackBar.show(
-              context: context,
-              message: error.toString(),
-              isError: true,
-            );
-          }
-        },
-      );
-    });
-
     return Scaffold(
       backgroundColor: AppColors.paper,
       body: GestureDetector(
@@ -117,6 +102,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ],
                     ),
                   ),
+                  // Error message display
+                  ref.watch(authViewModelProvider).whenOrNull(
+                    error: (error, stackTrace) => MessageBanner(
+                      message: error.toString(),
+                      isError: true,
+                    ),
+                  ) ?? const SizedBox.shrink(),
                   TextFormField(
                     controller: _emailController,
                     style: TextStyle(color: AppColors.ink),
@@ -176,10 +168,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         Icons.lock_outline,
                         color: AppColors.neutralMid,
                       ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          color: AppColors.neutralMid,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
                       fillColor: AppColors.neutralCard,
                       filled: true,
                     ),
-                    obscureText: true,
+                    obscureText: _obscurePassword,
                     validator: FormValidators.validatePassword,
                     enabled: !ref.watch(loadingStateProvider),
                     textInputAction: TextInputAction.done,

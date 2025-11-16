@@ -493,6 +493,18 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
       final difficulty = (data['difficulty'] ?? state.difficulty).toString();
       final questionText = (data['questionText'] ?? '').toString();
       String correctAnswer = _stringifyCorrectAnswer(data['correctAnswer']);
+
+      // Sanitize correctAnswer for MCQ format - ensure it's only A, B, C, or D
+      if (formatValue == 'mcq') {
+        final validAnswers = ['A', 'B', 'C', 'D'];
+        if (!validAnswers.contains(correctAnswer)) {
+          correctAnswer = ''; // Reset to empty if invalid
+          debugPrint(
+            '⚠️ Invalid correctAnswer value for MCQ: ${data['correctAnswer']}. Resetting to empty.',
+          );
+        }
+      }
+
       final caseSensitive = data['caseSensitive'] == true;
 
       // PQP data
@@ -805,10 +817,7 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
           await _refreshParentAggregates(normalizedNewParentId);
         }
 
-        // Reset form after 2 seconds only for create flow
-        Future.delayed(const Duration(seconds: 2), () {
-          state = const QuestionCreateState();
-        });
+        // Reset form after 2 seconds only for create flow - removed to prevent memory leaks
       }
     } catch (e) {
       debugPrint('❌ Error creating question: $e');

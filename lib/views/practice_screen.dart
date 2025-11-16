@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/model/question.dart';
+import 'package:past_question_paper_v1/utils/haptic_feedback.dart';
 import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
 import 'package:past_question_paper_v1/views/practice_results_screen.dart';
 import 'package:past_question_paper_v1/widgets/latex_text.dart';
@@ -37,12 +39,23 @@ class PracticeScreen extends ConsumerStatefulWidget {
 
 class _PracticeScreenState extends ConsumerState<PracticeScreen> {
   late final PageController _pageController;
+  late final ScrollController _navigatorScrollController;
   int _currentPage = 0;
+  Timer? _countdownTimer;
+  int _remainingSeconds = 0;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    _navigatorScrollController = ScrollController();
+
+    // Initialize countdown timer if duration is configured
+    if (widget.configuredDurationMinutes != null) {
+      _remainingSeconds = widget.configuredDurationMinutes! * 60;
+      _startCountdownTimer();
+    }
+
     // Initialize the ViewModel with the questions for this session
     Future.microtask(
       () => ref
@@ -58,9 +71,30 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     );
   }
 
+  void _startCountdownTimer() {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      setState(() {
+        if (_remainingSeconds > 0) {
+          _remainingSeconds--;
+        } else {
+          timer.cancel();
+          // Auto-submit when time expires
+          _submitTest();
+        }
+      });
+    });
+  }
+
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _pageController.dispose();
+    _navigatorScrollController.dispose();
     // Session cleanup is now handled automatically by autoDispose provider
     // No need to manually call clearSession() here to avoid "ref after dispose" error
     super.dispose();
@@ -70,6 +104,26 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     setState(() {
       _currentPage = page;
     });
+    _scrollNavigatorToCurrentPage();
+  }
+
+  void _scrollNavigatorToCurrentPage() {
+    if (!_navigatorScrollController.hasClients) return;
+
+    // Calculate the position to scroll to
+    // Each item is ~52 (minWidth 44 + padding) + 8 (separator)
+    const itemWidth = 52.0 + 8.0;
+    final targetOffset = (_currentPage * itemWidth) - 100; // Center the item
+
+    // Clamp the offset to valid scroll range
+    final maxScroll = _navigatorScrollController.position.maxScrollExtent;
+    final scrollTo = targetOffset.clamp(0.0, maxScroll);
+
+    _navigatorScrollController.animateTo(
+      scrollTo,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   void _submitTest() async {
@@ -96,7 +150,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       // because grading result doesn't contain question data - only grading results
       for (final question in widget.questions) {
         final Map<String, dynamic> safeQuestion = {};
-        
+
         // Convert Question object to Map, preserving all essential fields including ID
         safeQuestion['id'] = question.id;
         safeQuestion['questionText'] = question.questionText;
@@ -115,7 +169,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
         safeQuestion['explanation'] = question.explanation;
         safeQuestion['options'] = question.options;
         safeQuestion['imageUrl'] = question.imageUrl;
-        
+
         // Handle complex objects - convert to simple maps
         if (question.pqpData != null) {
           safeQuestion['pqpData'] = {
@@ -124,7 +178,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
             'questionText': question.pqpData!.questionText,
           };
         }
-        
+
         if (question.sprintData != null) {
           safeQuestion['sprintData'] = {
             'questionText': question.sprintData!.questionText,
@@ -132,19 +186,18 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
             'difficulty': question.sprintData!.difficulty,
           };
         }
-        
+
         if (question.parentContext != null) {
           safeQuestion['parentContext'] = question.parentContext;
         }
-        
+
         // IMPORTANT: For drag-and-drop questions, preserve dragItems for step text mapping
         if (question.dragItems != null) {
-          safeQuestion['dragItems'] = question.dragItems!.map((item) => {
-            'id': item.id,
-            'text': item.text,
-          }).toList();
+          safeQuestion['dragItems'] = question.dragItems!
+              .map((item) => {'id': item.id, 'text': item.text})
+              .toList();
         }
-        
+
         safeQuestions.add(safeQuestion);
       }
 
@@ -159,6 +212,8 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
           builder: (context) => PracticeResultsScreen(
             gradingResults: safeGradingResults,
             questions: safeQuestions,
+            isPQPMode: widget.isPQPMode,
+            isSprintMode: widget.isSprintMode,
           ),
         ),
       );
@@ -170,6 +225,51 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
         ),
       );
     }
+  }
+
+  /// Builds the timer display widget for timed practice modes
+  Widget _buildTimerDisplay(ColorScheme colorScheme) {
+    final minutes = _remainingSeconds ~/ 60;
+    final seconds = _remainingSeconds % 60;
+    final timeString =
+        '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+
+    // Change color to warning when less than 5 minutes remain
+    final isWarning = _remainingSeconds < 300; // 5 minutes
+    final isCritical = _remainingSeconds < 60; // 1 minute
+
+    Color timerColor;
+    if (isCritical) {
+      timerColor = Colors.red;
+    } else if (isWarning) {
+      timerColor = Colors.orange;
+    } else {
+      timerColor = colorScheme.primary;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: timerColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: timerColor, width: 1.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.timer, color: timerColor, size: 18),
+          const SizedBox(width: 6),
+          Text(
+            timeString,
+            style: TextStyle(
+              color: timerColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Gets the appropriate question title based on mode and question data
@@ -218,6 +318,9 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
         foregroundColor: colorScheme.onBackground,
         title: Text(_getQuestionTitle(practiceState)),
         centerTitle: true,
+        actions: widget.configuredDurationMinutes != null
+            ? [_buildTimerDisplay(colorScheme), const SizedBox(width: 16)]
+            : null,
       ),
       body: Column(
         children: [
@@ -267,6 +370,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     return SizedBox(
       height: 52,
       child: ListView.separated(
+        controller: _navigatorScrollController,
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         scrollDirection: Axis.horizontal,
         itemCount: total,
@@ -303,6 +407,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
 
           return GestureDetector(
             onTap: () {
+              AppHaptics.selection();
               _pageController.animateToPage(
                 index,
                 duration: const Duration(milliseconds: 250),
@@ -344,9 +449,10 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     final isLastPage = _currentPage == totalQuestions - 1;
     final practiceState = ref.watch(practiceViewModelProvider);
     final colorScheme = Theme.of(context).colorScheme;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 16.0 + bottomPadding),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -355,6 +461,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
             onPressed: _currentPage == 0
                 ? null
                 : () {
+                    AppHaptics.light();
                     _pageController.previousPage(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeIn,
@@ -374,8 +481,14 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
             ),
             onPressed: isLastPage
-                ? (practiceState.isSubmitting ? null : _submitTest)
+                ? (practiceState.isSubmitting
+                      ? null
+                      : () {
+                          AppHaptics.medium();
+                          _submitTest();
+                        })
                 : () {
+                    AppHaptics.light();
                     _pageController.nextPage(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeIn,

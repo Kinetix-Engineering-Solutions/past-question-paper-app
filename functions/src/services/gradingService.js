@@ -13,9 +13,13 @@ const { gradeShortAnswer, gradeShortAnswerSubmissions } = require('./shortAnswer
  * @returns {Object} - Grading result
  */
 function gradeMultipleChoice(question, userAnswer) {
-  const isCorrect = userAnswer === question.correctAnswer;
+  // Normalize both answers for comparison (trim whitespace, case-insensitive)
+  const normalizedUserAnswer = (userAnswer || '').toString().trim().toUpperCase();
+  const normalizedCorrectAnswer = (question.correctAnswer || '').toString().trim().toUpperCase();
+
+  const isCorrect = normalizedUserAnswer === normalizedCorrectAnswer;
   const maxMarks = question.maxMarks || question.marks || 2;
-  
+
   return {
     questionId: question.id,
     format: 'multipleChoice',
@@ -34,9 +38,13 @@ function gradeMultipleChoice(question, userAnswer) {
  * @returns {Object} - Grading result
  */
 function gradeTrueFalse(question, userAnswer) {
-  const isCorrect = userAnswer === question.correctAnswer;
+  // Normalize both answers for comparison (handles "true"/"false" strings and booleans)
+  const normalizedUserAnswer = (userAnswer || '').toString().trim().toLowerCase();
+  const normalizedCorrectAnswer = (question.correctAnswer || '').toString().trim().toLowerCase();
+
+  const isCorrect = normalizedUserAnswer === normalizedCorrectAnswer;
   const maxMarks = question.maxMarks || question.marks || 1;
-  
+
   return {
     questionId: question.id,
     format: 'trueFalse',
@@ -114,11 +122,14 @@ function gradeDragAndDropOrdering(question, userAnswers) {
   // Check each position in the correct sequence (SA step-based marking)
   correctOrder.forEach((correctStep, index) => {
     const userStep = userOrderArray[index];
-    const isCorrect = correctStep === userStep;
+    // Normalize both for comparison (trim whitespace, case-sensitive for step IDs)
+    const normalizedCorrectStep = (correctStep || '').toString().trim();
+    const normalizedUserStep = (userStep || '').toString().trim();
+    const isCorrect = normalizedCorrectStep === normalizedUserStep;
     const stepMarks = isCorrect ? marksPerStep : 0;
-    
+
     if (isCorrect) correctCount++;
-    
+
     detailedResults.push({
       stepPosition: index + 1,
       userAnswer: userStep || 'Not provided',
@@ -198,10 +209,13 @@ function gradeDragAndDropMatching(question, userAnswers) {
     const userMapping = userAnswersArray.find(ua => ua.target === target.id) || userAnswersArray[index];
     const userAnswer = userMapping?.item || userMapping;
     const expectedAnswer = target.correctPair || target.correctAnswer;
-    const isCorrect = userAnswer === expectedAnswer;
-    
+    // Normalize both for comparison (trim whitespace, case-sensitive for IDs)
+    const normalizedUserAnswer = (userAnswer || '').toString().trim();
+    const normalizedExpectedAnswer = (expectedAnswer || '').toString().trim();
+    const isCorrect = normalizedUserAnswer === normalizedExpectedAnswer;
+
     if (isCorrect) correctCount++;
-    
+
     detailedResults.push({
       targetId: target.id || index,
       targetText: target.text || target.label,

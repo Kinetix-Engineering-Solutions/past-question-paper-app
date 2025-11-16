@@ -1,0 +1,187 @@
+rules_version = '2';
+
+/**
+ * Firestore Security Rules for Past Question Paper App
+ * 
+ * Security Model:
+ * - Users can only access their own data
+ * - Questions and blueprints are read-only (answers hidden by Cloud Functions)
+ * - All writes to questions/blueprints must go through Cloud Functions
+ * - Test sessions are private to each user
+ * 
+ * Last Updated: November 6, 2025
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // Helper Functions
+    // ============================================
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if user is accessing their own document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Check if document belongs to the authenticated user
+    function belongsToUser() {
+      return isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
+    // Allowed admin identities (lower-case emails mapped to true)
+    function adminEmailDirectory() {
+      return {
+        'irvinsenwedi@gmail.com': true,
+        'irvinsenwedi25@gmail.com': true,
+        'irvinsenwedi10@gmail.com': true,
+  'admin@kinetix.com': true,
+  'admin@kinetixes.com': true,
+  'info@kinetix.com': true
+      };
+    }
+
+    // Check if user is an admin (authorized to manage questions)
+    function isAdmin() {
+      return isAuthenticated() &&
+             request.auth.token.email != null &&
+             adminEmailDirectory()[request.auth.token.email.lower()] == true;
+    }
+    
+    // ============================================
+    // User Data
+    // ============================================
+    
+    // Users collection - users can only read/write their own profile
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
+      
+      // User sub-collections (test results, preferences, etc.)
+      match /testResults/{resultId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      match /preferences/{prefId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      match /sessions/{sessionId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+    
+    // ============================================
+    // Questions & Blueprints (Read-Only)
+    // ============================================
+    
+    // Questions collection - authenticated users can read, admins can write
+    // Answers are hidden by Cloud Functions before sending to client
+    match /questions/{questionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin(); // Admin can create/edit questions
+      
+      // Parent-child question structure
+      match /sub_questions/{subQuestionId} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin(); // Admin can create/edit sub-questions
+      }
+    }
+    
+    // Blueprints collection - authenticated users can read, admins can write
+    match /blueprints/{blueprintId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin(); // Admin can create/edit blueprints
+    }
+    
+    // ============================================
+    // Test Sessions (Private to User)
+    // ============================================
+    
+    // Test sessions - users can only access their own sessions
+    match /test_sessions/{sessionId} {
+      // Can read own sessions
+      allow read: if isAuthenticated() && 
+                     (resource == null || resource.data.userId == request.auth.uid);
+      
+      // Can create sessions with their own userId
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Can update own sessions
+      allow update: if belongsToUser();
+      
+      // Can delete own sessions
+      allow delete: if belongsToUser();
+    }
+    
+    // Session history - users can only access their own history
+    match /session_history/{userId} {
+      allow read, write: if isOwner(userId);
+      
+      // Individual session entries
+      match /sessions/{sessionId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+    
+    // ============================================
+    // User Progress & Statistics
+    // ============================================
+    
+    // User progress tracking
+    match /user_progress/{userId} {
+      allow read, write: if isOwner(userId);
+      
+      // Subject-specific progress
+      match /subjects/{subjectId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+    
+    // User statistics
+    match /user_stats/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if false; // Only Cloud Functions update stats
+    }
+    
+    // ============================================
+    // Admin Data (Restricted)
+    // ============================================
+    
+    // Admin-only collections
+    match /admin/{document=**} {
+      allow read, write: if false; // Admin portal uses Admin SDK
+    }
+    
+    // ============================================
+    // Rate Limiting & Metadata
+    // ============================================
+    
+    // Rate limiting data (managed by Cloud Functions)
+    match /rate_limits/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if false; // Only Cloud Functions can write
+    }
+    
+    // App configuration (read-only for all authenticated users)
+    match /app_config/{configId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+    
+    // ============================================
+    // Default Deny All
+    // ============================================
+    
+    // Deny access to everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

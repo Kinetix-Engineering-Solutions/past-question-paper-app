@@ -108,23 +108,45 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
             color: _colorScheme.primary.withOpacity(0.08),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.touch_app_outlined, color: _colorScheme.primary, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Drag items from below to the correct drop zones above',
-                  style: _textTheme.bodyMedium?.copyWith(
+              Row(
+                children: [
+                  Icon(Icons.touch_app_outlined, color: _colorScheme.primary, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Drag items from below to the correct drop zones above',
+                      style: _textTheme.bodyMedium?.copyWith(
+                            color: _colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ) ??
+                          TextStyle(
+                            color: _colorScheme.primary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.info_outline, color: _colorScheme.primary, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Tip: Press and hold an item for a moment before dragging',
+                      style: TextStyle(
                         color: _colorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ) ??
-                      TextStyle(
-                        color: _colorScheme.primary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
                       ),
-                ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -320,10 +342,12 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
   }
 
   Widget _buildDragItem(DragItem item) {
-    return Draggable<String>(
+    return LongPressDraggable<String>(
       data: item.id,
+      hapticFeedbackOnStart: true,
+      delay: const Duration(milliseconds: 200),
       feedback: Material(
-        elevation: 4,
+        elevation: 6,
         borderRadius: BorderRadius.circular(12),
         child: Container(
           width: 120,
@@ -331,6 +355,13 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
           decoration: BoxDecoration(
             color: _colorScheme.primary,
             borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: _colorScheme.primary.withOpacity(0.4),
+                blurRadius: 8,
+                spreadRadius: 2,
+              ),
+            ],
           ),
           child: Center(child: _buildItemContent(item, isDragging: true)),
         ),
@@ -356,7 +387,10 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
         decoration: BoxDecoration(
           color: _colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _colorScheme.outlineVariant),
+          border: Border.all(
+            color: _colorScheme.outlineVariant,
+            width: 2,
+          ),
           boxShadow: [
             BoxShadow(
               color: _colorScheme.shadow.withOpacity(0.08),
@@ -365,7 +399,20 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
             ),
           ],
         ),
-        child: Center(child: _buildItemContent(item)),
+        child: Stack(
+          children: [
+            Center(child: _buildItemContent(item)),
+            Positioned(
+              top: 4,
+              right: 4,
+              child: Icon(
+                Icons.touch_app,
+                size: 16,
+                color: _colorScheme.primary.withOpacity(0.6),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

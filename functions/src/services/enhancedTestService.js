@@ -580,18 +580,28 @@ async function generateBlueprintCompliantTest(params) {
 
   // Quick practice / scaled mode detection (duration or explicit quick flag)
   let effectiveBlueprint = { ...blueprint, topics: { ...blueprint.topics } };
-  if (params.mode === 'sprint' || params.quick || params.duration) {
-    const duration = params.duration || 15; // minutes
-    // Simple scaling: assume full blueprint ~150 marks ~ 180 minutes (example), scale proportionally
-    const baseTotal = blueprint.totalMarks || 150;
-    const assumedFullDuration = params.fullDuration || 180; // fallback assumption
-    const targetMarks = Math.max(15, Math.round(baseTotal * (duration / assumedFullDuration))); // keep minimum
+  const isQuickPractice = params.mode === 'sprint' || params.mode === 'quick_practice' || params.quick || params.duration;
+
+  if (isQuickPractice && params.duration) {
+    const duration = params.duration; // minutes from slider (5-60)
+    const baseTotal = blueprint.totalMarks || 150; // Full paper marks
+    const baseDuration = 150; // Full paper duration in minutes (matching most papers)
+
+    // Calculate target marks proportionally based on duration
+    // Example: 15 min / 150 min * 150 marks = 15 marks
+    //          30 min / 150 min * 150 marks = 30 marks
+    //          60 min / 150 min * 150 marks = 60 marks
+    const targetMarks = Math.max(10, Math.round(baseTotal * (duration / baseDuration)));
     const scale = targetMarks / baseTotal;
+
+    // Scale each topic proportionally
     Object.entries(blueprint.topics).forEach(([t, m]) => {
-      effectiveBlueprint.topics[t] = Math.max(3, Math.round(m * scale));
+      effectiveBlueprint.topics[t] = Math.max(2, Math.round(m * scale));
     });
     effectiveBlueprint.totalMarks = Object.values(effectiveBlueprint.topics).reduce((s,m)=>s+m,0);
-    console.log(`⚡ Quick practice scaling active: duration=${duration}m, targetMarks≈${effectiveBlueprint.totalMarks}`);
+
+    console.log(`⚡ Quick practice scaling active: duration=${duration}m (${Math.round(duration/baseDuration*100)}% of full paper)`);
+    console.log(`   Base: ${baseTotal} marks in ${baseDuration}m → Target: ${effectiveBlueprint.totalMarks} marks`);
   }
 
   // Calculate total marks and estimate questions

@@ -32,6 +32,9 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+pubspec.lock
+package-lock.json
+**/package-lock.json
 
 #CLAUDE: Exclude generated plugin registrant
 CLAUDE.md
@@ -87,6 +90,17 @@ test/coverage/
 /macos/build/
 /windows/build/
 /web/build/
+
+# Web build artifacts (auto-generated)
+web/.last_build_id
+web/flutter.js
+web/flutter_bootstrap.js
+web/flutter_service_worker.js
+web/main.dart.js
+web/version.json
+web/assets/
+web/build_admin/
+web/canvaskit/
 
 # IDE specific files
 *.code-workspace

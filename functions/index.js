@@ -1,4 +1,5 @@
 const functions = require('firebase-functions');
+const {onCall, HttpsError} = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 const cors = require('cors')({ origin: true });
 
@@ -14,8 +15,51 @@ admin.initializeApp();
  * Cloud Function to generate a test paper
  * Generates questions based on parameters and blueprints
  */
-exports.generateTest = functions.https.onCall(async (data, context) => {
+exports.generateTest = onCall(
+  {
+    memory: '256MiB',
+    timeoutSeconds: 30,
+    maxInstances: 100 // Limit concurrent executions to control costs
+  },
+  async (request) => {
+  const context = request;
+  const data = request.data;
   try {
+    // SECURITY: Require authentication
+    if (!context.auth) {
+      throw new HttpsError(
+        'unauthenticated',
+        'You must be logged in to generate tests.'
+      );
+    }
+    
+    const userId = context.auth.uid;
+    console.log('Test generation request received from user:', userId);
+    
+    // RATE LIMITING: Check if user is generating tests too quickly
+    const userRef = admin.firestore().collection('users').doc(userId);
+    const userDoc = await userRef.get();
+    
+    if (userDoc.exists) {
+      const userData = userDoc.data();
+      const lastGeneration = userData.lastTestGeneration;
+      const now = Date.now();
+      
+      // Limit to 1 test generation every 3 seconds
+      if (lastGeneration && (now - lastGeneration) < 3000) {
+        throw new HttpsError(
+          'resource-exhausted',
+          'Please wait a moment before generating another test.'
+        );
+      }
+      
+      // Update last generation timestamp
+      await userRef.update({ 
+        lastTestGeneration: now,
+        totalTestsGenerated: admin.firestore.FieldValue.increment(1)
+      });
+    }
+    
     console.log('Test generation request received:', data);
     
     // Extract parameters from request
@@ -23,6 +67,15 @@ exports.generateTest = functions.https.onCall(async (data, context) => {
     
     // Validate required parameters
     validateTestParams(params);
+    
+    // SECURITY: Validate request size
+    const requestedQuestions = params.numQuestions || 50;
+    if (requestedQuestions > 100) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Cannot generate more than 100 questions at once.'
+      );
+    }
     
     // Generate test using modular service
     const testData = await generateTestPaper(params);
@@ -61,11 +114,11 @@ exports.generateTest = functions.https.onCall(async (data, context) => {
   } catch (error) {
     console.error('Error in generateTest:', error);
     
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
     
-    throw new functions.https.HttpsError('internal', 'Failed to generate test. Please try again.');
+    throw new HttpsError('internal', 'Failed to generate test. Please try again.');
   }
 });
 
@@ -73,16 +126,32 @@ exports.generateTest = functions.https.onCall(async (data, context) => {
  * Cloud Function to grade a test submission
  * Grades answers and returns detailed results with statistics
  */
-exports.gradeTest = functions.https.onCall(async (data, context) => {
+exports.gradeTest = onCall(
+  {
+    memory: '256MiB',
+    timeoutSeconds: 30,
+    maxInstances: 100 // Limit concurrent executions to control costs
+  },
+  async (request) => {
+  const context = request;
+  const data = request.data;
   try {
-    console.log('🎯 Grading request received');
+    // SECURITY: Require authentication
+    if (!context.auth) {
+      throw new HttpsError(
+        'unauthenticated',
+        'You must be logged in to submit tests for grading.'
+      );
+    }
+    
+    const userId = context.auth.uid;
+    console.log('🎯 Grading request received from user:', userId);
     
     // Extract parameters from request
     const params = data.data || data;
     const {
       submissions,
       answers,
-      userId,
       subject,
       paper,
       mode,
@@ -93,13 +162,31 @@ exports.gradeTest = functions.https.onCall(async (data, context) => {
       flags,
     } = params;
     
+    // SECURITY: Validate submission size
+    const submissionsData = submissions || answers;
+    const submissionCount = Object.keys(submissionsData || {}).length;
+    
+    if (submissionCount > 100) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Cannot grade more than 100 questions at once.'
+      );
+    }
+    
+    // Validate answer text length
+    for (const [questionId, answer] of Object.entries(submissionsData || {})) {
+      if (typeof answer === 'string' && answer.length > 50000) {
+        throw new HttpsError(
+          'invalid-argument',
+          'Answer text is too long. Maximum 50,000 characters per answer.'
+        );
+      }
+    }
+    
     // DEBUG: Log received parameters
     console.log('📋 Received parameters:', {
       hasSubmissions: !!submissions || !!answers,
-      hasUserId: !!userId,
       contextAuthUid: context.auth?.uid,
-      receivedUserId: userId,
-      finalUserIdWillBe: userId || (context.auth ? context.auth.uid : null),
       subject,
       paper,
       mode,
@@ -107,14 +194,11 @@ exports.gradeTest = functions.https.onCall(async (data, context) => {
       durationMinutes,
     });
     
-    // Handle both new format (submissions) and legacy format (answers)
-    const submissionsData = submissions || answers;
-    
     // Validate parameters
     validateGradingParams({ submissions: submissionsData });
     
-    // Get userId from params or context auth (fallback)
-    const finalUserId = userId || (context.auth ? context.auth.uid : null);
+    // SECURITY: Use authenticated user's ID (don't trust client-provided userId)
+    const finalUserId = context.auth.uid;
     console.log('✅ Final userId for storage:', finalUserId || '⚠️ WARNING: No userId available');
     console.log('   - Received userId param:', userId);
     console.log('   - Context auth uid:', context.auth?.uid);
@@ -150,10 +234,10 @@ exports.gradeTest = functions.https.onCall(async (data, context) => {
   } catch (error) {
     console.error('❌ Error in gradeTest:', error);
     
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
     
-    throw new functions.https.HttpsError('internal', 'Failed to grade test. Please try again.');
+    throw new HttpsError('internal', 'Failed to grade test. Please try again.');
   }
 });

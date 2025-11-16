@@ -12,6 +12,8 @@ import 'package:past_question_paper_v1/views/login.dart';
 import 'package:past_question_paper_v1/views/main_navigation_screen.dart';
 import 'package:past_question_paper_v1/views/onboarding_screen.dart';
 import 'package:past_question_paper_v1/views/signup_screen.dart';
+import 'package:past_question_paper_v1/views/email_verification_screen.dart';
+import 'package:past_question_paper_v1/widgets/connectivity_banner.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,6 +54,19 @@ class MyApp extends ConsumerWidget {
         '/signup': (context) => const SignUpScreen(),
         '/home': (context) => const MainNavigationScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
+      },
+      builder: (context, child) {
+        return Stack(
+          children: [
+            if (child != null) child,
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: ConnectivityBanner(),
+            ),
+          ],
+        );
       },
     );
   }
