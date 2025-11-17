@@ -1,9 +1,11 @@
 import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 class StorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   /// Upload an image to Firebase Storage
   /// Returns the download URL on success
@@ -17,12 +19,42 @@ class StorageService {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final filePath = '$folder/${timestamp}_$fileName';
 
+      // Detect content type from file extension
+      String contentType = 'image/jpeg'; // Default
+      final lowerFileName = fileName.toLowerCase();
+      if (lowerFileName.endsWith('.png')) {
+        contentType = 'image/png';
+      } else if (lowerFileName.endsWith('.jpg') || lowerFileName.endsWith('.jpeg')) {
+        contentType = 'image/jpeg';
+      } else if (lowerFileName.endsWith('.gif')) {
+        contentType = 'image/gif';
+      } else if (lowerFileName.endsWith('.webp')) {
+        contentType = 'image/webp';
+      }
+
+      debugPrint('📤 Uploading to: $filePath');
+      debugPrint('📤 Content-Type: $contentType');
+
+      // Log current auth state and token claims to help debug permission issues
+      final user = _auth.currentUser;
+      if (user == null) {
+        debugPrint('⚠️ No authenticated user found when attempting upload.');
+      } else {
+        debugPrint('🔐 Upload initiated by: ${user.email} (uid: ${user.uid})');
+        try {
+          final idTokenResult = await user.getIdTokenResult(false);
+          debugPrint('🔑 Token claims: ${idTokenResult.claims}');
+        } catch (claimErr) {
+          debugPrint('⚠️ Failed to fetch token claims: $claimErr');
+        }
+      }
+
       // Upload the file
       final ref = _storage.ref().child(filePath);
       final uploadTask = ref.putData(
         imageBytes,
         SettableMetadata(
-          contentType: 'image/jpeg',
+          contentType: contentType,
           customMetadata: {'uploaded': DateTime.now().toIso8601String()},
         ),
       );
@@ -37,7 +69,7 @@ class StorageService {
       return downloadUrl;
     } catch (e) {
       debugPrint('❌ Error uploading image: $e');
-      throw Exception('Failed to upload image: $e');
+      rethrow; // Rethrow to preserve the original error message
     }
   }
 

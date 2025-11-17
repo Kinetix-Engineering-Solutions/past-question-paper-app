@@ -73,6 +73,13 @@ service firebase.storage {
       allow write: if isAdmin() && isImage() && isValidSize(10);
       allow delete: if isAdmin();
     }
+
+    // MCQ option images - public read, admin-only write
+    match /mcq_option_images/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isImage() && isValidSize(10);
+      allow delete: if isAdmin();
+    }
     
     // ============================================
     // User Uploads (Future Feature)
