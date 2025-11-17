@@ -32,6 +32,26 @@ service firebase.storage {
     function isImage() {
       return request.resource.contentType.matches('image/.*');
     }
+
+    // Admin email directory (lower-case)
+    function adminEmailDirectory() {
+      return {
+        'irvinsenwedi@gmail.com': true,
+        'irvinsenwedi25@gmail.com': true,
+        'irvinsenwedi10@gmail.com': true,
+        'admin@kinetix.com': true,
+        'admin@kinetixes.com': true,
+        'info@kinetix.com': true
+      };
+    }
+
+    // Check if user is admin by custom claim or by allowed email
+    function isAdmin() {
+      return request.auth != null && (
+        (request.auth.token.admin == true) ||
+        (request.auth.token.email != null && adminEmailDirectory()[request.auth.token.email.lower()] == true)
+      );
+    }
     
     // ============================================
     // Question Images (Read-Only)
@@ -40,13 +60,18 @@ service firebase.storage {
     // Parent question images - public read, admin-only write
     match /parent_question_images/{fileName} {
       allow read: if true; // Anyone can read (needed for app to display images)
-      allow write: if false; // Only Admin SDK (server-side) can upload/delete
+      // Allow writes from admin users from client (useful for admin portal uploads).
+      // Also validate content type and size to prevent abuse.
+      allow write: if isAdmin() && isImage() && isValidSize(10);
+      allow delete: if isAdmin();
     }
     
     // Regular question images - public read, admin-only write
     match /question_images/{fileName} {
       allow read: if true; // Anyone can read (needed for app to display images)
-      allow write: if false; // Only Admin SDK (server-side) can upload/delete
+      // Allow writes from admin users from client (admin portal) while ensuring file is an image
+      allow write: if isAdmin() && isImage() && isValidSize(10);
+      allow delete: if isAdmin();
     }
     
     // ============================================
@@ -88,7 +113,8 @@ service firebase.storage {
     // Admin assets
     match /admin/{allPaths=**} {
       allow read: if true;
-      allow write: if false; // Only Admin SDK can write
+      // Allow admin users to upload administrative assets from client if they have admin claim
+      allow write: if isAdmin() && isValidSize(20);
     }
     
     // ============================================
