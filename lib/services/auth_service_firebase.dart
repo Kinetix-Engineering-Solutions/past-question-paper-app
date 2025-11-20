@@ -226,4 +226,77 @@ class AuthServiceFirebase implements IAuthService {
     // This just waits for the first auth state change
     return await authStateChanges.first;
   }
+
+  /// Deletes the current user's account
+  /// This permanently deletes the user from Firebase Auth
+  /// Note: User data in Firestore should be deleted separately
+  @override
+  Future<void> deleteAccount() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw AuthException(
+          'No user is currently signed in',
+          code: 'no-current-user',
+        );
+      }
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      // Handle re-authentication required error
+      if (e.code == 'requires-recent-login') {
+        throw AuthException(
+          'For security, please sign out and sign in again before deleting your account',
+          code: 'requires-recent-login',
+        );
+      }
+      throw AuthException.fromFirebaseAuth(e);
+    }
+  }
+
+  @override
+  Future<void> reauthenticateAndDelete({
+    required String email,
+    required String password,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw AuthException(
+        'No user is currently signed in',
+        code: 'no-current-user',
+      );
+    }
+    try {
+      // Re-authenticate first
+      final credential = EmailAuthProvider.credential(
+        email: email,
+        password: password,
+      );
+      await user.reauthenticateWithCredential(credential);
+      // Then delete
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'wrong-password') {
+        throw AuthException('Incorrect password.', code: 'wrong-password');
+      }
+      if (e.code == 'user-mismatch' || e.code == 'user-not-found') {
+        throw AuthException(
+          'Authentication mismatch. Please sign in again.',
+          code: e.code,
+        );
+      }
+      if (e.code == 'too-many-requests') {
+        throw AuthException(
+          'Too many attempts. Please wait and try again.',
+          code: e.code,
+        );
+      }
+      if (e.code == 'requires-recent-login') {
+        throw AuthException(
+          'Session expired. Sign in again and retry.',
+          code: e.code,
+        );
+      }
+      throw AuthException.fromFirebaseAuth(e);
+    }
+  }
 }

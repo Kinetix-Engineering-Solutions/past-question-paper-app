@@ -24,7 +24,8 @@ class StorageService {
       final lowerFileName = fileName.toLowerCase();
       if (lowerFileName.endsWith('.png')) {
         contentType = 'image/png';
-      } else if (lowerFileName.endsWith('.jpg') || lowerFileName.endsWith('.jpeg')) {
+      } else if (lowerFileName.endsWith('.jpg') ||
+          lowerFileName.endsWith('.jpeg')) {
         contentType = 'image/jpeg';
       } else if (lowerFileName.endsWith('.gif')) {
         contentType = 'image/gif';

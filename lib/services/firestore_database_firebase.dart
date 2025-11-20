@@ -44,6 +44,20 @@ class FirestoreDatabaseService {
     }
   }
 
+  /// Deletes a user's data from Firestore
+  /// This removes the user document and related data
+  Future<void> deleteUserData(String userId) async {
+    try {
+      // Delete the user document
+      await _firestore.collection('users').doc(userId).delete();
+
+      // TODO: Delete other user-related data if needed
+      // (e.g., test sessions, progress, etc.)
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Fetches questions directly from Firestore with optional filters
   Future<List<Question>> getQuestions({
     String? subject,

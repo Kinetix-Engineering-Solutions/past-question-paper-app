@@ -133,6 +133,76 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
 // Enum for test modes
 enum TestMode { fullExam, quickPractice, byTopic }
 
+// Enum for journey node position
+enum JourneyPosition { start, middle, end }
+
+// Custom painter for the winding path
+class _PathPainter extends CustomPainter {
+  final Color color;
+
+  _PathPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 8
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    
+    // Start from top center
+    path.moveTo(size.width * 0.5, 80);
+    
+    // Curve to left
+    path.quadraticBezierTo(
+      size.width * 0.3, 150,
+      size.width * 0.2, 260,
+    );
+    
+    // Curve to right
+    path.quadraticBezierTo(
+      size.width * 0.1, 350,
+      size.width * 0.5, 370,
+    );
+    
+    // Curve to final position
+    path.quadraticBezierTo(
+      size.width * 0.8, 390,
+      size.width * 0.65, 450,
+    );
+
+    canvas.drawPath(path, paint);
+    
+    // Draw dotted overlay
+    final dashPaint = Paint()
+      ..color = color.withOpacity(0.5)
+      ..strokeWidth = 4
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    
+    _drawDashedPath(canvas, path, dashPaint);
+  }
+
+  void _drawDashedPath(Canvas canvas, Path path, Paint paint) {
+    const dashWidth = 10.0;
+    const dashSpace = 8.0;
+    double distance = 0.0;
+
+    for (var pathMetric in path.computeMetrics()) {
+      while (distance < pathMetric.length) {
+        final segment = pathMetric.extractPath(distance, distance + dashWidth);
+        canvas.drawPath(segment, paint);
+        distance += dashWidth + dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class TestConfigurationScreen extends StatefulWidget {
   final String subject;
   final int grade;
@@ -179,123 +249,204 @@ class _TestConfigurationScreenState extends State<TestConfigurationScreen> {
     );
   }
 
-  // Mode selection screen with three cards
+  // Mode selection screen with Candy Crush-style level map UI
   Widget _buildModeSelection() {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final screenWidth = MediaQuery.of(context).size.width;
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text(
-          'Choose Practice Mode',
-          style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Select the type of practice that best suits your learning goals.',
-          style: textTheme.bodyMedium?.copyWith(
-            color:
-                textTheme.bodyMedium?.color?.withOpacity(0.75) ??
-                colorScheme.onSurfaceVariant,
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              children: [
+                const SizedBox(height: 20),
+                Text(
+                  'Choose Practice Mode',
+                  style: textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Select the type of practice that best suits your learning goals',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: textTheme.bodyMedium?.color?.withOpacity(0.75) ??
+                        colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 32),
-        _buildModeCard(
-          icon: Icons.article,
-          title: 'Full Exam Mode',
-          description:
-              'Practice with authentic past exam papers. Questions appear exactly as they did in the original exam, with proper numbering and question chains.',
-          mode: TestMode.fullExam,
-          colorScheme: colorScheme,
-          textTheme: textTheme,
-        ),
-        const SizedBox(height: 16),
-        _buildModeCard(
-          icon: Icons.timer_outlined,
-          title: 'Quick Practice',
-          description:
-              'Fast-paced practice with mixed topics. Questions are simplified for learning, with hints available. Choose your own duration.',
-          mode: TestMode.quickPractice,
-          colorScheme: colorScheme,
-          textTheme: textTheme,
-        ),
-        const SizedBox(height: 16),
-        _buildModeCard(
-          icon: Icons.bookmark_border,
-          title: 'By Topic',
-          description:
-              'Focus on specific topics to strengthen weak areas. Select a topic to practice questions only from that section.',
-          mode: TestMode.byTopic,
-          colorScheme: colorScheme,
-          textTheme: textTheme,
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: 700,
+            child: Stack(
+              children: [
+                // Winding path background
+                CustomPaint(
+                  size: Size(screenWidth, 700),
+                  painter: _PathPainter(colorScheme.primary.withOpacity(0.2)),
+                ),
+                
+                // Level nodes positioned along the path
+                Positioned(
+                  left: screenWidth * 0.5 - 60,
+                  top: 80,
+                  child: _buildLevelNode(
+                    context: context,
+                    level: 1,
+                    icon: Icons.bookmark_border,
+                    title: 'By Topic',
+                    subtitle: 'Master the basics',
+                    color: Colors.green,
+                    mode: TestMode.byTopic,
+                    colorScheme: colorScheme,
+                    textTheme: textTheme,
+                  ),
+                ),
+                
+                Positioned(
+                  left: screenWidth * 0.2 - 60,
+                  top: 260,
+                  child: _buildLevelNode(
+                    context: context,
+                    level: 2,
+                    icon: Icons.timer_outlined,
+                    title: 'Quick Practice',
+                    subtitle: 'Speed challenge',
+                    color: Colors.orange,
+                    mode: TestMode.quickPractice,
+                    colorScheme: colorScheme,
+                    textTheme: textTheme,
+                  ),
+                ),
+                
+                Positioned(
+                  left: screenWidth * 0.65 - 60,
+                  top: 450,
+                  child: _buildLevelNode(
+                    context: context,
+                    level: 3,
+                    icon: Icons.article,
+                    title: 'Full Exam',
+                    subtitle: 'Final boss!',
+                    color: Colors.blue,
+                    mode: TestMode.fullExam,
+                    colorScheme: colorScheme,
+                    textTheme: textTheme,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ],
     );
   }
 
-  // Individual mode card
-  Widget _buildModeCard({
+  // Candy Crush style level node
+  Widget _buildLevelNode({
+    required BuildContext context,
+    required int level,
     required IconData icon,
     required String title,
-    required String description,
+    required String subtitle,
+    required Color color,
     required TestMode mode,
     required ColorScheme colorScheme,
     required TextTheme textTheme,
   }) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _selectedMode = mode;
-          });
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(icon, color: colorScheme.primary, size: 32),
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedMode = mode;
+        });
+      },
+      child: Column(
+        children: [
+          // Main circular level button
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color,
+              border: Border.all(
+                color: Colors.white,
+                width: 5,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Center(
+                  child: Icon(
+                    icon,
+                    size: 50,
+                    color: Colors.white,
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
+                ),
+                // Level number badge
+                Positioned(
+                  top: 5,
+                  right: 5,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: color, width: 2),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$level',
+                        style: TextStyle(
+                          color: color,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                   ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    color: colorScheme.primary,
-                    size: 20,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                description,
-                style: textTheme.bodyMedium?.copyWith(
-                  color:
-                      textTheme.bodyMedium?.color?.withOpacity(0.75) ??
-                      colorScheme.onSurfaceVariant,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const SizedBox(height: 12),
+          // Label container
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  title,
+                  style: textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                Text(
+                  subtitle,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurface.withOpacity(0.6),
+                    fontSize: 11,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -311,6 +462,63 @@ class _TestConfigurationScreenState extends State<TestConfigurationScreen> {
         return _ByTopicView(grade: widget.grade, subject: widget.subject);
     }
   }
+}
+
+// Custom painter for topic path (alternating left-right)
+class _TopicPathPainter extends CustomPainter {
+  final Color color;
+  final int topicCount;
+  final double screenWidth;
+
+  _TopicPathPainter(this.color, this.topicCount, this.screenWidth);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 8
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    
+    // Start from first topic position (centered)
+    path.moveTo(screenWidth * 0.5, 130);
+    
+    // Draw straight line down through all topics
+    for (int i = 0; i < topicCount - 1; i++) {
+      final nextY = 130.0 + ((i + 1) * 180.0);
+      path.lineTo(screenWidth * 0.5, nextY);
+    }
+
+    canvas.drawPath(path, paint);
+    
+    // Draw dotted overlay
+    final dashPaint = Paint()
+      ..color = color.withOpacity(0.5)
+      ..strokeWidth = 4
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    
+    _drawDashedPath(canvas, path, dashPaint);
+  }
+
+  void _drawDashedPath(Canvas canvas, Path path, Paint paint) {
+    const dashWidth = 10.0;
+    const dashSpace = 8.0;
+    double distance = 0.0;
+
+    for (var pathMetric in path.computeMetrics()) {
+      while (distance < pathMetric.length) {
+        final segment = pathMetric.extractPath(distance, distance + dashWidth);
+        canvas.drawPath(segment, paint);
+        distance += dashWidth + dashSpace;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // --- View for "Full Exam" Tab ---
@@ -546,24 +754,36 @@ class _ByTopicView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loadingButtonId = ref.watch(testConfigurationViewModelProvider);
-    // Get the topics for the current subject from your constants file
     final topics = AppConstants.topicsBySubject[subject] ?? [];
     final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    final screenWidth = MediaQuery.of(context).size.width;
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: topics.length + 1, // +1 for header
-      itemBuilder: (context, index) {
-        // Header section
-        if (index == 0) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+    // Define colors for topics (cycle through colors)
+    final topicColors = [
+      Colors.purple,
+      Colors.teal,
+      Colors.pink,
+      Colors.indigo,
+      Colors.deepOrange,
+      Colors.cyan,
+      Colors.amber,
+      Colors.green,
+      Colors.red,
+      Colors.blue,
+    ];
+
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: 20),
                 Text(
                   'Select a Topic',
-                  style: textTheme.titleLarge?.copyWith(
+                  style: textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -571,42 +791,165 @@ class _ByTopicView extends ConsumerWidget {
                 Text(
                   'Choose a topic to practice',
                   style: textTheme.bodyMedium?.copyWith(
-                    color: textTheme.bodyMedium?.color?.withOpacity(0.75),
+                    color: textTheme.bodyMedium?.color?.withOpacity(0.75) ??
+                        colorScheme.onSurfaceVariant,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
-          );
-        }
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: SizedBox(
+            height: topics.length * 180.0 + 100,
+            child: Stack(
+              children: [
+                // Winding path connecting topics
+                CustomPaint(
+                  size: Size(screenWidth, topics.length * 180.0 + 100),
+                  painter: _TopicPathPainter(
+                    colorScheme.primary.withOpacity(0.2),
+                    topics.length,
+                    screenWidth,
+                  ),
+                ),
+                // Position topic nodes along the path
+                ...List.generate(topics.length, (index) {
+                  final topic = topics[index];
+                  final buttonId = 'topic_$index';
+                  final color = topicColors[index % topicColors.length];
+                  final isLoading = loadingButtonId == buttonId;
+                  
+                  // Center all nodes
+                  final leftPosition = screenWidth * 0.5 - 50;
+                  final topPosition = 80.0 + (index * 180.0);
 
-        // Topic cards
-        final topicIndex = index - 1;
-        final topic = topics[topicIndex];
-        final buttonId = 'topic_$topicIndex';
-        return _buildStartCard(
-          context,
-          title: topic,
-          icon: Icons.bookmark_border,
-          isLoading: loadingButtonId == buttonId,
-          onTap: () {
-            ref
-                .read(testConfigurationViewModelProvider.notifier)
-                .startTest(
-                  context,
-                  {
-                    'grade': grade,
-                    'subject': subject,
-                    'mode': 'by_topic',
-                    'topic': topic,
-                    'paper': 'p1', // Default to paper 1 for topic practice
-                  },
-                  buttonId,
-                  modeKey: 'by_topic',
-                  sessionMetadata: {'topic': topic},
-                );
-          },
-        );
-      },
+                  return Positioned(
+                    left: leftPosition,
+                    top: topPosition,
+                    child: GestureDetector(
+                      onTap: isLoading
+                          ? null
+                          : () {
+                              ref
+                                  .read(testConfigurationViewModelProvider.notifier)
+                                  .startTest(
+                                    context,
+                                    {
+                                      'grade': grade,
+                                      'subject': subject,
+                                      'mode': 'by_topic',
+                                      'topic': topic,
+                                      'paper': 'p1',
+                                    },
+                                    buttonId,
+                                    modeKey: 'by_topic',
+                                    sessionMetadata: {'topic': topic},
+                                  );
+                            },
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Circular node
+                          Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: color,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 4,
+                              ),
+                            ),
+                            child: Stack(
+                              children: [
+                                // Icon
+                                Center(
+                                  child: Icon(
+                                    Icons.bookmark_border,
+                                    size: 40,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                // Level number badge
+                                Positioned(
+                                  top: 5,
+                                  right: 5,
+                                  child: Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: color, width: 2),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '${index + 1}',
+                                        style: TextStyle(
+                                          color: color,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                // Loading indicator
+                                if (isLoading)
+                                  Positioned.fill(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.3),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 3,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Label
+                          Container(
+                            width: 120,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              topic,
+                              style: textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: color,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+      ],
     );
   }
 }

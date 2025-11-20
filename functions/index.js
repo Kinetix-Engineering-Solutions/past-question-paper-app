@@ -11,6 +11,65 @@ const { gradeTestSubmission } = require('./src/services/gradingService');
 // Initialize Firebase Admin
 admin.initializeApp();
 
+// -------- User Cleanup (Auth onDelete) --------
+// Lazy helper to cleanup user data after account deletion.
+async function cleanupUserAccount(uid) {
+  const firestore = admin.firestore();
+  const bucket = admin.storage().bucket();
+  console.log(`[UserCleanup] Starting cleanup for uid=${uid}`);
+
+  // Delete user doc
+  try {
+    await firestore.collection('users').doc(uid).delete();
+    console.log(`[UserCleanup] Deleted users/${uid}`);
+  } catch (e) {
+    console.error(`[UserCleanup] Failed deleting users/${uid}`, e);
+  }
+
+  // Delete test sessions documents
+  try {
+    const sessionsSnap = await firestore.collection('test_sessions').where('userId', '==', uid).get();
+    if (!sessionsSnap.empty) {
+      const batch = firestore.batch();
+      sessionsSnap.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+      console.log(`[UserCleanup] Deleted ${sessionsSnap.size} test_sessions for uid=${uid}`);
+    } else {
+      console.log('[UserCleanup] No test_sessions found for user');
+    }
+  } catch (e) {
+    console.error(`[UserCleanup] Failed deleting test_sessions for ${uid}`, e);
+  }
+
+  // Storage prefixes to purge (convention based)
+  const prefixes = [
+    `user_uploads/${uid}/`,
+    `profile_images/${uid}/`,
+  ];
+  for (const prefix of prefixes) {
+    try {
+      await bucket.deleteFiles({ prefix });
+      console.log(`[UserCleanup] Deleted storage prefix ${prefix}`);
+    } catch (e) {
+      if (e && e.code !== 404) {
+        console.error(`[UserCleanup] Failed deleting storage prefix ${prefix}`, e);
+      }
+    }
+  }
+
+  console.log(`[UserCleanup] Completed cleanup for uid=${uid}`);
+}
+
+// Auth trigger: cascade deletion of Firestore + Storage after auth account removal.
+exports.onUserDeleteCleanup = functions.auth.user().onDelete(async (user) => {
+  const uid = user.uid;
+  try {
+    await cleanupUserAccount(uid);
+  } catch (e) {
+    console.error(`[UserCleanup] Unexpected error during cleanup for ${uid}`, e);
+  }
+});
+
 /**
  * Cloud Function to generate a test paper
  * Generates questions based on parameters and blueprints

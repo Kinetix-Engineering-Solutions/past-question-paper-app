@@ -262,9 +262,11 @@ class _PracticeResultsScreenState extends State<PracticeResultsScreen> {
                       children: [
                         Expanded(
                           child: ElevatedButton.icon(
-                            onPressed: () => Navigator.of(
-                              context,
-                            ).pushNamedAndRemoveUntil('/', (route) => false),
+                            onPressed: () =>
+                                Navigator.of(context).pushNamedAndRemoveUntil(
+                                  '/home',
+                                  (route) => false,
+                                ),
                             icon: const Icon(Icons.home),
                             label: const Text('Back to Home'),
                             style: ElevatedButton.styleFrom(

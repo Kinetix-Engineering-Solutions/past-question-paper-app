@@ -143,7 +143,8 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
       if (context.mounted) {
         CustomSnackBar.show(
           context: context,
-          message: 'Account created successfully! Welcome to Past Question Papers.',
+          message:
+              'Account created successfully! Welcome to Past Question Papers.',
           isError: false,
         );
       }
@@ -410,4 +411,60 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
 
   /// Get the current authentication state as a boolean
   bool get isAuthenticated => isUserLoggedIn;
+
+  /// Delete user account with re-authentication (Auth only; data cleanup handled by Cloud Function trigger)
+  Future<void> deleteAccountInUI({
+    required BuildContext context,
+    required String password,
+  }) async {
+    try {
+      _ref.read(loadingStateProvider.notifier).state = true;
+      final currentUser = state.value;
+      if (currentUser == null) {
+        throw AuthException(
+          'No user is currently signed in',
+          code: 'no-current-user',
+        );
+      }
+      final email = currentUser.email;
+      if (email == null || email.isEmpty) {
+        throw AuthException(
+          'Missing email for re-authentication',
+          code: 'missing-email',
+        );
+      }
+
+      // Re-authenticate & delete auth user (Firestore & Storage cleanup runs server-side)
+      await _ref
+          .read(userRepositoryProvider)
+          .reauthenticateAndDelete(email: email, password: password);
+      state = const AsyncValue.data(null);
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: 'Account deleted successfully',
+          isError: false,
+        );
+        await NavigationService.navigateToLogin();
+      }
+    } on AuthException catch (e) {
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: e.message,
+          isError: true,
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: 'Failed to delete account: $e',
+          isError: true,
+        );
+      }
+    } finally {
+      _ref.read(loadingStateProvider.notifier).state = false;
+    }
+  }
 }

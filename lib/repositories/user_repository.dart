@@ -174,4 +174,40 @@ class UserRepository {
       throw Exception('Failed to load available subjects.');
     }
   }
+
+  /// Deletes the user's Firestore data
+  Future<void> deleteUserData(String userId) async {
+    try {
+      await _database.deleteUserData(userId);
+    } catch (e) {
+      throw AuthException(
+        'Failed to delete user data',
+        code: 'delete-data-error',
+      );
+    }
+  }
+
+  /// Deletes the user's Firebase Auth account
+  Future<void> deleteAccount() async {
+    try {
+      await _authService.deleteAccount();
+    } on AuthException {
+      rethrow;
+    }
+  }
+
+  /// Re-authenticate with email & password then delete auth account.
+  Future<void> reauthenticateAndDelete({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      await _authService.reauthenticateAndDelete(
+        email: email,
+        password: password,
+      );
+    } on AuthException {
+      rethrow;
+    }
+  }
 }

@@ -17,6 +17,15 @@ abstract class IAuthService {
   AppUser? get currentUser;
   Future<void> sendPasswordResetEmail(String email);
 
+  Future<void> deleteAccount();
+
+  /// Re-authenticates the current user with email & password then deletes the auth account.
+  /// Throws if re-auth fails or deletion is blocked by security rules.
+  Future<void> reauthenticateAndDelete({
+    required String email,
+    required String password,
+  });
+
   /// Sends a sign-in link to the user's email
   Future<void> sendSignInLinkToEmail(String email);
 

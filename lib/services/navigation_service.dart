@@ -11,9 +11,10 @@ class NavigationService {
 
   /// Navigate to home screen and clear all previous routes
   static Future<void> navigateToHome() async {
-    if (context == null) return;
+    final nav = navigatorKey.currentState;
+    if (nav == null) return;
 
-    await Navigator.of(context!).pushAndRemoveUntil(
+    await nav.pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
       (route) => false, // Remove all previous routes
     );
@@ -21,9 +22,10 @@ class NavigationService {
 
   /// Navigate to onboarding screen and clear all previous routes
   static Future<void> navigateToOnboarding() async {
-    if (context == null) return;
+    final nav = navigatorKey.currentState;
+    if (nav == null) return;
 
-    await Navigator.of(context!).pushAndRemoveUntil(
+    await nav.pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const OnboardingScreen()),
       (route) => false, // Remove all previous routes
     );
@@ -31,9 +33,10 @@ class NavigationService {
 
   /// Navigate to login screen and clear all previous routes
   static Future<void> navigateToLogin() async {
-    if (context == null) return;
+    final nav = navigatorKey.currentState;
+    if (nav == null) return;
 
-    await Navigator.of(context!).pushAndRemoveUntil(
+    await nav.pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const LoginScreen()),
       (route) => false, // Remove all previous routes
     );

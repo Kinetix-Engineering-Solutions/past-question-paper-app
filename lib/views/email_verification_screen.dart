@@ -62,30 +62,42 @@ class _EmailVerificationScreenState
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        // Reload user to get latest email verification status
-        await user.reload();
-        final updatedUser = FirebaseAuth.instance.currentUser;
+      
+      // If user is signed out, redirect to login
+      if (user == null) {
+        if (mounted) {
+          CustomSnackBar.show(
+            context: context,
+            message: 'Please sign in again to continue.',
+            isError: false,
+          );
+        }
+        await _goBackToLogin();
+        return;
+      }
 
-        if (updatedUser != null && updatedUser.emailVerified) {
-          if (mounted) {
-            CustomSnackBar.show(
-              context: context,
-              message: 'Email verified successfully! Welcome aboard!',
-              isError: false,
-            );
-          }
+      // Reload user to get latest email verification status
+      await user.reload();
+      final updatedUser = FirebaseAuth.instance.currentUser;
 
-          // Navigate to onboarding or home
-          await NavigationService.navigateToOnboarding();
-        } else {
-          if (mounted) {
-            CustomSnackBar.show(
-              context: context,
-              message: 'Email not verified yet. Please check your inbox.',
-              isError: true,
-            );
-          }
+      if (updatedUser != null && updatedUser.emailVerified) {
+        if (mounted) {
+          CustomSnackBar.show(
+            context: context,
+            message: 'Email verified successfully! Welcome aboard!',
+            isError: false,
+          );
+        }
+
+        // Navigate to onboarding or home
+        await NavigationService.navigateToOnboarding();
+      } else {
+        if (mounted) {
+          CustomSnackBar.show(
+            context: context,
+            message: 'Email not verified yet. Please check your inbox and spam folder.',
+            isError: true,
+          );
         }
       }
     } catch (e) {
@@ -134,14 +146,6 @@ class _EmailVerificationScreenState
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Email icon
-              Icon(
-                Icons.mark_email_unread_outlined,
-                size: 120,
-                color: AppColors.accent,
-              ),
-              const SizedBox(height: 32),
-
               // Title
               Text(
                 'Verify Your Email',
@@ -185,7 +189,7 @@ class _EmailVerificationScreenState
               ),
               const SizedBox(height: 24),
 
-              // Instructions
+              // Spam folder reminder
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -193,37 +197,22 @@ class _EmailVerificationScreenState
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.accent.withOpacity(0.3)),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: AppColors.accent,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Next Steps:',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                      ],
+                    Icon(
+                      Icons.info_outline,
+                      color: AppColors.accent,
+                      size: 20,
                     ),
-                    const SizedBox(height: 12),
-                    _buildInstructionStep('1', 'Open your email inbox'),
-                    const SizedBox(height: 8),
-                    _buildInstructionStep('2', 'Find the verification email'),
-                    const SizedBox(height: 8),
-                    _buildInstructionStep('3', 'Click the verification link'),
-                    const SizedBox(height: 8),
-                    _buildInstructionStep(
-                      '4',
-                      'Return here and tap "I\'ve Verified"',
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Please check your inbox and spam folder for the verification link.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.ink,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -319,39 +308,6 @@ class _EmailVerificationScreenState
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildInstructionStep(String number, String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: AppColors.accent,
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: Text(
-              number,
-              style: TextStyle(
-                color: AppColors.neutralCard,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(fontSize: 14, color: AppColors.ink),
-          ),
-        ),
-      ],
     );
   }
 }

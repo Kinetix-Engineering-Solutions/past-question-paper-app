@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/utils/app_constants.dart';
+import 'package:past_question_paper_v1/utils/loading_state.dart';
 import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_v1/viewmodels/profile_viewmodel.dart';
 import 'package:past_question_paper_v1/viewmodels/theme_viewmodel.dart';
@@ -16,7 +17,6 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  // Local state to manage form changes before saving
   int? _selectedGrade;
   List<String> _selectedSubjects = [];
   bool _isSaving = false;
@@ -25,7 +25,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Initialize local state when user data is first loaded
     final userState = ref.watch(profileViewModelProvider);
     userState.whenData((user) {
       if (_selectedGrade == null && user != null) {
@@ -35,8 +34,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         });
       }
     });
-    
-    // Load package info
+
     if (_packageInfo == null) {
       _loadPackageInfo();
     }
@@ -62,25 +60,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             grade: _selectedGrade!,
             subjects: _selectedSubjects,
           );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Preferences saved successfully!',
-            style: TextStyle(color: AppColors.neutralCard),
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Preferences saved successfully!'),
+            backgroundColor: AppColors.accent,
           ),
-          backgroundColor: AppColors.accent,
-        ),
-      );
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Error saving preferences: $e',
-            style: const TextStyle(color: AppColors.neutralCard),
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving preferences: $e'),
+            backgroundColor: Colors.red,
           ),
-          backgroundColor: AppColors.ink,
-        ),
-      );
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -95,24 +91,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final themeState = ref.watch(themeViewModelProvider);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       backgroundColor: colorScheme.paperBackground,
       appBar: AppBar(
-        title: const Text('Profile & Settings'),
+        title: const Text('Settings'),
         backgroundColor: colorScheme.paperBackground,
         elevation: 0,
         foregroundColor: colorScheme.onBackground,
+        centerTitle: false,
       ),
       body: userState.when(
-        loading: () => Center(
-          child: CircularProgressIndicator(color: colorScheme.accentOrange),
-        ),
+        loading: () =>
+            Center(child: CircularProgressIndicator(color: AppColors.accent)),
         error: (error, stack) => Center(child: Text('Error: $error')),
         data: (user) {
           if (user == null) {
             return const Center(child: Text('User not found.'));
           }
-          // Initialize state if it hasn't been set yet
+
           _selectedGrade ??= user.grade ?? AppConstants.grades.first;
           if (_selectedSubjects.isEmpty &&
               (user.selectedSubjects?.isNotEmpty ?? false)) {
@@ -120,380 +117,119 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           }
 
           return ListView(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(16.0),
             children: [
-              _ProfileSectionCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        CircleAvatar(
-                          radius: 36,
-                          backgroundColor: colorScheme.cardBackground,
-                          child: Icon(
-                            Icons.person,
-                            size: 36,
-                            color: colorScheme.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                user.name ?? 'Student',
-                                style: textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                user.email ?? '',
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _buildInfoChip(
-                          context,
-                          label:
-                              'Grade ${_selectedGrade ?? user.grade ?? AppConstants.grades.first}',
-                          icon: Icons.school_outlined,
-                        ),
-                        if (_selectedSubjects.isEmpty)
-                          _buildInfoChip(
-                            context,
-                            label: 'No subjects selected',
-                            icon: Icons.library_add_outlined,
-                          )
-                        else
-                          _buildInfoChip(
-                            context,
-                            label:
-                                '${_selectedSubjects.length} ${_selectedSubjects.length == 1 ? 'subject' : 'subjects'} selected',
-                            icon: Icons.bookmark_added_outlined,
-                          ),
-                      ],
-                    ),
-                  ],
+              // User Profile Header
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: colorScheme.cardBackground,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: colorScheme.borderColor, width: 1),
                 ),
-              ),
-              const SizedBox(height: 20),
-
-              _ProfileSectionCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    _buildSectionHeader(context, 'Grade level'),
-                    // 🚀 MVP: Show beta message for grade selection
-                    if (AppConstants.comingSoonGrades.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: colorScheme.brightness == Brightness.dark
-                                ? AppColorsDark.accentSoft
-                                : AppColors.accentSoft,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: AppColors.accent.withOpacity(0.3),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.info_outline,
-                                size: 16,
-                                color: AppColors.accent,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Currently: Grade 12 only. Other grades coming soon!',
-                                  style: textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onBackground,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                    CircleAvatar(
+                      radius: 32,
+                      backgroundColor: AppColors.accent.withOpacity(0.1),
+                      child: Text(
+                        (user.name ?? 'S').substring(0, 1).toUpperCase(),
+                        style: textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.accent,
                         ),
-                      ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<int>(
-                      value: _selectedGrade,
-                      items: AppConstants.grades.map((grade) {
-                        // 🚀 MVP: Check if grade is available
-                        final isAvailable = AppConstants.isGradeAvailable(
-                          grade,
-                        );
-                        return DropdownMenuItem(
-                          value: grade,
-                          enabled: isAvailable,
-                          child: Row(
-                            children: [
-                              Text(
-                                'Grade $grade',
-                                style: TextStyle(
-                                  color: isAvailable
-                                      ? null
-                                      : colorScheme.textSecondary.withOpacity(
-                                          0.5,
-                                        ),
-                                ),
-                              ),
-                              if (!isAvailable) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.cardBackground,
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(
-                                      color: colorScheme.borderColor,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'Soon',
-                                    style: TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
-                                      color: colorScheme.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        // 🚀 MVP: Only allow changing to available grades
-                        if (value != null &&
-                            AppConstants.isGradeAvailable(value)) {
-                          setState(() => _selectedGrade = value);
-                        }
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      icon: Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: colorScheme.textSecondary,
-                      ),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: colorScheme.cardBackground,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      dropdownColor: colorScheme.cardBackground,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              _ProfileSectionCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.library_books_outlined,
-                          size: 20,
-                          color: colorScheme.textSecondary,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildSectionHeader(
-                            context,
-                            'Subjects I care about',
-                          ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      'Select subjects to personalize your home screen',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.textSecondary,
                       ),
                     ),
-                    // 🚀 MVP: Show beta message for subjects
-                    if (AppConstants.comingSoonSubjects.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: colorScheme.brightness == Brightness.dark
-                                ? AppColorsDark.accentSoft
-                                : AppColors.accentSoft,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: AppColors.accent.withOpacity(0.3),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user.name ?? 'Student',
+                            style: textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.info_outline,
-                                size: 16,
-                                color: AppColors.accent,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Currently: Mathematics only. Other subjects coming soon!',
-                                  style: textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onBackground,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          const SizedBox(height: 4),
+                          Text(
+                            user.email ?? '',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ),
-                    const SizedBox(height: 16),
-                    _buildSubjectSelection(context),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              _ThemeToggle(mode: themeState.mode),
-              const SizedBox(height: 20),
-
-              _ProfileSectionCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSectionHeader(context, 'Account actions'),
-                    if (_hasUnsavedChanges())
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: colorScheme.brightness == Brightness.dark
-                              ? AppColorsDark.accentSoft
-                              : AppColors.accentSoft,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: AppColors.accent.withOpacity(0.3),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              size: 20,
-                              color: AppColors.accent,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Don\'t forget to save your preferences',
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.onBackground,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    const SizedBox(height: 12),
-                    ElevatedButton(
-                      onPressed: _isSaving ? null : _savePreferences,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: AppColors.accent,
-                        foregroundColor: AppColors.neutralCard,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: _isSaving
-                          ? SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation(
-                                  AppColors.neutralCard,
-                                ),
-                              ),
-                            )
-                          : const Text(
-                              'Save preferences',
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                    ),
-                    const SizedBox(height: 12),
-                    Center(
-                      child: TextButton(
-                        onPressed: () async => await authViewModel
-                            .signOutUserInUI(context: context),
-                        style: TextButton.styleFrom(
-                          foregroundColor: colorScheme.textSecondary,
-                        ),
-                        child: const Text('Sign out'),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(height: 24),
+
+              // App Preferences Section
+              _buildSectionTitle(context, 'App Preferences'),
               const SizedBox(height: 12),
-
-              // Privacy Policy & Terms
-              _ProfileSectionCard(
+              Container(
+                decoration: BoxDecoration(
+                  color: colorScheme.cardBackground,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: colorScheme.borderColor, width: 1),
+                ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionHeader(context, 'Legal'),
-                    const SizedBox(height: 8),
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(
-                        Icons.privacy_tip_outlined,
-                        color: colorScheme.textSecondary,
-                      ),
-                      title: Text(
-                        'Privacy Policy',
-                        style: textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      trailing: Icon(
-                        Icons.open_in_new,
-                        size: 20,
-                        color: colorScheme.textSecondary,
-                      ),
+                    _buildDropdownTile(
+                      context,
+                      icon: Icons.school_outlined,
+                      title: 'Grade',
+                      value:
+                          'Grade ${_selectedGrade ?? user.grade ?? AppConstants.grades.first}',
+                      onTap: () => _showGradeSelector(context),
+                    ),
+                    _buildDivider(colorScheme),
+                    _buildDropdownTile(
+                      context,
+                      icon: Icons.subject_outlined,
+                      title: 'Subjects',
+                      value: _selectedSubjects.isEmpty
+                          ? 'None selected'
+                          : '${_selectedSubjects.length} ${_selectedSubjects.length == 1 ? 'subject' : 'subjects'}',
+                      onTap: () => _showSubjectSelector(context),
+                    ),
+                    _buildDivider(colorScheme),
+                    _buildThemeTile(context, themeState.mode),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Support & Legal Section
+              _buildSectionTitle(context, 'Support & Legal'),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: colorScheme.cardBackground,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: colorScheme.borderColor, width: 1),
+                ),
+                child: Column(
+                  children: [
+                    _buildNavTile(
+                      context,
+                      icon: Icons.help_outline,
+                      title: 'Help & Support',
+                      iconColor: Colors.orange,
+                      onTap: () {
+                        // TODO: Navigate to help screen
+                      },
+                    ),
+                    _buildDivider(colorScheme),
+                    _buildNavTile(
+                      context,
+                      icon: Icons.privacy_tip_outlined,
+                      title: 'Privacy Policy',
+                      iconColor: Colors.red,
                       onTap: () async {
                         try {
                           final uri = Uri.parse(
@@ -514,37 +250,118 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         }
                       },
                     ),
+                    _buildDivider(colorScheme),
+                    _buildNavTile(
+                      context,
+                      icon: Icons.article_outlined,
+                      title: 'Terms & Conditions',
+                      iconColor: Colors.red,
+                      onTap: () {
+                        // TODO: Navigate to terms screen
+                      },
+                    ),
+                    _buildDivider(colorScheme),
+                    _buildNavTile(
+                      context,
+                      icon: Icons.info_outline,
+                      title: 'About App',
+                      iconColor: Colors.red,
+                      onTap: () => _showAboutDialog(context),
+                    ),
                   ],
                 ),
               ),
+
               const SizedBox(height: 24),
-              
+
+              // Save button if there are unsaved changes
+              if (_hasUnsavedChanges()) ...[
+                ElevatedButton(
+                  onPressed: _isSaving ? null : _savePreferences,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _isSaving
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          'Save Changes',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Sign Out Button
+              TextButton(
+                onPressed: () async =>
+                    await authViewModel.signOutUserInUI(context: context),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  foregroundColor: Colors.red,
+                ),
+                child: const Text(
+                  'Sign Out',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // Delete Account Button
+              TextButton(
+                onPressed: () => _showDeleteAccountDialog(context),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  foregroundColor: Colors.red.shade700,
+                ),
+                child: const Text(
+                  'Delete Account',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
               // App Version Footer
               if (_packageInfo != null)
                 Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Column(
-                      children: [
-                        Text(
-                          'PQP App',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colorScheme.textSecondary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'PQP App',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.textSecondary,
+                          fontWeight: FontWeight.w600,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Version ${_packageInfo!.version} (${_packageInfo!.buildNumber})',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: colorScheme.textSecondary.withOpacity(0.7),
-                            fontSize: 12,
-                          ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Version ${_packageInfo!.version} (${_packageInfo!.buildNumber})',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.textSecondary.withOpacity(0.7),
+                          fontSize: 12,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
+              const SizedBox(height: 24),
             ],
           );
         },
@@ -552,367 +369,738 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title) {
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
+      padding: const EdgeInsets.only(left: 4),
       child: Text(
         title,
-        style:
-            Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600) ??
-            const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        style: textTheme.labelLarge?.copyWith(
+          color: colorScheme.textSecondary,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
 
-  Widget _buildInfoChip(
+  Widget _buildDropdownTile(
     BuildContext context, {
-    required String label,
     required IconData icon,
+    required String title,
+    required String value,
+    required VoidCallback onTap,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.borderColor, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: colorScheme.textSecondary),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onBackground,
-              fontWeight: FontWeight.w600,
-            ),
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Row(
+            children: [
+              Icon(icon, color: colorScheme.textSecondary, size: 24),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      value,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: colorScheme.textSecondary.withOpacity(0.5),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  String _formatSubjectLabel(String subject) {
-    return subject
-        .split(RegExp(r'[ _]+'))
-        .where((word) => word.isNotEmpty)
-        .map(
-          (word) =>
-              '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
-        )
-        .join(' ');
+  Widget _buildThemeTile(BuildContext context, ThemeMode mode) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    String getModeLabel(ThemeMode mode) {
+      switch (mode) {
+        case ThemeMode.system:
+          return 'System Default';
+        case ThemeMode.light:
+          return 'Light';
+        case ThemeMode.dark:
+          return 'Dark';
+      }
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _showThemeSelector(context),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Row(
+            children: [
+              Icon(
+                mode == ThemeMode.dark
+                    ? Icons.dark_mode_outlined
+                    : mode == ThemeMode.light
+                    ? Icons.light_mode_outlined
+                    : Icons.brightness_auto_outlined,
+                color: colorScheme.textSecondary,
+                size: 24,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Theme',
+                      style: textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      getModeLabel(mode),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: colorScheme.textSecondary.withOpacity(0.5),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  String _normalizeSubject(String subject) => subject.trim().toLowerCase();
+  Widget _buildNavTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: iconColor, size: 20),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                size: 24,
+                color: colorScheme.textSecondary.withOpacity(0.5),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDivider(ColorScheme colorScheme) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 56),
+      child: Divider(height: 1, thickness: 1, color: colorScheme.borderColor),
+    );
+  }
+
+  void _showGradeSelector(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colorScheme.cardBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colorScheme.textSecondary.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Select Grade',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...AppConstants.grades.map((grade) {
+                final isAvailable = AppConstants.isGradeAvailable(grade);
+                final isSelected = grade == _selectedGrade;
+
+                return ListTile(
+                  enabled: isAvailable,
+                  leading: Radio<int>(
+                    value: grade,
+                    groupValue: _selectedGrade,
+                    onChanged: isAvailable
+                        ? (value) {
+                            setState(() => _selectedGrade = value);
+                            Navigator.pop(context);
+                          }
+                        : null,
+                    activeColor: AppColors.accent,
+                  ),
+                  title: Row(
+                    children: [
+                      Text(
+                        'Grade $grade',
+                        style: TextStyle(
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          color: isAvailable
+                              ? null
+                              : colorScheme.textSecondary.withOpacity(0.5),
+                        ),
+                      ),
+                      if (!isAvailable) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorScheme.textSecondary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'Coming Soon',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  onTap: isAvailable
+                      ? () {
+                          setState(() => _selectedGrade = grade);
+                          Navigator.pop(context);
+                        }
+                      : null,
+                );
+              }).toList(),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showSubjectSelector(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final tempSelected = List<String>.from(_selectedSubjects);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colorScheme.cardBackground,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: colorScheme.textSecondary.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Select Subjects',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Choose subjects for your personalized experience',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: AppConstants.allSubjects.map((subject) {
+                        final isAvailable = AppConstants.isSubjectAvailable(
+                          subject,
+                        );
+                        final isSelected = tempSelected.contains(subject);
+
+                        return FilterChip(
+                          label: Text(subject),
+                          selected: isSelected && isAvailable,
+                          onSelected: isAvailable
+                              ? (selected) {
+                                  setModalState(() {
+                                    if (selected) {
+                                      tempSelected.add(subject);
+                                    } else {
+                                      tempSelected.remove(subject);
+                                    }
+                                  });
+                                }
+                              : null,
+                          selectedColor: AppColors.accent,
+                          backgroundColor: colorScheme.cardBackground,
+                          disabledColor: colorScheme.cardBackground,
+                          side: BorderSide(
+                            color: isSelected && isAvailable
+                                ? AppColors.accent
+                                : colorScheme.borderColor,
+                          ),
+                          labelStyle: TextStyle(
+                            color: isSelected && isAvailable
+                                ? Colors.white
+                                : isAvailable
+                                ? colorScheme.onBackground
+                                : colorScheme.textSecondary.withOpacity(0.5),
+                            fontWeight: isSelected && isAvailable
+                                ? FontWeight.w600
+                                : FontWeight.normal,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedSubjects = tempSelected;
+                          });
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.accent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Done',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showThemeSelector(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final currentMode = ref.read(themeViewModelProvider).mode;
+
+    final options = [
+      (
+        mode: ThemeMode.system,
+        label: 'System Default',
+        icon: Icons.brightness_auto_outlined,
+      ),
+      (mode: ThemeMode.light, label: 'Light', icon: Icons.light_mode_outlined),
+      (mode: ThemeMode.dark, label: 'Dark', icon: Icons.dark_mode_outlined),
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colorScheme.cardBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colorScheme.textSecondary.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Select Theme',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...options.map((option) {
+                final isSelected = option.mode == currentMode;
+
+                return ListTile(
+                  leading: Icon(
+                    option.icon,
+                    color: isSelected
+                        ? AppColors.accent
+                        : colorScheme.textSecondary,
+                  ),
+                  title: Text(
+                    option.label,
+                    style: TextStyle(
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
+                    ),
+                  ),
+                  trailing: isSelected
+                      ? Icon(Icons.check, color: AppColors.accent)
+                      : null,
+                  onTap: () {
+                    ref
+                        .read(themeViewModelProvider.notifier)
+                        .setThemeMode(option.mode);
+                    Navigator.pop(context);
+                  },
+                );
+              }).toList(),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showAboutDialog(
+      context: context,
+      applicationName: 'PQP App',
+      applicationVersion: _packageInfo != null
+          ? 'Version ${_packageInfo!.version} (${_packageInfo!.buildNumber})'
+          : 'Unknown',
+      applicationIcon: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.accent.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.school, size: 32, color: AppColors.accent),
+      ),
+      children: [
+        const Text('Master your exams with Past Question Papers!'),
+        const SizedBox(height: 8),
+        const Text(
+          'Practice with exam-authentic questions across multiple subjects.',
+        ),
+      ],
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final passwordController = TextEditingController();
+    bool obscure = true;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+            backgroundColor: colorScheme.cardBackground,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
+              children: [
+                Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.red.shade700,
+                  size: 28,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Delete Account',
+                  style: textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Are you sure you want to delete your account?',
+                    style: textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'This action cannot be undone. All your data including:',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...[
+                        'Profile information',
+                        'Test history',
+                        'Progress data',
+                        'Preferences',
+                      ]
+                      .map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.only(left: 8, top: 4),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.close,
+                                size: 16,
+                                color: Colors.red.shade700,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                item,
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Confirm with your password:',
+                    style: textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: passwordController,
+                    obscureText: obscure,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: colorScheme.cardBackground,
+                      hintText: 'Enter password',
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscure ? Icons.visibility_off : Icons.visibility,
+                        ),
+                        onPressed: () => setState(() => obscure = !obscure),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: colorScheme.borderColor),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'will be permanently deleted. Type carefully.',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                style: TextButton.styleFrom(
+                  foregroundColor: colorScheme.onBackground,
+                ),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+              Consumer(
+                builder: (context, ref, _) {
+                  final isLoading = ref.watch(loadingStateProvider);
+                  return ElevatedButton(
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            final pwd = passwordController.text.trim();
+                            if (pwd.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Password required to delete account',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                            // Close dialog immediately
+                            Navigator.of(dialogContext).pop();
+
+                            // Execute deletion
+                            final authViewModel = ref.read(
+                              authViewModelProvider.notifier,
+                            );
+                            await authViewModel.deleteAccountInUI(
+                              context: context,
+                              password: pwd,
+                            );
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade700,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                    child: isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : const Text(
+                            'Delete Account',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   bool _hasUnsavedChanges() {
     final userState = ref.read(profileViewModelProvider);
     return userState.whenOrNull(
           data: (user) {
             if (user == null) return false;
-
-            // Check if grade changed
             if (_selectedGrade != user.grade) return true;
-
-            // Check if subjects changed
             final currentSubjects = user.selectedSubjects ?? [];
             if (_selectedSubjects.length != currentSubjects.length) return true;
-
-            final normalizedCurrent = currentSubjects
-                .map(_normalizeSubject)
-                .toSet();
-            final normalizedSelected = _selectedSubjects
-                .map(_normalizeSubject)
-                .toSet();
-
-            return !normalizedCurrent.containsAll(normalizedSelected) ||
-                !normalizedSelected.containsAll(normalizedCurrent);
+            return !Set.from(currentSubjects).containsAll(_selectedSubjects);
           },
         ) ??
         false;
-  }
-
-  Widget _buildSubjectSelection(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    if (AppConstants.allSubjects.isEmpty) {
-      return Text(
-        'No subjects available yet.',
-        style: textTheme.bodyMedium?.copyWith(color: colorScheme.textSecondary),
-      );
-    }
-
-    final normalizedSelected = _selectedSubjects.map(_normalizeSubject).toSet();
-    final accentSoft = colorScheme.brightness == Brightness.dark
-        ? AppColorsDark.accentSoft
-        : AppColors.accentSoft;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Show selected count
-        if (_selectedSubjects.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: accentSoft,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.accent.withOpacity(0.3)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.check_circle,
-                    size: 16,
-                    color: AppColors.accent,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${_selectedSubjects.length} selected',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onBackground,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-        // Subject chips
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: AppConstants.allSubjects.map((subject) {
-            final normalizedSubject = _normalizeSubject(subject);
-            final isSelected = normalizedSelected.contains(normalizedSubject);
-            // 🚀 MVP: Check if subject is available
-            final isAvailable = AppConstants.isSubjectAvailable(subject);
-            final canSelect = isSelected && isAvailable;
-
-            return FilterChip(
-              label: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (canSelect)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: Icon(
-                        Icons.check,
-                        size: 16,
-                        color: AppColors.neutralCard,
-                      ),
-                    ),
-                  Text(_formatSubjectLabel(subject)),
-                  // 🚀 MVP: Show "Coming Soon" badge
-                  if (!isAvailable) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.cardBackground,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: colorScheme.borderColor),
-                      ),
-                      child: Text(
-                        'Soon',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.textSecondary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              selected: canSelect,
-              onSelected: isAvailable
-                  ? (selected) {
-                      setState(() {
-                        if (selected) {
-                          if (!normalizedSelected.contains(normalizedSubject)) {
-                            _selectedSubjects.add(subject);
-                          }
-                        } else {
-                          _selectedSubjects.removeWhere(
-                            (item) =>
-                                _normalizeSubject(item) == normalizedSubject,
-                          );
-                        }
-                      });
-                    }
-                  : null,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              visualDensity: VisualDensity.comfortable,
-              showCheckmark: false,
-              labelStyle: textTheme.bodyMedium?.copyWith(
-                color: !isAvailable
-                    ? colorScheme.textSecondary.withOpacity(0.5)
-                    : canSelect
-                    ? AppColors.neutralCard
-                    : colorScheme.onBackground,
-                fontWeight: canSelect ? FontWeight.w600 : FontWeight.w500,
-              ),
-              backgroundColor: colorScheme.cardBackground,
-              selectedColor: AppColors.accent,
-              disabledColor: colorScheme.cardBackground,
-              side: BorderSide(
-                color: canSelect ? AppColors.accent : colorScheme.borderColor,
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-}
-
-class _ProfileSectionCard extends StatelessWidget {
-  const _ProfileSectionCard({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.borderColor, width: 1),
-      ),
-      child: child,
-    );
-  }
-}
-
-class _ThemeToggle extends ConsumerWidget {
-  const _ThemeToggle({required this.mode});
-
-  final ThemeMode mode;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final options = [
-      (
-        mode: ThemeMode.system,
-        label: 'Match device',
-        icon: Icons.brightness_auto,
-      ),
-      (
-        mode: ThemeMode.light,
-        label: 'Light mode',
-        icon: Icons.wb_sunny_outlined,
-      ),
-      (mode: ThemeMode.dark, label: 'Dark mode', icon: Icons.nightlight_round),
-    ];
-
-    return _ProfileSectionCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                mode == ThemeMode.dark
-                    ? Icons.nightlight_round
-                    : mode == ThemeMode.light
-                    ? Icons.wb_sunny
-                    : Icons.brightness_auto,
-                color: colorScheme.textSecondary,
-              ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Appearance',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _labelForMode(mode),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: options.map((option) {
-              final isSelected = option.mode == mode;
-              return ChoiceChip(
-                label: Text(option.label),
-                avatar: Icon(
-                  option.icon,
-                  size: 16,
-                  color: isSelected
-                      ? AppColors.neutralCard
-                      : colorScheme.textSecondary,
-                ),
-                selected: isSelected,
-                onSelected: (_) {
-                  ref
-                      .read(themeViewModelProvider.notifier)
-                      .setThemeMode(option.mode);
-                },
-                showCheckmark: false,
-                labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: isSelected
-                      ? AppColors.neutralCard
-                      : colorScheme.onBackground,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                ),
-                backgroundColor: colorScheme.cardBackground,
-                selectedColor: AppColors.accent,
-                side: BorderSide(
-                  color: isSelected
-                      ? AppColors.accent
-                      : colorScheme.borderColor,
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static String _labelForMode(ThemeMode mode) {
-    switch (mode) {
-      case ThemeMode.dark:
-        return 'Dark mode';
-      case ThemeMode.light:
-        return 'Light mode';
-      case ThemeMode.system:
-        return 'Match device settings';
-    }
   }
 }
