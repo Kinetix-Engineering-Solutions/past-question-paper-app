@@ -5,6 +5,7 @@ import 'package:past_question_paper_v1/admin/views/question_create_view.dart';
 import 'package:past_question_paper_v1/admin/views/parent_question_create_view.dart';
 import 'package:past_question_paper_v1/admin/views/question_list_view.dart';
 import 'package:past_question_paper_v1/admin/views/parent_child_browser_view.dart';
+import 'package:past_question_paper_v1/admin/views/paper_upload_view.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 
 /// Admin Home View - Simple landing page with quick actions
@@ -126,6 +127,25 @@ class AdminHomeView extends ConsumerWidget {
                     PageRouteBuilder(
                       pageBuilder: (context, animation, secondaryAnimation) =>
                           const ParentChildBrowserView(),
+                      transitionDuration: Duration.zero,
+                      reverseTransitionDuration: Duration.zero,
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildActionCard(
+                context,
+                title: 'Upload Past Papers',
+                subtitle: 'Upload PDF files for past question papers',
+                icon: Icons.upload_file,
+                color: Colors.orange,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          const PaperUploadView(),
                       transitionDuration: Duration.zero,
                       reverseTransitionDuration: Duration.zero,
                     ),

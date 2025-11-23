@@ -54,6 +54,7 @@ dependencies:
   
   # Image handling
   image_picker: ^1.0.7
+  file_picker: ^6.1.1
   
   # Utility packages
   shared_preferences: ^2.3.2

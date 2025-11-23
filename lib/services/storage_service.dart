@@ -74,6 +74,59 @@ class StorageService {
     }
   }
 
+  /// Upload a PDF to Firebase Storage
+  /// Returns the download URL on success
+  Future<String> uploadPDF({
+    required Uint8List pdfBytes,
+    required String fileName,
+    String folder = 'papers',
+  }) async {
+    try {
+      // Create a unique file path
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final filePath = '$folder/${timestamp}_$fileName';
+
+      debugPrint('📤 Uploading PDF to: $filePath');
+      debugPrint('📤 Content-Type: application/pdf');
+
+      // Log current auth state and token claims to help debug permission issues
+      final user = _auth.currentUser;
+      if (user == null) {
+        debugPrint('⚠️ No authenticated user found when attempting upload.');
+      } else {
+        debugPrint('🔐 Upload initiated by: ${user.email} (uid: ${user.uid})');
+        try {
+          final idTokenResult = await user.getIdTokenResult(false);
+          debugPrint('🔑 Token claims: ${idTokenResult.claims}');
+        } catch (claimErr) {
+          debugPrint('⚠️ Failed to fetch token claims: $claimErr');
+        }
+      }
+
+      // Upload the file
+      final ref = _storage.ref().child(filePath);
+      final uploadTask = ref.putData(
+        pdfBytes,
+        SettableMetadata(
+          contentType: 'application/pdf',
+          customMetadata: {'uploaded': DateTime.now().toIso8601String()},
+        ),
+      );
+
+      // Wait for upload to complete
+      final snapshot = await uploadTask;
+
+      // Get download URL
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+
+      debugPrint('✅ PDF uploaded: $downloadUrl');
+      return downloadUrl;
+    } catch (e) {
+      debugPrint('❌ Error uploading PDF: $e');
+      rethrow; // Rethrow to preserve the original error message
+    }
+  }
+
   /// Delete an image from Firebase Storage by URL
   Future<void> deleteImage(String imageUrl) async {
     try {
