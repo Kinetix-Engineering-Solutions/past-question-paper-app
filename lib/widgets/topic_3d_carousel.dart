@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:past_question_paper_v1/utils/app_colors.dart';
 
 /// A brain neuron network widget with topics scattered in multiple directions.
 /// Camera stays fixed at center. When you select a node, it animates to camera position.
@@ -35,23 +36,23 @@ class _Topic3DCarouselState extends State<Topic3DCarousel>
 
   // Store start positions for animation lerp
   late List<Offset> _startPositions;
-  
+
   // Drag tracking for smooth manual movement
   Offset _dragOffset = Offset.zero;
   bool _isDragging = false;
 
-  // Color palette for topics (cycling colors)
+  // Color palette for topics - PQP brand colors
   static const List<Color> _topicColors = [
-    Colors.purple,
-    Colors.teal,
-    Colors.pink,
-    Colors.indigo,
-    Colors.deepOrange,
-    Colors.cyan,
-    Colors.amber,
-    Colors.green,
-    Colors.red,
-    Colors.blue,
+    AppColors.brandCyan, // Cyan - question mark highlight
+    AppColors.brandMagenta, // Magenta - playful accent
+    AppColors.brandLavender, // Lavender - supportive accent
+    AppColors.brandTeal, // Teal - geometric accent
+    AppColors.accent, // Orange - primary action
+    AppColors.brandCyan,
+    AppColors.brandMagenta,
+    AppColors.brandLavender,
+    AppColors.brandTeal,
+    AppColors.accent,
   ];
 
   @override
@@ -96,36 +97,23 @@ class _Topic3DCarouselState extends State<Topic3DCarousel>
   void _generateNeuronPositions() {
     _basePositions = [];
     final random = math.Random(42); // Fixed seed for consistent layout
-    const minDistance =
-        150.0; // Minimum distance between node centers (accounts for 120px focused node size)
-    const maxAttempts = 150; // More attempts to find valid positions
+    const minDistance = 150.0; // Minimum distance between node centers
+    const maxAttempts = 200; // More attempts for better distribution
 
-    // Calculate how many nodes per ring to maintain spacing
     final totalTopics = widget.topics.length;
-    final nodesPerRing = (totalTopics / 3).ceil();
 
     for (int i = 0; i < totalTopics; i++) {
       bool positionFound = false;
       int attempts = 0;
 
       while (!positionFound && attempts < maxAttempts) {
-        // Distribute across 3 concentric rings more evenly
-        final ringIndex = i % 3;
-        final indexInRing = (i / 3).floor();
-        final totalInRing = nodesPerRing;
+        // Random angle for full 360° distribution
+        final angle = random.nextDouble() * 2 * math.pi;
 
-        // Base angle for even distribution
-        final baseAngle = (indexInRing / totalInRing) * 2 * math.pi;
-        final angleVariation =
-            (random.nextDouble() - 0.5) *
-            0.6; // Less variation for better spacing
-        final angle = baseAngle + angleVariation;
-
-        // Larger radius increments for better separation
-        final baseRadius = 140.0 + (ringIndex * 80.0); // 140, 220, 300
-        final radiusVariation =
-            (random.nextDouble() - 0.5) * 30.0; // Less variation
-        final radius = baseRadius + radiusVariation;
+        // Random radius with preference for spreading out
+        // Use a non-linear distribution to avoid clustering at center or edge
+        final radiusNormalized = math.pow(random.nextDouble(), 0.7).toDouble();
+        final radius = 120.0 + (radiusNormalized * 200.0); // Range: 120-320px
 
         final x = math.cos(angle) * radius;
         final y = math.sin(angle) * radius;
@@ -149,14 +137,11 @@ class _Topic3DCarouselState extends State<Topic3DCarousel>
         attempts++;
       }
 
-      // If we couldn't find a good position after many attempts,
-      // place it in a deterministic safe position
+      // Fallback: if we couldn't find a position, use a spiral pattern
       if (!positionFound) {
-        final ringIndex = i % 3;
-        final indexInRing = (i / 3).floor();
-        final totalInRing = nodesPerRing;
-        final angle = (indexInRing / totalInRing) * 2 * math.pi;
-        final radius = 140.0 + (ringIndex * 80.0);
+        final angle =
+            (i / totalTopics) * 2 * math.pi * 2.5; // 2.5 full rotations
+        final radius = 120.0 + (i / totalTopics) * 200.0;
         final x = math.cos(angle) * radius;
         final y = math.sin(angle) * radius;
         _basePositions.add(Offset(x, y));
@@ -177,14 +162,6 @@ class _Topic3DCarouselState extends State<Topic3DCarousel>
     _animationController.forward(from: 0.0);
   }
 
-  void _changeFocus(int direction) {
-    setState(() {
-      _focusedIndex = (_focusedIndex + direction) % widget.topics.length;
-      if (_focusedIndex < 0) _focusedIndex = widget.topics.length - 1;
-    });
-    _arrangeNodesAroundFocus();
-  }
-  
   void _changeFocusWithSteps(int steps) {
     setState(() {
       _focusedIndex = (_focusedIndex + steps) % widget.topics.length;
@@ -192,12 +169,12 @@ class _Topic3DCarouselState extends State<Topic3DCarousel>
     });
     _arrangeNodesAroundFocus();
   }
-  
+
   void _snapToNearest() {
     // Find the node closest to center after drag
     double minDistance = double.infinity;
     int nearestIndex = _focusedIndex;
-    
+
     for (int i = 0; i < _currentPositions.length; i++) {
       final distance = _currentPositions[i].distance;
       if (distance < minDistance) {
@@ -205,7 +182,7 @@ class _Topic3DCarouselState extends State<Topic3DCarousel>
         nearestIndex = i;
       }
     }
-    
+
     if (nearestIndex != _focusedIndex) {
       setState(() {
         _focusedIndex = nearestIndex;
@@ -252,7 +229,7 @@ class _Topic3DCarouselState extends State<Topic3DCarousel>
             builder: (context, constraints) {
               final width = constraints.maxWidth;
               final height = constraints.maxHeight;
-              
+
               return Center(
                 child: GestureDetector(
                   onPanStart: (details) {
@@ -318,9 +295,7 @@ class _Topic3DCarouselState extends State<Topic3DCarousel>
                               ),
                             ),
                             // Draw neuron nodes
-                            ..._buildNeuronNodes(
-                              Size(width, height),
-                            ),
+                            ..._buildNeuronNodes(Size(width, height)),
                           ],
                         ),
                       ),

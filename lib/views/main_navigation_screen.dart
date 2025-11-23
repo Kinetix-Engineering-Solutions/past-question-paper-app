@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/providers/navigation_providers.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/views/home_screen.dart';
-import 'package:past_question_paper_v1/viewmodels/session_history_viewmodel.dart';
+import 'package:past_question_paper_v1/views/library_screen.dart';
 import 'package:past_question_paper_v1/views/history/pqp_history_screen.dart';
 import 'package:past_question_paper_v1/views/profile_screen.dart';
 
@@ -13,58 +13,113 @@ class MainNavigationScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(bottomNavigationProvider);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       body: IndexedStack(
         index: currentIndex,
         children: [
           const HomeScreen(),
+          const LibraryScreen(),
           const PqpHistoryScreen(),
           const ProfileScreen(),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: currentIndex,
-        selectedItemColor: AppColors.neutralCard,
-        unselectedItemColor: AppColors.neutralCard.withOpacity(0.7),
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w700),
-        onTap: (index) {
-          ref.read(bottomNavigationProvider.notifier).setIndex(index);
-          if (index == 1) {
-            ref.read(sessionHistoryViewModelProvider.notifier).refresh();
-          }
-        },
-        items: [
-          BottomNavigationBarItem(
-            icon: AnimatedScale(
-              scale: currentIndex == 0 ? 1.1 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              child: const Icon(Icons.home, size: 28),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(color: colorScheme.surface),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _NavItem(
+                  ref: ref,
+                  icon: Icons.quiz,
+                  label: 'Quiz',
+                  index: 0,
+                  currentIndex: currentIndex,
+                ),
+                _NavItem(
+                  ref: ref,
+                  icon: Icons.library_books,
+                  label: 'Library',
+                  index: 1,
+                  currentIndex: currentIndex,
+                ),
+                _NavItem(
+                  ref: ref,
+                  icon: Icons.history,
+                  label: 'History',
+                  index: 2,
+                  currentIndex: currentIndex,
+                ),
+                _NavItem(
+                  ref: ref,
+                  icon: Icons.person,
+                  label: 'Profile',
+                  index: 3,
+                  currentIndex: currentIndex,
+                ),
+              ],
             ),
-            label: 'PQP Home',
           ),
-          BottomNavigationBarItem(
-            icon: AnimatedScale(
-              scale: currentIndex == 1 ? 1.1 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              child: const Icon(Icons.history_edu_outlined, size: 28),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  final WidgetRef ref;
+  final IconData icon;
+  final String label;
+  final int index;
+  final int currentIndex;
+
+  const _NavItem({
+    required this.ref,
+    required this.icon,
+    required this.label,
+    required this.index,
+    required this.currentIndex,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = currentIndex == index;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return GestureDetector(
+      onTap: () {
+        ref.read(bottomNavigationProvider.notifier).setIndex(index);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected
+                  ? AppColors.accent
+                  : colorScheme.onSurfaceVariant,
+              size: 24,
             ),
-            label: 'PQP History',
-          ),
-          BottomNavigationBarItem(
-            icon: AnimatedScale(
-              scale: currentIndex == 2 ? 1.1 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              child: const Icon(Icons.person, size: 28),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: isSelected
+                    ? AppColors.accent
+                    : colorScheme.onSurfaceVariant,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
             ),
-            label: 'PQP Profile',
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

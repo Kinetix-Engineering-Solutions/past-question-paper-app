@@ -62,7 +62,7 @@ class _EmailVerificationScreenState
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      
+
       // If user is signed out, redirect to login
       if (user == null) {
         if (mounted) {
@@ -95,7 +95,8 @@ class _EmailVerificationScreenState
         if (mounted) {
           CustomSnackBar.show(
             context: context,
-            message: 'Email not verified yet. Please check your inbox and spam folder.',
+            message:
+                'Email not verified yet. Please check your inbox and spam folder.',
             isError: true,
           );
         }
@@ -199,19 +200,12 @@ class _EmailVerificationScreenState
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: AppColors.accent,
-                      size: 20,
-                    ),
+                    Icon(Icons.info_outline, color: AppColors.accent, size: 20),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         'Please check your inbox and spam folder for the verification link.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.ink,
-                        ),
+                        style: TextStyle(fontSize: 14, color: AppColors.ink),
                       ),
                     ),
                   ],

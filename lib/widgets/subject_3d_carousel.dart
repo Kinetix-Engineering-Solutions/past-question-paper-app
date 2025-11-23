@@ -1,39 +1,37 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// A brain neuron network widget for practice modes.
+/// A brain neuron network widget with subjects scattered in multiple directions.
 /// Camera stays fixed at center. When you select a node, it animates to camera position.
-class Mode3DCarousel extends StatefulWidget {
-  final List<ModeOption> modes;
-  final Function(ModeOption mode) onModeSelected;
+class Subject3DCarousel extends StatefulWidget {
+  final List<SubjectOption> subjects;
+  final Function(SubjectOption subject, int index) onSubjectSelected;
 
-  const Mode3DCarousel({
+  const Subject3DCarousel({
     Key? key,
-    required this.modes,
-    required this.onModeSelected,
+    required this.subjects,
+    required this.onSubjectSelected,
   }) : super(key: key);
 
   @override
-  State<Mode3DCarousel> createState() => _Mode3DCarouselState();
+  State<Subject3DCarousel> createState() => _Subject3DCarouselState();
 }
 
-class ModeOption {
-  final String title;
-  final String subtitle;
-  final IconData icon;
+class SubjectOption {
+  final String name;
   final Color color;
-  final int level;
+  final bool isAvailable;
+  final String subtitle;
 
-  ModeOption({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
+  SubjectOption({
+    required this.name,
     required this.color,
-    required this.level,
+    required this.isAvailable,
+    required this.subtitle,
   });
 }
 
-class _Mode3DCarouselState extends State<Mode3DCarousel>
+class _Subject3DCarouselState extends State<Subject3DCarousel>
     with SingleTickerProviderStateMixin {
   int _focusedIndex = 0;
 
@@ -96,32 +94,23 @@ class _Mode3DCarouselState extends State<Mode3DCarousel>
   void _generateNeuronPositions() {
     _basePositions = [];
     final random = math.Random(42); // Fixed seed for consistent layout
-    const minDistance = 180.0; // Minimum distance between node centers
-    const maxAttempts = 150;
+    const minDistance = 150.0; // Minimum distance between node centers
+    const maxAttempts = 200; // More attempts for better distribution
 
-    // Calculate how many nodes per ring to maintain spacing
-    final totalModes = widget.modes.length;
-    final nodesPerRing = (totalModes / 3).ceil();
+    final totalSubjects = widget.subjects.length;
 
-    for (int i = 0; i < totalModes; i++) {
+    for (int i = 0; i < totalSubjects; i++) {
       bool positionFound = false;
       int attempts = 0;
 
       while (!positionFound && attempts < maxAttempts) {
-        // Distribute across 3 concentric rings more evenly
-        final ringIndex = i % 3;
-        final indexInRing = (i / 3).floor();
-        final totalInRing = nodesPerRing;
+        // Random angle for full 360° distribution
+        final angle = random.nextDouble() * 2 * math.pi;
 
-        // Base angle for even distribution
-        final baseAngle = (indexInRing / totalInRing) * 2 * math.pi;
-        final angleVariation = (random.nextDouble() - 0.5) * 0.6;
-        final angle = baseAngle + angleVariation;
-
-        // Larger radius increments for better separation
-        final baseRadius = 140.0 + (ringIndex * 80.0); // 140, 220, 300
-        final radiusVariation = (random.nextDouble() - 0.5) * 30.0;
-        final radius = baseRadius + radiusVariation;
+        // Random radius with preference for spreading out
+        // Use a non-linear distribution to avoid clustering at center or edge
+        final radiusNormalized = math.pow(random.nextDouble(), 0.7).toDouble();
+        final radius = 120.0 + (radiusNormalized * 200.0); // Range: 120-320px
 
         final x = math.cos(angle) * radius;
         final y = math.sin(angle) * radius;
@@ -145,14 +134,11 @@ class _Mode3DCarouselState extends State<Mode3DCarousel>
         attempts++;
       }
 
-      // If we couldn't find a good position after many attempts,
-      // place it in a deterministic safe position
+      // Fallback: if we couldn't find a position, use a spiral pattern
       if (!positionFound) {
-        final ringIndex = i % 3;
-        final indexInRing = (i / 3).floor();
-        final totalInRing = nodesPerRing;
-        final angle = (indexInRing / totalInRing) * 2 * math.pi;
-        final radius = 140.0 + (ringIndex * 80.0);
+        final angle =
+            (i / totalSubjects) * 2 * math.pi * 2.5; // 2.5 full rotations
+        final radius = 120.0 + (i / totalSubjects) * 200.0;
         final x = math.cos(angle) * radius;
         final y = math.sin(angle) * radius;
         _basePositions.add(Offset(x, y));
@@ -173,18 +159,10 @@ class _Mode3DCarouselState extends State<Mode3DCarousel>
     _animationController.forward(from: 0.0);
   }
 
-  void _changeFocus(int direction) {
-    setState(() {
-      _focusedIndex = (_focusedIndex + direction) % widget.modes.length;
-      if (_focusedIndex < 0) _focusedIndex = widget.modes.length - 1;
-    });
-    _arrangeNodesAroundFocus();
-  }
-
   void _changeFocusWithSteps(int steps) {
     setState(() {
-      _focusedIndex = (_focusedIndex + steps) % widget.modes.length;
-      if (_focusedIndex < 0) _focusedIndex += widget.modes.length;
+      _focusedIndex = (_focusedIndex + steps) % widget.subjects.length;
+      if (_focusedIndex < 0) _focusedIndex += widget.subjects.length;
     });
     _arrangeNodesAroundFocus();
   }
@@ -225,14 +203,14 @@ class _Mode3DCarouselState extends State<Mode3DCarousel>
           child: Column(
             children: [
               Text(
-                'Choose Practice Mode',
+                'Your Subjects',
                 style: textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'Swipe or tap to switch modes',
+                'Swipe or tap to switch subjects',
                 style: textTheme.bodyMedium?.copyWith(
                   color: textTheme.bodyMedium?.color?.withOpacity(0.75),
                 ),
@@ -309,8 +287,8 @@ class _Mode3DCarouselState extends State<Mode3DCarousel>
                               painter: _NeuralConnectionsPainter(
                                 neuronPositions: _currentPositions,
                                 focusedIndex: _focusedIndex,
-                                colors: widget.modes
-                                    .map((m) => m.color)
+                                colors: widget.subjects
+                                    .map((s) => s.color)
                                     .toList(),
                                 screenSize: Size(width, height),
                               ),
@@ -327,31 +305,6 @@ class _Mode3DCarouselState extends State<Mode3DCarousel>
             },
           ),
         ),
-
-        // Current mode indicator
-        Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              Text(
-                widget.modes[_focusedIndex].title,
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: widget.modes[_focusedIndex].color,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                widget.modes[_focusedIndex].subtitle,
-                style: textTheme.bodySmall?.copyWith(
-                  color: textTheme.bodySmall?.color?.withOpacity(0.6),
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -359,7 +312,7 @@ class _Mode3DCarouselState extends State<Mode3DCarousel>
   List<Widget> _buildNeuronNodes(Size screenSize) {
     final center = Offset(screenSize.width / 2, screenSize.height / 2);
 
-    return List.generate(widget.modes.length, (index) {
+    return List.generate(widget.subjects.length, (index) {
       final position = _currentPositions[index];
       final adjustedPosition = center + position;
 
@@ -383,14 +336,15 @@ class _Mode3DCarouselState extends State<Mode3DCarousel>
   }
 
   Widget _buildNeuronNode(int index, bool isFocused) {
-    final mode = widget.modes[index];
+    final subject = widget.subjects[index];
     final size = isFocused ? 130.0 : 100.0;
+    final isAvailable = subject.isAvailable;
 
     return GestureDetector(
       onTap: () {
-        if (isFocused) {
-          // Select the mode
-          widget.onModeSelected(mode);
+        if (isFocused && isAvailable) {
+          // Select the subject
+          widget.onSubjectSelected(subject, index);
         } else {
           // Switch focus to this node - it will animate to center
           setState(() {
@@ -405,12 +359,12 @@ class _Mode3DCarouselState extends State<Mode3DCarousel>
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: mode.color,
+          color: isAvailable ? subject.color : subject.color.withOpacity(0.4),
           border: Border.all(color: Colors.white, width: isFocused ? 5 : 3),
           boxShadow: isFocused
               ? [
                   BoxShadow(
-                    color: mode.color.withOpacity(0.5),
+                    color: subject.color.withOpacity(0.5),
                     blurRadius: 20,
                     offset: const Offset(0, 5),
                   ),
@@ -419,38 +373,62 @@ class _Mode3DCarouselState extends State<Mode3DCarousel>
         ),
         child: Stack(
           children: [
-            // Icon
+            // Subject name inside node
             Center(
-              child: Icon(
-                mode.icon,
-                size: isFocused ? 55 : 45,
-                color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Text(
+                  subject.name,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: isFocused ? 14 : 11,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
-            // Level number badge
-            Positioned(
-              top: 5,
-              right: 5,
-              child: Container(
-                width: isFocused ? 28 : 24,
-                height: isFocused ? 28 : 24,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: mode.color, width: 2),
-                ),
+            // Coming Soon badge for unavailable subjects
+            if (!isAvailable)
+              Positioned(
+                bottom: 8,
+                left: 0,
+                right: 0,
                 child: Center(
-                  child: Text(
-                    '${mode.level}',
-                    style: TextStyle(
-                      color: mode.color,
-                      fontWeight: FontWeight.bold,
-                      fontSize: isFocused ? 14 : 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'SOON',
+                      style: TextStyle(
+                        color: subject.color,
+                        fontWeight: FontWeight.bold,
+                        fontSize: isFocused ? 9 : 7,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+            // Lock icon for unavailable subjects (focused only)
+            if (!isAvailable && isFocused)
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Icon(
+                  Icons.lock_outline,
+                  color: Colors.white.withOpacity(0.8),
+                  size: 20,
+                ),
+              ),
           ],
         ),
       ),
@@ -458,7 +436,7 @@ class _Mode3DCarouselState extends State<Mode3DCarousel>
   }
 }
 
-/// Custom painter for drawing neural network connections between mode nodes
+/// Custom painter for drawing neural network connections between subject nodes
 class _NeuralConnectionsPainter extends CustomPainter {
   final List<Offset> neuronPositions;
   final int focusedIndex;

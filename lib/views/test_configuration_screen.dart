@@ -1,11 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/utils/app_constants.dart';
+import 'package:past_question_paper_v1/utils/haptic_feedback.dart';
+import 'package:past_question_paper_v1/viewmodels/view_mode_viewmodel.dart';
 import 'package:past_question_paper_v1/widgets/topic_3d_carousel.dart';
+import 'package:past_question_paper_v1/widgets/topic_list_view.dart';
 import 'package:past_question_paper_v1/widgets/mode_3d_carousel.dart';
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../repositories/question_repository.dart';
 import 'practice_screen.dart';
@@ -79,10 +81,11 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
       if (context.mounted) {
         // Determine if it's an offline/connectivity error
         final errorMessage = e.toString().replaceFirst('Exception: ', '');
-        final isNetworkError = errorMessage.toLowerCase().contains('network') ||
+        final isNetworkError =
+            errorMessage.toLowerCase().contains('network') ||
             errorMessage.toLowerCase().contains('internet') ||
             errorMessage.toLowerCase().contains('connection');
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -470,27 +473,95 @@ class _ByTopicView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loadingButtonId = ref.watch(testConfigurationViewModelProvider);
+    final viewMode = ref.watch(viewModeProvider);
     final topics = AppConstants.topicsBySubject[subject] ?? [];
 
-    return Topic3DCarousel(
-      topics: topics,
-      loadingTopicId: loadingButtonId,
-      onTopicSelected: (topic, index) {
-        final buttonId = 'topic_$index';
-        ref.read(testConfigurationViewModelProvider.notifier).startTest(
-          context,
-          {
-            'grade': grade,
-            'subject': subject,
-            'mode': 'by_topic',
-            'topic': topic,
-            'paper': 'p1',
-          },
-          buttonId,
-          modeKey: 'by_topic',
-          sessionMetadata: {'topic': topic},
-        );
-      },
+    return Column(
+      children: [
+        // View mode toggle button
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              IconButton(
+                tooltip: viewMode.testConfigViewMode == ViewMode.carousel3D
+                    ? 'Switch to list view'
+                    : 'Switch to 3D carousel',
+                onPressed: () {
+                  AppHaptics.light();
+                  ref
+                      .read(viewModeProvider.notifier)
+                      .toggleTestConfigViewMode();
+                },
+                icon: Icon(
+                  viewMode.testConfigViewMode == ViewMode.carousel3D
+                      ? Icons.view_list
+                      : Icons.view_carousel,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Animated content switch
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            switchInCurve: Curves.easeInOut,
+            switchOutCurve: Curves.easeInOut,
+            transitionBuilder: (child, animation) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            child: viewMode.testConfigViewMode == ViewMode.carousel3D
+                ? Topic3DCarousel(
+                    key: const ValueKey('topic_carousel'),
+                    topics: topics,
+                    loadingTopicId: loadingButtonId,
+                    onTopicSelected: (topic, index) {
+                      final buttonId = 'topic_$index';
+                      ref
+                          .read(testConfigurationViewModelProvider.notifier)
+                          .startTest(
+                            context,
+                            {
+                              'grade': grade,
+                              'subject': subject,
+                              'mode': 'by_topic',
+                              'topic': topic,
+                              'paper': 'p1',
+                            },
+                            buttonId,
+                            modeKey: 'by_topic',
+                            sessionMetadata: {'topic': topic},
+                          );
+                    },
+                  )
+                : TopicListView(
+                    key: const ValueKey('topic_list'),
+                    topics: topics,
+                    loadingTopicId: loadingButtonId,
+                    onTopicSelected: (topic, index) {
+                      final buttonId = 'topic_$index';
+                      ref
+                          .read(testConfigurationViewModelProvider.notifier)
+                          .startTest(
+                            context,
+                            {
+                              'grade': grade,
+                              'subject': subject,
+                              'mode': 'by_topic',
+                              'topic': topic,
+                              'paper': 'p1',
+                            },
+                            buttonId,
+                            modeKey: 'by_topic',
+                            sessionMetadata: {'topic': topic},
+                          );
+                    },
+                  ),
+          ),
+        ),
+      ],
     );
   }
 }
