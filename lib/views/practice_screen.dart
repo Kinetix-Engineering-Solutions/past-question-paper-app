@@ -317,8 +317,8 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
       appBar: AppBar(
         backgroundColor: widget.topicColor ?? colorScheme.background,
         elevation: 0,
-        foregroundColor: widget.topicColor != null 
-            ? Colors.white 
+        foregroundColor: widget.topicColor != null
+            ? Colors.white
             : colorScheme.onBackground,
         title: Text(_getQuestionTitle(practiceState)),
         centerTitle: true,

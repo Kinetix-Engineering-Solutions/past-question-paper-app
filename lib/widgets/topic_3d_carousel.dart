@@ -292,8 +292,11 @@ class _Topic3DCarouselState extends State<Topic3DCarousel>
                               painter: _NeuralConnectionsPainter(
                                 neuronPositions: _currentPositions,
                                 focusedIndex: _focusedIndex,
-                                colors: widget.modeColor != null 
-                                    ? List.filled(widget.topics.length, widget.modeColor!) 
+                                colors: widget.modeColor != null
+                                    ? List.filled(
+                                        widget.topics.length,
+                                        widget.modeColor!,
+                                      )
                                     : _topicColors,
                                 screenSize: Size(width, height),
                               ),

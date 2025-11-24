@@ -7,7 +7,8 @@ import 'package:past_question_paper_v1/utils/haptic_feedback.dart';
 import 'package:past_question_paper_v1/viewmodels/view_mode_viewmodel.dart';
 import 'package:past_question_paper_v1/widgets/topic_3d_carousel.dart';
 import 'package:past_question_paper_v1/widgets/topic_list_view.dart';
-import 'package:past_question_paper_v1/widgets/mode_3d_carousel.dart' as carousel;
+import 'package:past_question_paper_v1/widgets/mode_3d_carousel.dart'
+    as carousel;
 import 'package:past_question_paper_v1/widgets/mode_list_view.dart' as list;
 
 import '../repositories/question_repository.dart';
@@ -64,7 +65,7 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
         if (options['topicColor'] != null) {
           topicColor = Color(options['topicColor'] as int);
         }
-        
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -166,7 +167,8 @@ class TestConfigurationScreen extends ConsumerStatefulWidget {
       _TestConfigurationScreenState();
 }
 
-class _TestConfigurationScreenState extends ConsumerState<TestConfigurationScreen> {
+class _TestConfigurationScreenState
+    extends ConsumerState<TestConfigurationScreen> {
   TestMode? _selectedMode;
 
   // Get the appropriate logo color for each mode
@@ -183,11 +185,11 @@ class _TestConfigurationScreenState extends ConsumerState<TestConfigurationScree
       backgroundColor: colorScheme.background,
       appBar: AppBar(
         title: Text(widget.subject),
-        backgroundColor: _selectedMode != null 
+        backgroundColor: _selectedMode != null
             ? _getModeColor(_selectedMode!)
             : (widget.subjectColor ?? colorScheme.background),
-        foregroundColor: (_selectedMode != null || widget.subjectColor != null) 
-            ? Colors.white 
+        foregroundColor: (_selectedMode != null || widget.subjectColor != null)
+            ? Colors.white
             : colorScheme.onBackground,
         elevation: 0,
         leading: _selectedMode != null
@@ -228,7 +230,7 @@ class _TestConfigurationScreenState extends ConsumerState<TestConfigurationScree
   // Mode selection screen with both carousel and list views
   Widget _buildModeSelection() {
     final viewMode = ref.watch(viewModeProvider);
-    
+
     final modeOptions = [
       {
         'carousel': carousel.ModeOption(
@@ -279,13 +281,16 @@ class _TestConfigurationScreenState extends ConsumerState<TestConfigurationScree
         'mode': TestMode.fullExam,
       },
     ];
-    
+
     if (viewMode.testConfigViewMode == ViewMode.carousel3D) {
       return carousel.Mode3DCarousel(
-        modes: modeOptions.map((option) => option['carousel'] as carousel.ModeOption).toList(),
+        modes: modeOptions
+            .map((option) => option['carousel'] as carousel.ModeOption)
+            .toList(),
         onModeSelected: (mode) {
           final selectedOption = modeOptions.firstWhere(
-            (option) => (option['carousel'] as carousel.ModeOption).level == mode.level,
+            (option) =>
+                (option['carousel'] as carousel.ModeOption).level == mode.level,
           );
           setState(() {
             _selectedMode = selectedOption['mode'] as TestMode;
@@ -294,7 +299,9 @@ class _TestConfigurationScreenState extends ConsumerState<TestConfigurationScree
       );
     } else {
       return list.ModeListView(
-        modes: modeOptions.map((option) => option['list'] as list.ModeOption).toList(),
+        modes: modeOptions
+            .map((option) => option['list'] as list.ModeOption)
+            .toList(),
         onModeSelected: (mode, index) {
           setState(() {
             _selectedMode = modeOptions[index]['mode'] as TestMode;
@@ -309,11 +316,24 @@ class _TestConfigurationScreenState extends ConsumerState<TestConfigurationScree
     final modeColor = _getModeColor(mode);
     switch (mode) {
       case TestMode.fullExam:
-        return _FullExamView(grade: widget.grade, subject: widget.subject, modeColor: modeColor);
+        return _FullExamView(
+          grade: widget.grade,
+          subject: widget.subject,
+          modeColor: modeColor,
+        );
       case TestMode.quickPractice:
-        return _QuickPracticeView(grade: widget.grade, subject: widget.subject, modeColor: modeColor);
+        return _QuickPracticeView(
+          grade: widget.grade,
+          subject: widget.subject,
+          modeColor: modeColor,
+        );
       case TestMode.byTopic:
-        return _ByTopicView(grade: widget.grade, subject: widget.subject, subjectColor: widget.subjectColor, modeColor: modeColor);
+        return _ByTopicView(
+          grade: widget.grade,
+          subject: widget.subject,
+          subjectColor: widget.subjectColor,
+          modeColor: modeColor,
+        );
     }
   }
 }
@@ -323,7 +343,11 @@ class _FullExamView extends ConsumerStatefulWidget {
   final int grade;
   final String subject;
   final Color? modeColor;
-  const _FullExamView({required this.grade, required this.subject, this.modeColor});
+  const _FullExamView({
+    required this.grade,
+    required this.subject,
+    this.modeColor,
+  });
 
   @override
   ConsumerState<_FullExamView> createState() => _FullExamViewState();
@@ -466,7 +490,11 @@ class _QuickPracticeView extends ConsumerStatefulWidget {
   final int grade;
   final String subject;
   final Color? modeColor;
-  const _QuickPracticeView({required this.grade, required this.subject, this.modeColor});
+  const _QuickPracticeView({
+    required this.grade,
+    required this.subject,
+    this.modeColor,
+  });
 
   @override
   ConsumerState<_QuickPracticeView> createState() => _QuickPracticeViewState();
@@ -550,7 +578,12 @@ class _ByTopicView extends ConsumerWidget {
   final String subject;
   final Color? subjectColor;
   final Color? modeColor;
-  const _ByTopicView({required this.grade, required this.subject, this.subjectColor, this.modeColor});
+  const _ByTopicView({
+    required this.grade,
+    required this.subject,
+    this.subjectColor,
+    this.modeColor,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -588,8 +621,9 @@ class _ByTopicView extends ConsumerWidget {
                         AppColors.brandMagenta,
                         AppColors.brandLavender,
                       ];
-                      final topicColor = topicColors[index % topicColors.length];
-                      
+                      final topicColor =
+                          topicColors[index % topicColors.length];
+
                       ref
                           .read(testConfigurationViewModelProvider.notifier)
                           .startTest(
@@ -600,7 +634,8 @@ class _ByTopicView extends ConsumerWidget {
                               'mode': 'by_topic',
                               'topic': topic,
                               'paper': 'p1',
-                              'topicColor': topicColor.value, // Pass color as int
+                              'topicColor':
+                                  topicColor.value, // Pass color as int
                             },
                             buttonId,
                             modeKey: 'by_topic',
@@ -629,8 +664,9 @@ class _ByTopicView extends ConsumerWidget {
                         AppColors.brandMagenta,
                         AppColors.brandLavender,
                       ];
-                      final topicColor = topicColors[index % topicColors.length];
-                      
+                      final topicColor =
+                          topicColors[index % topicColors.length];
+
                       ref
                           .read(testConfigurationViewModelProvider.notifier)
                           .startTest(
@@ -641,7 +677,8 @@ class _ByTopicView extends ConsumerWidget {
                               'mode': 'by_topic',
                               'topic': topic,
                               'paper': 'p1',
-                              'topicColor': topicColor.value, // Pass color as int
+                              'topicColor':
+                                  topicColor.value, // Pass color as int
                             },
                             buttonId,
                             modeKey: 'by_topic',

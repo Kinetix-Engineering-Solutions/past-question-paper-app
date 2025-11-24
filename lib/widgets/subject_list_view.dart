@@ -43,10 +43,7 @@ class SubjectListView extends StatelessWidget {
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(
-                color: Colors.grey.withOpacity(0.2),
-                width: 1,
-              ),
+              side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
             ),
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
