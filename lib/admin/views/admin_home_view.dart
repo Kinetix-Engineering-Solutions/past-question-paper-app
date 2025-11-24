@@ -32,11 +32,9 @@ class AdminHomeView extends ConsumerWidget {
             },
             isWideScreen: isWideScreen,
           ),
-          
+
           // Main content area
-          Expanded(
-            child: _getContentForIndex(selectedIndex),
-          ),
+          Expanded(child: _getContentForIndex(selectedIndex)),
         ],
       ),
     );
@@ -83,10 +81,7 @@ class _AdminSidebar extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         border: Border(
-          right: BorderSide(
-            color: AppColors.neutralBorder,
-            width: 1,
-          ),
+          right: BorderSide(color: AppColors.neutralBorder, width: 1),
         ),
       ),
       child: Column(
@@ -190,15 +185,12 @@ class _AdminSidebar extends StatelessWidget {
           // Sign out button
           const Divider(height: 1),
           ListTile(
-            leading: Icon(
-              Icons.logout,
-              color: AppColors.neutralMid,
-            ),
+            leading: Icon(Icons.logout, color: AppColors.neutralMid),
             title: isWideScreen
                 ? Text(
-              'Sign Out',
-              style: TextStyle(color: AppColors.neutralMid),
-            )
+                    'Sign Out',
+                    style: TextStyle(color: AppColors.neutralMid),
+                  )
                 : null,
             onTap: () async {
               await FirebaseAuth.instance.signOut();
@@ -228,16 +220,14 @@ class _AdminSidebar extends StatelessWidget {
         ),
         title: isWideScreen
             ? Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? AppColors.accent : AppColors.neutralMid,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          ),
-        )
+                label,
+                style: TextStyle(
+                  color: isSelected ? AppColors.accent : AppColors.neutralMid,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              )
             : null,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         selectedTileColor: AppColors.accent.withOpacity(0.1),
         onTap: () => onItemSelected(index),
       ),
@@ -264,16 +254,16 @@ class _AdminDashboard extends ConsumerWidget {
             // Welcome header
             Text(
               'Welcome Back!',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
               'Overview of your content management system',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: AppColors.neutralMid,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: AppColors.neutralMid),
             ),
             const SizedBox(height: 32),
 
@@ -290,7 +280,9 @@ class _AdminDashboard extends ConsumerWidget {
                       title: 'Total Questions',
                       icon: Icons.quiz,
                       color: AppColors.accent,
-                      width: isWide ? (constraints.maxWidth - 32) / 3 : constraints.maxWidth,
+                      width: isWide
+                          ? (constraints.maxWidth - 32) / 3
+                          : constraints.maxWidth,
                       streamBuilder: _buildQuestionCountStream(context),
                     ),
                     _buildMetricCard(
@@ -298,7 +290,9 @@ class _AdminDashboard extends ConsumerWidget {
                       title: 'Past Papers',
                       icon: Icons.picture_as_pdf,
                       color: Colors.blue,
-                      width: isWide ? (constraints.maxWidth - 32) / 3 : constraints.maxWidth,
+                      width: isWide
+                          ? (constraints.maxWidth - 32) / 3
+                          : constraints.maxWidth,
                       streamBuilder: _buildPaperCountStream(context),
                     ),
                     _buildMetricCard(
@@ -306,7 +300,9 @@ class _AdminDashboard extends ConsumerWidget {
                       title: 'Parent Questions',
                       icon: Icons.account_tree,
                       color: Colors.purple,
-                      width: isWide ? (constraints.maxWidth - 32) / 3 : constraints.maxWidth,
+                      width: isWide
+                          ? (constraints.maxWidth - 32) / 3
+                          : constraints.maxWidth,
                       streamBuilder: _buildParentCountStream(context),
                     ),
                   ],
@@ -318,9 +314,9 @@ class _AdminDashboard extends ConsumerWidget {
             // Recent activity section
             Text(
               'Recent Activity',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             _buildRecentActivityCard(context),
@@ -364,9 +360,9 @@ class _AdminDashboard extends ConsumerWidget {
               const SizedBox(height: 16),
               Text(
                 title,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.neutralMid,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: AppColors.neutralMid),
               ),
             ],
           ),
@@ -385,9 +381,9 @@ class _AdminDashboard extends ConsumerWidget {
         if (snapshot.hasError) {
           return Text(
             'Error',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
           );
         }
 
@@ -402,9 +398,9 @@ class _AdminDashboard extends ConsumerWidget {
         final count = snapshot.data!.docs.length;
         return Text(
           count.toString(),
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
         );
       },
     );
@@ -417,9 +413,9 @@ class _AdminDashboard extends ConsumerWidget {
         if (snapshot.hasError) {
           return Text(
             'Error',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
           );
         }
 
@@ -434,9 +430,9 @@ class _AdminDashboard extends ConsumerWidget {
         final count = snapshot.data!.docs.length;
         return Text(
           count.toString(),
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
         );
       },
     );
@@ -452,9 +448,9 @@ class _AdminDashboard extends ConsumerWidget {
         if (snapshot.hasError) {
           return Text(
             'Error',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
           );
         }
 
@@ -469,9 +465,9 @@ class _AdminDashboard extends ConsumerWidget {
         final count = snapshot.data!.docs.length;
         return Text(
           count.toString(),
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
         );
       },
     );
@@ -521,7 +517,8 @@ class _AdminDashboard extends ConsumerWidget {
                 final data = doc.data() as Map<String, dynamic>;
                 final subject = data['subject'] ?? 'Unknown';
                 final topic = data['topic'] ?? 'No topic';
-                final format = data['format'] ?? data['questionType'] ?? 'Unknown';
+                final format =
+                    data['format'] ?? data['questionType'] ?? 'Unknown';
                 final isParent = data['isParent'] == true;
 
                 return ListTile(
@@ -544,4 +541,3 @@ class _AdminDashboard extends ConsumerWidget {
     );
   }
 }
-

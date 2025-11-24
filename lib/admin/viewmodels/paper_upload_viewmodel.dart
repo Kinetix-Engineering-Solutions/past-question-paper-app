@@ -248,9 +248,6 @@ class PaperUploadViewModel extends StateNotifier<PaperUploadState> {
 
   /// Clear messages
   void clearMessages() {
-    state = state.copyWith(
-      errorMessage: null,
-      successMessage: null,
-    );
+    state = state.copyWith(errorMessage: null, successMessage: null);
   }
 }

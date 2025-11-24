@@ -39,10 +39,7 @@ class PaperUploadView extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Upload Past Paper'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Upload Past Paper'), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Center(
@@ -52,11 +49,7 @@ class PaperUploadView extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Header Icon
-                Icon(
-                  Icons.upload_file,
-                  size: 64,
-                  color: AppColors.accent,
-                ),
+                Icon(Icons.upload_file, size: 64, color: AppColors.accent),
                 const SizedBox(height: 16),
                 Text(
                   'Upload Past Question Paper',
@@ -68,9 +61,9 @@ class PaperUploadView extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   'Fill in the details below and upload a PDF file',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.neutralMid,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppColors.neutralMid),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
@@ -122,11 +115,7 @@ class PaperUploadView extends ConsumerWidget {
                   context: context,
                   label: 'Season',
                   value: state.season,
-                  items: const [
-                    'November',
-                    'June',
-                    'March',
-                  ],
+                  items: const ['November', 'June', 'March'],
                   onChanged: state.isUploading
                       ? null
                       : (value) => viewModel.updateSeason(value!),
@@ -150,7 +139,8 @@ class PaperUploadView extends ConsumerWidget {
                   enabled: !state.isUploading,
                   decoration: InputDecoration(
                     labelText: 'Title',
-                    hintText: 'e.g., Mathematics Grade 10 November 2024 Paper 1',
+                    hintText:
+                        'e.g., Mathematics Grade 10 November 2024 Paper 1',
                     border: const OutlineInputBorder(),
                   ),
                   onChanged: viewModel.updateTitle,
@@ -187,15 +177,19 @@ class PaperUploadView extends ConsumerWidget {
                       : () => viewModel.uploadPaper(),
                   icon: state.isUploading
                       ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
                       : const Icon(Icons.cloud_upload),
-                  label: Text(state.isUploading ? 'Uploading...' : 'Upload Paper'),
+                  label: Text(
+                    state.isUploading ? 'Uploading...' : 'Upload Paper',
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.accent,
                     foregroundColor: Colors.white,
@@ -228,10 +222,7 @@ class PaperUploadView extends ConsumerWidget {
         border: const OutlineInputBorder(),
       ),
       items: items.map((item) {
-        return DropdownMenuItem(
-          value: item,
-          child: Text(item),
-        );
+        return DropdownMenuItem(value: item, child: Text(item));
       }).toList(),
       onChanged: onChanged,
     );
@@ -276,32 +267,32 @@ class PaperUploadView extends ConsumerWidget {
         onTap: state.isUploading
             ? null
             : () async {
-          try {
-            final result = await FilePicker.platform.pickFiles(
-              type: FileType.custom,
-              allowedExtensions: ['pdf'],
-              withData: true,
-            );
+                try {
+                  final result = await FilePicker.platform.pickFiles(
+                    type: FileType.custom,
+                    allowedExtensions: ['pdf'],
+                    withData: true,
+                  );
 
-            if (result != null && result.files.isNotEmpty) {
-              final file = result.files.first;
-              if (file.bytes != null) {
-                viewModel.setSelectedPdf(
-                  file.bytes!,
-                  file.name,
-                  file.size,
-                );
-              }
-            }
-          } catch (e) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Failed to pick file: $e'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
+                  if (result != null && result.files.isNotEmpty) {
+                    final file = result.files.first;
+                    if (file.bytes != null) {
+                      viewModel.setSelectedPdf(
+                        file.bytes!,
+                        file.name,
+                        file.size,
+                      );
+                    }
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to pick file: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -335,9 +326,9 @@ class PaperUploadView extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   '${(state.selectedFileSize / 1024).toStringAsFixed(2)} KB',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.neutralMid,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: AppColors.neutralMid),
                 ),
                 const SizedBox(height: 16),
                 TextButton.icon(
@@ -346,9 +337,7 @@ class PaperUploadView extends ConsumerWidget {
                       : () => viewModel.clearSelectedPdf(),
                   icon: const Icon(Icons.close),
                   label: const Text('Remove'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.red,
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
                 ),
               ],
             ],

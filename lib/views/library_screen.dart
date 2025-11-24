@@ -30,12 +30,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     'geography',
   ];
 
-  final List<String> _grades = [
-    'All',
-    '10',
-    '11',
-    '12',
-  ];
+  final List<String> _grades = ['All', '10', '11', '12'];
 
   @override
   Widget build(BuildContext context) {
@@ -139,12 +134,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 final filteredPapers = _searchQuery.isEmpty
                     ? papers
                     : papers.where((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  final title = (data['title'] ?? '').toString().toLowerCase();
-                  final subject = (data['subject'] ?? '').toString().toLowerCase();
-                  return title.contains(_searchQuery.toLowerCase()) ||
-                      subject.contains(_searchQuery.toLowerCase());
-                }).toList();
+                        final data = doc.data() as Map<String, dynamic>;
+                        final title = (data['title'] ?? '')
+                            .toString()
+                            .toLowerCase();
+                        final subject = (data['subject'] ?? '')
+                            .toString()
+                            .toLowerCase();
+                        return title.contains(_searchQuery.toLowerCase()) ||
+                            subject.contains(_searchQuery.toLowerCase());
+                      }).toList();
 
                 if (filteredPapers.isEmpty) {
                   return Center(
@@ -247,7 +246,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 ),
               ),
               const SizedBox(width: 16),
-              
+
               // Paper details
               Expanded(
                 child: Column(
@@ -278,7 +277,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   ],
                 ),
               ),
-              
+
               // View button
               IconButton(
                 icon: Icon(Icons.open_in_new, color: AppColors.accent),
@@ -329,19 +328,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
   void _openPDF(BuildContext context, String url, String title) {
     if (url.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('PDF URL not available')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('PDF URL not available')));
       return;
     }
 
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PDFViewerScreen(
-          pdfUrl: url,
-          title: title,
-        ),
+        builder: (context) => PDFViewerScreen(pdfUrl: url, title: title),
       ),
     );
   }
@@ -389,32 +385,32 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Subject', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Subject',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _selectedSubject,
                 decoration: const InputDecoration(border: OutlineInputBorder()),
                 items: _subjects.map((subject) {
-                  return DropdownMenuItem(
-                    value: subject,
-                    child: Text(subject),
-                  );
+                  return DropdownMenuItem(value: subject, child: Text(subject));
                 }).toList(),
                 onChanged: (value) {
                   setState(() => _selectedSubject = value!);
                 },
               ),
               const SizedBox(height: 16),
-              const Text('Grade', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Grade',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _selectedGrade,
                 decoration: const InputDecoration(border: OutlineInputBorder()),
                 items: _grades.map((grade) {
-                  return DropdownMenuItem(
-                    value: grade,
-                    child: Text(grade),
-                  );
+                  return DropdownMenuItem(value: grade, child: Text(grade));
                 }).toList(),
                 onChanged: (value) {
                   setState(() => _selectedGrade = value!);
