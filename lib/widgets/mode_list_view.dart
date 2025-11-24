@@ -71,8 +71,8 @@ class ModeListView extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                     side: BorderSide(
-                      color: mode.color.withOpacity(0.3),
-                      width: 2,
+                      color: Colors.grey.withOpacity(0.2),
+                      width: 1,
                     ),
                   ),
                   child: InkWell(

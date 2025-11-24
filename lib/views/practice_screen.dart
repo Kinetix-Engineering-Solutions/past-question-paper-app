@@ -22,6 +22,7 @@ class PracticeScreen extends ConsumerStatefulWidget {
   final String? modeKey;
   final int? configuredDurationMinutes;
   final Map<String, dynamic>? sessionMetadata;
+  final Color? topicColor;
 
   const PracticeScreen({
     super.key,
@@ -31,6 +32,7 @@ class PracticeScreen extends ConsumerStatefulWidget {
     this.modeKey,
     this.configuredDurationMinutes,
     this.sessionMetadata,
+    this.topicColor,
   });
 
   @override
@@ -244,7 +246,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     } else if (isWarning) {
       timerColor = Colors.orange;
     } else {
-      timerColor = colorScheme.primary;
+      timerColor = widget.topicColor ?? colorScheme.primary;
     }
 
     return Container(
@@ -313,9 +315,11 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
     return Scaffold(
       backgroundColor: colorScheme.background,
       appBar: AppBar(
-        backgroundColor: colorScheme.background,
+        backgroundColor: widget.topicColor ?? colorScheme.background,
         elevation: 0,
-        foregroundColor: colorScheme.onBackground,
+        foregroundColor: widget.topicColor != null 
+            ? Colors.white 
+            : colorScheme.onBackground,
         title: Text(_getQuestionTitle(practiceState)),
         centerTitle: true,
         actions: widget.configuredDurationMinutes != null
@@ -330,7 +334,7 @@ class _PracticeScreenState extends ConsumerState<PracticeScreen> {
             child: LinearProgressIndicator(
               value: (_currentPage + 1) / questions.length,
               backgroundColor: colorScheme.outlineVariant,
-              color: colorScheme.primary,
+              color: widget.topicColor ?? colorScheme.primary,
             ),
           ),
 

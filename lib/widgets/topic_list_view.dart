@@ -6,12 +6,14 @@ class TopicListView extends StatelessWidget {
   final List<String> topics;
   final Function(String topic, int index) onTopicSelected;
   final String? loadingTopicId;
+  final Color? modeColor;
 
   const TopicListView({
     Key? key,
     required this.topics,
     required this.onTopicSelected,
     this.loadingTopicId,
+    this.modeColor,
   }) : super(key: key);
 
   // Color palette for topics - PQP brand colors
@@ -66,7 +68,7 @@ class TopicListView extends StatelessWidget {
               final topic = topics[index];
               final buttonId = 'topic_$index';
               final isLoading = loadingTopicId == buttonId;
-              final color = _topicColors[index % _topicColors.length];
+              final color = modeColor ?? _topicColors[index % _topicColors.length];
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -74,7 +76,7 @@ class TopicListView extends StatelessWidget {
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: color.withOpacity(0.3), width: 1.5),
+                    side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
                   ),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(16),

@@ -44,10 +44,8 @@ class SubjectListView extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
               side: BorderSide(
-                color: isAvailable
-                    ? subject.color.withOpacity(0.3)
-                    : colorScheme.outline.withOpacity(0.2),
-                width: 1.5,
+                color: Colors.grey.withOpacity(0.2),
+                width: 1,
               ),
             ),
             child: InkWell(
@@ -73,15 +71,6 @@ class SubjectListView extends StatelessWidget {
                             isAvailable ? 0.5 : 0.3,
                           ),
                           width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${index + 1}',
-                          style: textTheme.titleMedium?.copyWith(
-                            color: subject.color,
-                            fontWeight: FontWeight.bold,
-                          ),
                         ),
                       ),
                     ),

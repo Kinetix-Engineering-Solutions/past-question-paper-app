@@ -150,6 +150,7 @@ class _SubjectCarouselSection extends StatelessWidget {
             builder: (context) => TestConfigurationScreen(
               subject: subject.name,
               grade: selectedGrade,
+              subjectColor: subject.color,
             ),
           ),
         );
@@ -219,6 +220,7 @@ class _SubjectListSection extends StatelessWidget {
             builder: (context) => TestConfigurationScreen(
               subject: subject.name,
               grade: selectedGrade,
+              subjectColor: subject.color,
             ),
           ),
         );

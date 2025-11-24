@@ -7,7 +7,8 @@ import 'package:past_question_paper_v1/utils/haptic_feedback.dart';
 import 'package:past_question_paper_v1/viewmodels/view_mode_viewmodel.dart';
 import 'package:past_question_paper_v1/widgets/topic_3d_carousel.dart';
 import 'package:past_question_paper_v1/widgets/topic_list_view.dart';
-import 'package:past_question_paper_v1/widgets/mode_3d_carousel.dart';
+import 'package:past_question_paper_v1/widgets/mode_3d_carousel.dart' as carousel;
+import 'package:past_question_paper_v1/widgets/mode_list_view.dart' as list;
 
 import '../repositories/question_repository.dart';
 import 'practice_screen.dart';
@@ -58,6 +59,12 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
       // Navigate to the practice screen with the fetched questions
       // Ensure the context is still valid before navigating
       if (context.mounted) {
+        // Extract topic color if available
+        Color? topicColor;
+        if (options['topicColor'] != null) {
+          topicColor = Color(options['topicColor'] as int);
+        }
+        
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -67,6 +74,7 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
               isSprintMode: isSprintMode,
               configuredDurationMinutes: durationMinutes,
               modeKey: modeKey ?? options['mode']?.toString(),
+              topicColor: topicColor,
               sessionMetadata: {
                 'options': options,
                 if (sessionMetadata != null) ...sessionMetadata,
@@ -141,34 +149,46 @@ enum TestMode { fullExam, quickPractice, byTopic }
 // Enum for journey node position
 enum JourneyPosition { start, middle, end }
 
-class TestConfigurationScreen extends StatefulWidget {
+class TestConfigurationScreen extends ConsumerStatefulWidget {
   final String subject;
   final int grade;
+  final Color? subjectColor;
 
   const TestConfigurationScreen({
     super.key,
     required this.subject,
     required this.grade,
+    this.subjectColor,
   });
 
   @override
-  State<TestConfigurationScreen> createState() =>
+  ConsumerState<TestConfigurationScreen> createState() =>
       _TestConfigurationScreenState();
 }
 
-class _TestConfigurationScreenState extends State<TestConfigurationScreen> {
+class _TestConfigurationScreenState extends ConsumerState<TestConfigurationScreen> {
   TestMode? _selectedMode;
+
+  // Get the appropriate logo color for each mode
+  Color _getModeColor(TestMode mode) {
+    return AppColors.accent; // Use same orange accent color for all modes
+  }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final viewMode = ref.watch(viewModeProvider);
 
     return Scaffold(
       backgroundColor: colorScheme.background,
       appBar: AppBar(
         title: Text(widget.subject),
-        backgroundColor: colorScheme.background,
-        foregroundColor: colorScheme.onBackground,
+        backgroundColor: _selectedMode != null 
+            ? _getModeColor(_selectedMode!)
+            : (widget.subjectColor ?? colorScheme.background),
+        foregroundColor: (_selectedMode != null || widget.subjectColor != null) 
+            ? Colors.white 
+            : colorScheme.onBackground,
         elevation: 0,
         leading: _selectedMode != null
             ? IconButton(
@@ -180,6 +200,24 @@ class _TestConfigurationScreenState extends State<TestConfigurationScreen> {
                 },
               )
             : null,
+        actions: [
+          // View mode toggle button (show when mode selection or in By Topic view)
+          if (_selectedMode == null || _selectedMode == TestMode.byTopic)
+            IconButton(
+              tooltip: viewMode.testConfigViewMode == ViewMode.carousel3D
+                  ? 'Switch to list view'
+                  : 'Switch to 3D carousel',
+              onPressed: () {
+                AppHaptics.light();
+                ref.read(viewModeProvider.notifier).toggleTestConfigViewMode();
+              },
+              icon: Icon(
+                viewMode.testConfigViewMode == ViewMode.carousel3D
+                    ? Icons.view_list
+                    : Icons.view_carousel,
+              ),
+            ),
+        ],
       ),
       body: _selectedMode == null
           ? _buildModeSelection()
@@ -187,55 +225,95 @@ class _TestConfigurationScreenState extends State<TestConfigurationScreen> {
     );
   }
 
-  // Mode selection screen with Candy Crush-style level map UI
+  // Mode selection screen with both carousel and list views
   Widget _buildModeSelection() {
-    return Mode3DCarousel(
-      modes: [
-        ModeOption(
+    final viewMode = ref.watch(viewModeProvider);
+    
+    final modeOptions = [
+      {
+        'carousel': carousel.ModeOption(
           title: 'By Topic',
           subtitle: 'Master the basics',
           icon: Icons.bookmark_border,
-          color: Colors.green,
+          color: AppColors.accent,
           level: 1,
         ),
-        ModeOption(
+        'list': list.ModeOption(
+          name: 'By Topic',
+          description: 'Master the basics with focused topic practice',
+          icon: Icons.bookmark_border,
+          color: AppColors.accent,
+        ),
+        'mode': TestMode.byTopic,
+      },
+      {
+        'carousel': carousel.ModeOption(
           title: 'Quick Practice',
           subtitle: 'Speed challenge',
           icon: Icons.timer_outlined,
-          color: Colors.orange,
+          color: AppColors.accent,
           level: 2,
         ),
-        ModeOption(
+        'list': list.ModeOption(
+          name: 'Quick Practice',
+          description: 'Speed challenge with mixed questions',
+          icon: Icons.timer_outlined,
+          color: AppColors.accent,
+        ),
+        'mode': TestMode.quickPractice,
+      },
+      {
+        'carousel': carousel.ModeOption(
           title: 'Full Exam',
           subtitle: 'Final boss!',
           icon: Icons.article,
-          color: Colors.blue,
+          color: AppColors.accent,
           level: 3,
         ),
-      ],
-      onModeSelected: (mode) {
-        setState(() {
-          if (mode.level == 1) {
-            _selectedMode = TestMode.byTopic;
-          } else if (mode.level == 2) {
-            _selectedMode = TestMode.quickPractice;
-          } else {
-            _selectedMode = TestMode.fullExam;
-          }
-        });
+        'list': list.ModeOption(
+          name: 'Full Exam',
+          description: 'Complete exam simulation - the final boss!',
+          icon: Icons.article,
+          color: AppColors.accent,
+        ),
+        'mode': TestMode.fullExam,
       },
-    );
+    ];
+    
+    if (viewMode.testConfigViewMode == ViewMode.carousel3D) {
+      return carousel.Mode3DCarousel(
+        modes: modeOptions.map((option) => option['carousel'] as carousel.ModeOption).toList(),
+        onModeSelected: (mode) {
+          final selectedOption = modeOptions.firstWhere(
+            (option) => (option['carousel'] as carousel.ModeOption).level == mode.level,
+          );
+          setState(() {
+            _selectedMode = selectedOption['mode'] as TestMode;
+          });
+        },
+      );
+    } else {
+      return list.ModeListView(
+        modes: modeOptions.map((option) => option['list'] as list.ModeOption).toList(),
+        onModeSelected: (mode, index) {
+          setState(() {
+            _selectedMode = modeOptions[index]['mode'] as TestMode;
+          });
+        },
+      );
+    }
   }
 
   // Configuration screen based on selected mode
   Widget _buildModeConfiguration(TestMode mode) {
+    final modeColor = _getModeColor(mode);
     switch (mode) {
       case TestMode.fullExam:
-        return _FullExamView(grade: widget.grade, subject: widget.subject);
+        return _FullExamView(grade: widget.grade, subject: widget.subject, modeColor: modeColor);
       case TestMode.quickPractice:
-        return _QuickPracticeView(grade: widget.grade, subject: widget.subject);
+        return _QuickPracticeView(grade: widget.grade, subject: widget.subject, modeColor: modeColor);
       case TestMode.byTopic:
-        return _ByTopicView(grade: widget.grade, subject: widget.subject);
+        return _ByTopicView(grade: widget.grade, subject: widget.subject, subjectColor: widget.subjectColor, modeColor: modeColor);
     }
   }
 }
@@ -244,7 +322,8 @@ class _TestConfigurationScreenState extends State<TestConfigurationScreen> {
 class _FullExamView extends ConsumerStatefulWidget {
   final int grade;
   final String subject;
-  const _FullExamView({required this.grade, required this.subject});
+  final Color? modeColor;
+  const _FullExamView({required this.grade, required this.subject, this.modeColor});
 
   @override
   ConsumerState<_FullExamView> createState() => _FullExamViewState();
@@ -386,7 +465,8 @@ class _FullExamViewState extends ConsumerState<_FullExamView> {
 class _QuickPracticeView extends ConsumerStatefulWidget {
   final int grade;
   final String subject;
-  const _QuickPracticeView({required this.grade, required this.subject});
+  final Color? modeColor;
+  const _QuickPracticeView({required this.grade, required this.subject, this.modeColor});
 
   @override
   ConsumerState<_QuickPracticeView> createState() => _QuickPracticeViewState();
@@ -468,7 +548,9 @@ class _QuickPracticeViewState extends ConsumerState<_QuickPracticeView> {
 class _ByTopicView extends ConsumerWidget {
   final int grade;
   final String subject;
-  const _ByTopicView({required this.grade, required this.subject});
+  final Color? subjectColor;
+  final Color? modeColor;
+  const _ByTopicView({required this.grade, required this.subject, this.subjectColor, this.modeColor});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -478,31 +560,6 @@ class _ByTopicView extends ConsumerWidget {
 
     return Column(
       children: [
-        // View mode toggle button
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              IconButton(
-                tooltip: viewMode.testConfigViewMode == ViewMode.carousel3D
-                    ? 'Switch to list view'
-                    : 'Switch to 3D carousel',
-                onPressed: () {
-                  AppHaptics.light();
-                  ref
-                      .read(viewModeProvider.notifier)
-                      .toggleTestConfigViewMode();
-                },
-                icon: Icon(
-                  viewMode.testConfigViewMode == ViewMode.carousel3D
-                      ? Icons.view_list
-                      : Icons.view_carousel,
-                ),
-              ),
-            ],
-          ),
-        ),
         // Animated content switch
         Expanded(
           child: AnimatedSwitcher(
@@ -517,8 +574,22 @@ class _ByTopicView extends ConsumerWidget {
                     key: const ValueKey('topic_carousel'),
                     topics: topics,
                     loadingTopicId: loadingButtonId,
+                    modeColor: modeColor,
                     onTopicSelected: (topic, index) {
                       final buttonId = 'topic_$index';
+                      // Get topic color from the same palette used in carousel
+                      final topicColors = [
+                        AppColors.brandCyan,
+                        AppColors.brandMagenta,
+                        AppColors.brandLavender,
+                        AppColors.brandTeal,
+                        AppColors.accent,
+                        AppColors.brandCyan,
+                        AppColors.brandMagenta,
+                        AppColors.brandLavender,
+                      ];
+                      final topicColor = topicColors[index % topicColors.length];
+                      
                       ref
                           .read(testConfigurationViewModelProvider.notifier)
                           .startTest(
@@ -529,10 +600,14 @@ class _ByTopicView extends ConsumerWidget {
                               'mode': 'by_topic',
                               'topic': topic,
                               'paper': 'p1',
+                              'topicColor': topicColor.value, // Pass color as int
                             },
                             buttonId,
                             modeKey: 'by_topic',
-                            sessionMetadata: {'topic': topic},
+                            sessionMetadata: {
+                              'topic': topic,
+                              'topicColor': topicColor.value,
+                            },
                           );
                     },
                   )
@@ -540,8 +615,22 @@ class _ByTopicView extends ConsumerWidget {
                     key: const ValueKey('topic_list'),
                     topics: topics,
                     loadingTopicId: loadingButtonId,
+                    modeColor: modeColor,
                     onTopicSelected: (topic, index) {
                       final buttonId = 'topic_$index';
+                      // Get topic color from the same palette used in list view
+                      final topicColors = [
+                        AppColors.brandCyan,
+                        AppColors.brandMagenta,
+                        AppColors.brandLavender,
+                        AppColors.brandTeal,
+                        AppColors.accent,
+                        AppColors.brandCyan,
+                        AppColors.brandMagenta,
+                        AppColors.brandLavender,
+                      ];
+                      final topicColor = topicColors[index % topicColors.length];
+                      
                       ref
                           .read(testConfigurationViewModelProvider.notifier)
                           .startTest(
@@ -552,10 +641,14 @@ class _ByTopicView extends ConsumerWidget {
                               'mode': 'by_topic',
                               'topic': topic,
                               'paper': 'p1',
+                              'topicColor': topicColor.value, // Pass color as int
                             },
                             buttonId,
                             modeKey: 'by_topic',
-                            sessionMetadata: {'topic': topic},
+                            sessionMetadata: {
+                              'topic': topic,
+                              'topicColor': topicColor.value,
+                            },
                           );
                     },
                   ),

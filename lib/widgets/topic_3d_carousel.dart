@@ -8,12 +8,14 @@ class Topic3DCarousel extends StatefulWidget {
   final List<String> topics;
   final Function(String topic, int index) onTopicSelected;
   final String? loadingTopicId;
+  final Color? modeColor;
 
   const Topic3DCarousel({
     Key? key,
     required this.topics,
     required this.onTopicSelected,
     this.loadingTopicId,
+    this.modeColor,
   }) : super(key: key);
 
   @override
@@ -290,7 +292,9 @@ class _Topic3DCarouselState extends State<Topic3DCarousel>
                               painter: _NeuralConnectionsPainter(
                                 neuronPositions: _currentPositions,
                                 focusedIndex: _focusedIndex,
-                                colors: _topicColors,
+                                colors: widget.modeColor != null 
+                                    ? List.filled(widget.topics.length, widget.modeColor!) 
+                                    : _topicColors,
                                 screenSize: Size(width, height),
                               ),
                             ),
@@ -340,7 +344,7 @@ class _Topic3DCarouselState extends State<Topic3DCarousel>
     final topic = widget.topics[index];
     final buttonId = 'topic_$index';
     final isLoading = widget.loadingTopicId == buttonId;
-    final color = _topicColors[index % _topicColors.length];
+    final color = widget.modeColor ?? _topicColors[index % _topicColors.length];
     final size = isFocused ? 120.0 : 90.0;
 
     return GestureDetector(
