@@ -100,6 +100,16 @@ service cloud.firestore {
     }
     
     // ============================================
+    // Past Question Papers (PDFs)
+    // ============================================
+    
+    // Papers collection - authenticated users can read, admins can write
+    match /papers/{paperId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin(); // Admin can upload/edit/delete papers
+    }
+    
+    // ============================================
     // Test Sessions (Private to User)
     // ============================================
     

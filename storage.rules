@@ -82,6 +82,20 @@ service firebase.storage {
     }
     
     // ============================================
+    // Past Question Paper PDFs
+    // ============================================
+    
+    // Past paper PDFs - public read, admin-only write
+    match /papers/{fileName} {
+      allow read: if true; // Anyone can read/download papers
+      // Allow admin users to upload PDFs (max 10MB)
+      allow write: if isAdmin() && 
+                     request.resource.contentType == 'application/pdf' &&
+                     isValidSize(10);
+      allow delete: if isAdmin();
+    }
+    
+    // ============================================
     // User Uploads (Future Feature)
     // ============================================
     

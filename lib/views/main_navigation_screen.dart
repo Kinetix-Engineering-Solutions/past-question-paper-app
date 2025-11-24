@@ -35,29 +35,29 @@ class MainNavigationScreen extends ConsumerWidget {
               children: [
                 _NavItem(
                   ref: ref,
-                  icon: Icons.quiz,
-                  label: 'Quiz',
+                  icon: Icons.fitness_center,
+                  label: 'PQP Exam',
                   index: 0,
                   currentIndex: currentIndex,
                 ),
                 _NavItem(
                   ref: ref,
                   icon: Icons.library_books,
-                  label: 'Library',
+                  label: 'PQP Library',
                   index: 1,
                   currentIndex: currentIndex,
                 ),
                 _NavItem(
                   ref: ref,
                   icon: Icons.history,
-                  label: 'History',
+                  label: 'PQP History',
                   index: 2,
                   currentIndex: currentIndex,
                 ),
                 _NavItem(
                   ref: ref,
                   icon: Icons.person,
-                  label: 'Profile',
+                  label: 'PQP Profile',
                   index: 3,
                   currentIndex: currentIndex,
                 ),
@@ -88,7 +88,6 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isSelected = currentIndex == index;
-    final colorScheme = Theme.of(context).colorScheme;
 
     return GestureDetector(
       onTap: () {
@@ -102,9 +101,7 @@ class _NavItem extends StatelessWidget {
           children: [
             Icon(
               icon,
-              color: isSelected
-                  ? AppColors.accent
-                  : colorScheme.onSurfaceVariant,
+              color: isSelected ? AppColors.accent : Colors.grey.shade500,
               size: 24,
             ),
             const SizedBox(height: 4),
@@ -112,9 +109,7 @@ class _NavItem extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 12,
-                color: isSelected
-                    ? AppColors.accent
-                    : colorScheme.onSurfaceVariant,
+                color: isSelected ? AppColors.accent : Colors.grey.shade500,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
