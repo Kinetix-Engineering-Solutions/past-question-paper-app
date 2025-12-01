@@ -78,41 +78,61 @@ class ModeListView extends StatelessWidget {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(20),
                     onTap: () => onModeSelected(mode, index),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          // Icon
-                          Container(
-                            width: 64,
-                            height: 64,
-                            decoration: BoxDecoration(
-                              color: mode.color.withOpacity(0.15),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(mode.icon, size: 32, color: mode.color),
+                    child: Row(
+                      children: [
+                        // Colored vertical bar
+                        Container(
+                          width: 4,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: mode.color,
+                            borderRadius: BorderRadius.circular(2),
                           ),
-                          const SizedBox(height: 16),
-                          // Mode name
-                          Text(
-                            mode.name,
-                            style: textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: mode.color,
-                            ),
-                            textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(width: 16),
+                        // Icon
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: mode.color.withOpacity(0.15),
+                            shape: BoxShape.circle,
                           ),
-                          const SizedBox(height: 8),
-                          // Description
-                          Text(
-                            mode.description,
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
+                          child: Icon(mode.icon, size: 24, color: mode.color),
+                        ),
+                        const SizedBox(width: 16),
+                        // Mode name and description
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  mode.name,
+                                  style: textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  mode.description,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
                             ),
-                            textAlign: TextAlign.center,
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 12),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          color: mode.color,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 16),
+                      ],
                     ),
                   ),
                 ),

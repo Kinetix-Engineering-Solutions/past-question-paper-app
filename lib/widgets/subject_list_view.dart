@@ -51,83 +51,80 @@ class SubjectListView extends StatelessWidget {
                   ? () => onSubjectSelected(subject, index)
                   : null,
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    // Color indicator circle
+                    // Colored vertical bar
                     Container(
-                      width: 48,
-                      height: 48,
+                      width: 4,
+                      height: 60,
                       decoration: BoxDecoration(
-                        color: subject.color.withOpacity(
-                          isAvailable ? 0.2 : 0.1,
-                        ),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: subject.color.withOpacity(
-                            isAvailable ? 0.5 : 0.3,
-                          ),
-                          width: 2,
-                        ),
+                        color: subject.color,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                     const SizedBox(width: 16),
                     // Subject info
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  subject.name,
-                                  style: textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: isAvailable
-                                        ? colorScheme.onSurface
-                                        : colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ),
-                              if (!isAvailable)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.accent.withOpacity(0.15),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: AppColors.accent.withOpacity(0.3),
-                                      width: 1,
-                                    ),
-                                  ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
                                   child: Text(
-                                    'COMING SOON',
-                                    style: TextStyle(
-                                      fontSize: 10,
+                                    subject.name,
+                                    style: textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.accent,
-                                      letterSpacing: 0.5,
+                                      color: isAvailable
+                                          ? colorScheme.onSurface
+                                          : colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            subject.subtitle,
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
+                                if (!isAvailable)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.accent.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: AppColors.accent.withOpacity(
+                                          0.3,
+                                        ),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'COMING SOON',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.accent,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text(
+                              subject.subtitle,
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // Trailing icon
+                    // Trailing icon or lock state
                     Icon(
                       isAvailable
                           ? Icons.arrow_forward_ios

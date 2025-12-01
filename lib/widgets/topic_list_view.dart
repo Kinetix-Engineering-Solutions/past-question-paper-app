@@ -87,35 +87,22 @@ class TopicListView extends StatelessWidget {
                     onTap: isLoading
                         ? null
                         : () => onTopicSelected(topic, index),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          // Number badge
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: color.withOpacity(0.2),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: color.withOpacity(0.5),
-                                width: 2,
-                              ),
-                            ),
-                            child: Center(
-                              child: Text(
-                                '${index + 1}',
-                                style: textTheme.titleMedium?.copyWith(
-                                  color: color,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+                    child: Row(
+                      children: [
+                        // Colored vertical bar
+                        Container(
+                          width: 4,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(2),
                           ),
-                          const SizedBox(width: 16),
-                          // Topic name
-                          Expanded(
+                        ),
+                        const SizedBox(width: 16),
+                        // Topic name
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             child: Text(
                               topic,
                               style: textTheme.titleMedium?.copyWith(
@@ -123,25 +110,27 @@ class TopicListView extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          // Loading or arrow
-                          if (isLoading)
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: color,
-                              ),
-                            )
-                          else
-                            Icon(
-                              Icons.arrow_forward_ios,
-                              color: color,
-                              size: 18,
-                            ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Loading or arrow
+                        Padding(
+                          padding: const EdgeInsets.only(right: 16),
+                          child: isLoading
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: color,
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.arrow_forward_ios,
+                                  color: color,
+                                  size: 18,
+                                ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
