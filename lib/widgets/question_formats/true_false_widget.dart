@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/model/question.dart';
-import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
+import 'package:past_question_paper_v1/features/practice/domain/entities/question.dart';
+import 'package:past_question_paper_v1/features/practice/presentation/viewmodels/practice_viewmodel.dart';
 
 class TrueFalseWidget extends ConsumerWidget {
   final Question question;
@@ -55,7 +55,8 @@ class TrueFalseWidget extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Text(
                   'You selected: $selectedOption',
-                  style: textTheme.bodyMedium?.copyWith(
+                  style:
+                      textTheme.bodyMedium?.copyWith(
                         color: colorScheme.primary,
                         fontWeight: FontWeight.w600,
                       ) ??
@@ -88,8 +89,9 @@ class TrueFalseWidget extends ConsumerWidget {
           backgroundColor: isSelected
               ? colorScheme.primary
               : colorScheme.surface,
-          foregroundColor:
-              isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
+          foregroundColor: isSelected
+              ? colorScheme.onPrimary
+              : colorScheme.onSurface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
@@ -100,8 +102,7 @@ class TrueFalseWidget extends ConsumerWidget {
             ),
           ),
           elevation: isSelected ? 4 : 1,
-          shadowColor:
-              isSelected ? colorScheme.primary.withOpacity(0.3) : null,
+          shadowColor: isSelected ? colorScheme.primary.withOpacity(0.3) : null,
         ),
         onPressed: () {
           ref
@@ -115,7 +116,8 @@ class TrueFalseWidget extends ConsumerWidget {
             const SizedBox(width: 8),
             Text(
               option,
-              style: textTheme.titleMedium?.copyWith(
+              style:
+                  textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: isSelected
                         ? colorScheme.onPrimary

@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/services/storage_service.dart';
+import 'package:past_question_paper_v1/core/shared/services/storage_service.dart';
 
 /// Provider for Paper Upload ViewModel
 final paperUploadViewModelProvider =

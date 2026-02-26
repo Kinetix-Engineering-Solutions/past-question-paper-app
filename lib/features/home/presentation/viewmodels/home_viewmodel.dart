@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/model/user.dart';
-import 'package:past_question_paper_v1/utils/app_constants.dart';
-import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
+import 'package:past_question_paper_v1/features/profile/domain/entities/user.dart';
+import 'package:past_question_paper_v1/core/shared/utils/app_constants.dart';
+import 'package:past_question_paper_v1/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 
 // Riverpod provider for the HomeViewModel
 final homeViewModelProvider = StateNotifierProvider<HomeViewModel, HomeState>((

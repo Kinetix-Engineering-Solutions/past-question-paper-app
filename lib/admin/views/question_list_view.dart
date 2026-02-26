@@ -4,8 +4,8 @@ import 'package:past_question_paper_v1/admin/viewmodels/question_list_viewmodel.
 import 'package:past_question_paper_v1/admin/widgets/question_preview_dialog.dart';
 import 'package:past_question_paper_v1/admin/views/parent_question_create_view.dart';
 import 'package:past_question_paper_v1/admin/views/question_create_view.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
-import 'package:past_question_paper_v1/utils/app_constants.dart';
+import 'package:past_question_paper_v1/core/theme/app_colors.dart';
+import 'package:past_question_paper_v1/core/shared/utils/app_constants.dart';
 
 /// Question Browser/List View - Search, filter, and manage questions
 class QuestionListView extends ConsumerStatefulWidget {

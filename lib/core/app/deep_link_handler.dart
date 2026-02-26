@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:past_question_paper_v1/services/auth_service_firebase.dart';
+import 'package:past_question_paper_v1/features/auth/data/services/auth_service_firebase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:past_question_paper_v1/views/home_screen.dart';
+import 'package:past_question_paper_v1/features/home/presentation/screens/home_screen.dart';
 
 class DeepLinkHandler {
   static const String _emailForSignInKey = 'email_for_link_sign_in';

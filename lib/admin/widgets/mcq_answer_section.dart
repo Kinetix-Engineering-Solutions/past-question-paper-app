@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/admin/viewmodels/question_create_viewmodel.dart';
 import 'package:past_question_paper_v1/admin/widgets/image_upload_widget.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
+import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 
 /// MCQ Answer Section - Options A, B, C, D and Correct Answer
 /// Supports both text and image-based options

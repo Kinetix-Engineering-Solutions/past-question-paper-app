@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:past_question_paper_v1/utils/haptic_feedback.dart';
+import 'package:past_question_paper_v1/core/shared/utils/haptic_feedback.dart';
 
 class CustomSnackBar {
   static void show({

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/model/user.dart';
-import 'package:past_question_paper_v1/providers/auth_providers.dart';
-import 'package:past_question_paper_v1/providers/navigation_providers.dart';
-import 'package:past_question_paper_v1/services/auth_service_firebase.dart';
-import 'package:past_question_paper_v1/services/navigation_service.dart';
+import 'package:past_question_paper_v1/features/profile/domain/entities/user.dart';
+import 'package:past_question_paper_v1/features/auth/providers/auth_providers.dart';
+import 'package:past_question_paper_v1/core/app/navigation_providers.dart';
+import 'package:past_question_paper_v1/features/auth/data/services/auth_service_firebase.dart';
+import 'package:past_question_paper_v1/core/app/navigation_service.dart';
 import 'package:past_question_paper_v1/Exceptions/auth_exception.dart';
 import 'package:past_question_paper_v1/widgets/custom_snackbar.dart';
-import 'package:past_question_paper_v1/utils/loading_state.dart';
-import 'package:past_question_paper_v1/views/email_verification_screen.dart';
+import 'package:past_question_paper_v1/core/shared/utils/loading_state.dart';
+import 'package:past_question_paper_v1/features/auth/presentation/screens/email_verification_screen.dart';
 
 // Auth View Model Provider
 final authViewModelProvider =

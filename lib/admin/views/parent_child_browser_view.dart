@@ -4,7 +4,7 @@ import 'package:past_question_paper_v1/admin/viewmodels/parent_child_browser_vie
 import 'package:past_question_paper_v1/admin/views/parent_question_create_view.dart';
 import 'package:past_question_paper_v1/admin/views/question_create_view.dart';
 import 'package:past_question_paper_v1/admin/widgets/question_tree_item.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
+import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 
 /// Parent-Child Browser View - View and manage parent-child question sets
 class ParentChildBrowserView extends ConsumerStatefulWidget {

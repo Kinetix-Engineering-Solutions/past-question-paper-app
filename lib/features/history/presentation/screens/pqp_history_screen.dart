@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/model/mistake_bank_entry.dart';
-import 'package:past_question_paper_v1/providers/auth_providers.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
-import 'package:past_question_paper_v1/viewmodels/session_history_viewmodel.dart';
+import 'package:past_question_paper_v1/features/practice/domain/entities/mistake_bank_entry.dart';
+import 'package:past_question_paper_v1/features/auth/providers/auth_providers.dart';
+import 'package:past_question_paper_v1/core/theme/app_colors.dart';
+import 'package:past_question_paper_v1/features/history/presentation/viewmodels/session_history_viewmodel.dart';
 import 'package:past_question_paper_v1/widgets/shimmer_loading.dart';
 import 'package:past_question_paper_v1/widgets/empty_state.dart';
 

@@ -3,16 +3,16 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/firebase_options.dart';
-import 'package:past_question_paper_v1/services/deep_link_handler.dart';
-import 'package:past_question_paper_v1/services/navigation_service.dart';
-import 'package:past_question_paper_v1/utils/app_theme.dart';
-import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
-import 'package:past_question_paper_v1/viewmodels/theme_viewmodel.dart';
-import 'package:past_question_paper_v1/views/login.dart';
-import 'package:past_question_paper_v1/views/main_navigation_screen.dart';
-import 'package:past_question_paper_v1/views/onboarding_screen.dart';
-import 'package:past_question_paper_v1/views/signup_screen.dart';
-import 'package:past_question_paper_v1/widgets/connectivity_banner.dart';
+import 'package:past_question_paper_v1/core/app/deep_link_handler.dart';
+import 'package:past_question_paper_v1/core/app/navigation_service.dart';
+import 'package:past_question_paper_v1/core/theme/app_theme.dart';
+import 'package:past_question_paper_v1/features/auth/presentation/viewmodels/auth_viewmodel.dart';
+import 'package:past_question_paper_v1/core/theme/theme_viewmodel.dart';
+import 'package:past_question_paper_v1/features/auth/presentation/screens/login.dart';
+import 'package:past_question_paper_v1/core/app/main_navigation_screen.dart';
+import 'package:past_question_paper_v1/features/auth/presentation/screens/onboarding_screen.dart';
+import 'package:past_question_paper_v1/features/auth/presentation/screens/signup_screen.dart';
+import 'package:past_question_paper_v1/core/shared/widgets/connectivity_banner.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

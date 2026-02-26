@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/providers/connectivity_provider.dart';
-import 'package:past_question_paper_v1/services/connectivity_service.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
+import 'package:past_question_paper_v1/core/shared/providers/connectivity_provider.dart';
+import 'package:past_question_paper_v1/core/shared/services/connectivity_service.dart';
+import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 
 /// Global banner that displays when network connectivity is lost or degraded
 /// 

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/providers/auth_providers.dart';
-import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
+import 'package:past_question_paper_v1/features/auth/providers/auth_providers.dart';
+import 'package:past_question_paper_v1/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 
 class SessionHistoryEntry {
   SessionHistoryEntry({

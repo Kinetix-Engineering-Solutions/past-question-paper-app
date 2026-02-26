@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
-import 'package:past_question_paper_v1/utils/loading_state.dart';
-import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
-import 'package:past_question_paper_v1/views/signup_screen.dart';
-import 'package:past_question_paper_v1/views/forgot_password_screen.dart';
+import 'package:past_question_paper_v1/core/theme/app_colors.dart';
+import 'package:past_question_paper_v1/core/shared/utils/loading_state.dart';
+import 'package:past_question_paper_v1/features/auth/presentation/viewmodels/auth_viewmodel.dart';
+import 'package:past_question_paper_v1/features/auth/presentation/screens/signup_screen.dart';
+import 'package:past_question_paper_v1/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:past_question_paper_v1/widgets/message_banner.dart';
-import 'package:past_question_paper_v1/utils/form_validators.dart';
+import 'package:past_question_paper_v1/core/shared/utils/form_validators.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});

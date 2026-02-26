@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:past_question_paper_v1/services/auth_service_firebase.dart';
+import 'package:past_question_paper_v1/features/auth/data/services/auth_service_firebase.dart';
 
 class EmailLinkSignIn extends StatefulWidget {
   final AuthServiceFirebase authService;

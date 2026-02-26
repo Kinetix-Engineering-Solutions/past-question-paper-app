@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
-import 'package:past_question_paper_v1/utils/app_typography.dart';
+import 'package:past_question_paper_v1/core/theme/app_typography.dart';
 
 class AppTheme {
   static ThemeData get paperAndInkTheme => lightTheme;

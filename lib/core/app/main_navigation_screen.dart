@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/providers/navigation_providers.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
-import 'package:past_question_paper_v1/views/home_screen.dart';
-import 'package:past_question_paper_v1/views/library_screen.dart';
-import 'package:past_question_paper_v1/views/history/pqp_history_screen.dart';
-import 'package:past_question_paper_v1/views/profile_screen.dart';
+import 'package:past_question_paper_v1/core/app/navigation_providers.dart';
+import 'package:past_question_paper_v1/core/theme/app_colors.dart';
+import 'package:past_question_paper_v1/features/home/presentation/screens/home_screen.dart';
+import 'package:past_question_paper_v1/features/library/presentation/screens/library_screen.dart';
+import 'package:past_question_paper_v1/features/history/presentation/screens/pqp_history_screen.dart';
+import 'package:past_question_paper_v1/features/profile/presentation/screens/profile_screen.dart';
 
 class MainNavigationScreen extends ConsumerWidget {
   const MainNavigationScreen({super.key});

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
-import 'package:past_question_paper_v1/utils/loading_state.dart';
-import 'package:past_question_paper_v1/viewmodels/auth_viewmodel.dart';
-import 'package:past_question_paper_v1/views/login.dart';
+import 'package:past_question_paper_v1/core/theme/app_colors.dart';
+import 'package:past_question_paper_v1/core/shared/utils/loading_state.dart';
+import 'package:past_question_paper_v1/features/auth/presentation/viewmodels/auth_viewmodel.dart';
+import 'package:past_question_paper_v1/features/auth/presentation/screens/login.dart';
 import 'package:past_question_paper_v1/widgets/custom_snackbar.dart';
 import 'package:past_question_paper_v1/widgets/message_banner.dart';
-import 'package:past_question_paper_v1/utils/form_validators.dart';
+import 'package:past_question_paper_v1/core/shared/utils/form_validators.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {

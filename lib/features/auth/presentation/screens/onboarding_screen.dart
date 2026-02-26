@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/providers/auth_providers.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
-import 'package:past_question_paper_v1/utils/app_constants.dart';
-import 'package:past_question_paper_v1/views/main_navigation_screen.dart';
+import 'package:past_question_paper_v1/features/auth/providers/auth_providers.dart';
+import 'package:past_question_paper_v1/core/theme/app_colors.dart';
+import 'package:past_question_paper_v1/core/shared/utils/app_constants.dart';
+import 'package:past_question_paper_v1/core/app/main_navigation_screen.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);

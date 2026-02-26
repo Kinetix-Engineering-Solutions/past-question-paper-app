@@ -1,251 +1,136 @@
 # 📚 Past Question Papers App
 
-A comprehensive Flutter application for past question papers and practice tests across all academic subjects. This app helps students access, practice, and improve their performance on various subjects through interactive question formats and detailed analytics.
+Flutter + Firebase learning platform for practicing exam questions through multiple modes: **Past Paper (PQP)**, **Sprint**, **By Topic**, and **Retry Mistakes**.
 
-## 🚀 Features
+## 🚀 Current Features
 
-### 📖 Core Features
-- **Multi-format Questions**: MCQ (text/image), True/False, Short Answer, Essay, and Drag & Drop questions
-- **LaTeX Support**: Mathematical equations and formulas rendered beautifully
-- **Practice Sessions**: Timed practice tests with configurable parameters
-- **Subject Management**: Organized by different academic subjects and topics
-- **User Authentication**: Secure Firebase-based authentication with email/password and email links
-- **Progress Tracking**: Detailed analytics and performance insights
-- **Offline Capability**: Practice questions even without internet connection
+### Student Experience
+- Multi-mode practice: PQP, Sprint, By Topic, Retry Mistakes
+- Question formats: MCQ (text/image), True/False, Short Answer, Essay, Drag & Drop
+- LaTeX rendering for math content
+- Session grading with detailed results and review
+- Mistake bank tracking and retry workflows
+- Past paper library and PDF viewer
 
-### 🎯 Question Types Supported
-- **Multiple Choice (Text)**: Standard MCQ with text-based options
-- **Multiple Choice (Image)**: MCQ with image-based questions and options  
-- **True/False**: Boolean-type questions
-- **Short Answer**: Brief text responses
-- **Essay Questions**: Long-form written responses
-- **Drag & Drop**: Interactive drag-and-drop matching questions
+### Platform & Security
+- Firebase Authentication + App Check
+- Cloud Firestore for questions/progress
+- Cloud Functions for generation/grading
+- Firebase Storage for media and paper assets
 
-### 📚 Subject Coverage
-- **STEM Subjects**: Mathematics, Physics, Chemistry, Biology, Computer Science
-- **Humanities**: History, Geography, Literature, Philosophy
-- **Social Sciences**: Economics, Political Science, Sociology, Psychology
-- **Languages**: English, Foreign Languages, Linguistics
-- **Professional Studies**: Business, Law, Medicine, Engineering
-- **And Many More**: Customizable for any academic subject
+## 🛠️ Tech Stack
 
-### 🔐 Security & Authentication
-- Firebase Authentication with email/password
-- Email link authentication for passwordless login
-- App Check integration for API security
-- Secure user data management with Firestore
+- **Frontend**: Flutter, Riverpod, Material 3
+- **Backend**: Firebase Functions (Node 20), Firestore, Storage, Auth
+- **Math Rendering**: `flutter_math_fork`
 
-## 🛠️ Technology Stack
+## 🏗️ Architecture (Current)
 
-### Frontend
-- **Flutter**: Cross-platform mobile development
-- **Riverpod**: State management solution
-- **Go Router**: Navigation and routing
-- **Flutter Math Fork**: LaTeX mathematical equation rendering
-- **Lottie**: Animations and micro-interactions
+### App (`lib/`)
 
-### Backend & Services
-- **Firebase Core**: Core Firebase functionality
-- **Firebase Authentication**: User authentication
-- **Cloud Firestore**: NoSQL database for questions and user data
-- **Cloud Functions**: Serverless backend logic
-- **Firebase Storage**: File and image storage
-- **Firebase App Check**: API abuse protection
+Feature-first layout with shared core services:
 
-### Development Tools
-- **Flutter 3.8+**: Latest Flutter framework
-- **Dart**: Programming language
-- **FlutterFire CLI**: Firebase configuration management
-
-## 📱 Platform Support
-
-- ✅ **Android**: Full support with Material Design
-- ✅ **iOS**: Native iOS experience
-- ✅ **Web**: Progressive Web App capabilities
-- ✅ **Windows**: Desktop application
-- ✅ **macOS**: Desktop application  
-- ✅ **Linux**: Desktop application
-
-## 🏗️ Project Structure
-
-```
+```text
 lib/
-├── Exceptions/           # Custom exception classes
-├── model/               # Data models and entities
-│   ├── drag_and_drop_models/  # Drag & drop specific models
-│   ├── practice_mode.dart
-│   ├── question.dart
-│   ├── user.dart
-│   └── ...
-├── providers/           # Riverpod state providers
-├── repositories/        # Data repository pattern
-├── services/           # Business logic and API services
-│   ├── auth_service_firebase.dart
-│   ├── firestore_database_firebase.dart
-│   └── ...
-├── utils/              # Utility classes and constants
-│   ├── app_colors.dart
-│   ├── app_theme.dart
-│   └── ...
-├── viewmodels/         # MVVM architecture view models
-├── views/              # UI screens and pages
-│   ├── home_screen.dart
-│   ├── practice_screen.dart
-│   └── ...
-├── widgets/            # Reusable UI components
-│   ├── question_formats/  # Question type specific widgets
-│   ├── latex_text.dart
-│   └── ...
-└── main.dart           # Application entry point
+├── core/
+│   ├── app/
+│   ├── shared/
+│   └── theme/
+├── features/
+│   ├── auth/
+│   ├── history/
+│   ├── home/
+│   ├── library/
+│   ├── practice/
+│   └── profile/
+├── admin/
+├── widgets/
+├── Exceptions/
+├── main.dart
+└── main_admin.dart
 ```
+
+### Functions (`functions/src`)
+
+Modular Cloud Functions layout:
+
+```text
+functions/src/
+├── app.js
+├── core/
+├── helpers/
+└── modules/
+    ├── test_generation/
+    ├── grading/
+    ├── user_lifecycle/
+    └── shared/
+```
+
+See detailed backend map in [functions/src/README.md](functions/src/README.md).
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Flutter SDK 3.8.0 or higher
-- Dart SDK 3.0.0 or higher
-- Firebase project with enabled services
-- Platform-specific development tools (Android Studio/Xcode)
+- Flutter 3.8+
+- Dart 3.8+
+- Node.js 20+ (for functions)
+- Firebase CLI + FlutterFire CLI
 
-### 1. Clone Repository
+### Install
+
 ```bash
 git clone https://github.com/Kinetix-Engineering-Solutions/past-question-paper-v0.01.git
 cd past-question-paper-v0.01
-```
-
-### 2. Install Dependencies
-```bash
 flutter pub get
 ```
 
-### 3. Firebase Setup
-**⚠️ IMPORTANT**: This project requires Firebase configuration. See [FIREBASE_SETUP.md](FIREBASE_SETUP.md) for detailed setup instructions.
+### Configure Firebase
 
 ```bash
-# Install FlutterFire CLI
 dart pub global activate flutterfire_cli
-
-# Configure Firebase for your project
 flutterfire configure
 ```
 
-### 4. Environment Configuration
-```bash
-# Copy environment template
-cp .env.example .env
+### Run App
 
-# Edit .env with your configuration values
-# Note: .env file is gitignored for security
+```bash
+flutter run
 ```
 
-### 5. Run the Application
+## ☁️ Cloud Functions
+
 ```bash
-# Debug mode
-flutter run
-
-# Release mode  
-flutter run --release
-
-# Specific platform
-flutter run -d chrome    # Web
-flutter run -d android   # Android
-flutter run -d ios       # iOS
+cd functions
+npm install
+cd ..
+firebase emulators:start --only functions
+# or deploy
+firebase deploy --only functions
 ```
 
 ## 🧪 Testing
 
 ```bash
-# Run all tests
 flutter test
-
-# Run tests with coverage
 flutter test --coverage
-
-# Run specific test file
-flutter test test/model/question_test.dart
 ```
 
-## 📦 Build for Production
+## 📚 Documentation
 
-### Android
-```bash
-flutter build apk --release                    # APK
-flutter build appbundle --release             # AAB (recommended)
-```
-
-### iOS
-```bash
-flutter build ios --release
-```
-
-### Web
-```bash
-flutter build web --release
-```
-
-### Desktop
-```bash
-flutter build windows --release               # Windows
-flutter build macos --release                # macOS  
-flutter build linux --release                # Linux
-```
-
-## 🔧 Configuration
-
-### Firebase Services Required
-- **Authentication**: Email/password, email links
-- **Firestore Database**: Question storage, user data
-- **Cloud Functions**: Backend logic (optional)
-- **Storage**: Image and file uploads
-- **App Check**: API protection (recommended)
-
-### Environment Variables
-See `.env.example` for all configurable environment variables.
+- Product feature overview: [APP_FEATURES.md](APP_FEATURES.md)
+- Security implementation notes: [SECURITY_IMPLEMENTATION.md](SECURITY_IMPLEMENTATION.md)
+- Functions architecture: [functions/src/README.md](functions/src/README.md)
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-- Follow Dart/Flutter style guidelines
-- Write tests for new features
-- Update documentation as needed
-- Ensure all CI checks pass
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support & Documentation
-
-- **Setup Guide**: [FIREBASE_SETUP.md](FIREBASE_SETUP.md)
-- **Security Guide**: [FIREBASE_SECURITY.md](FIREBASE_SECURITY.md)
-- **API Documentation**: Generated in `doc/api/`
-- **Issue Tracker**: [GitHub Issues](https://github.com/Kinetix-Engineering-Solutions/past-question-paper-v0.01/issues)
+1. Create a feature branch
+2. Make focused changes with tests/docs updates
+3. Open a PR against `develop`
 
 ## 👥 Team
+Irvin Senwedi
 
 **Kinetix Engineering Solutions**
-- 🌐 Website: [https://kinetix.engineering](https://kinetix.engineering)
-- 📧 Email: contact@kinetix.engineering
-- 🐙 GitHub: [@Kinetix-Engineering-Solutions](https://github.com/Kinetix-Engineering-Solutions)
 
-## 🔄 Version History
-
-- **v0.01**: Initial release with core functionality
-- **Latest**: Enhanced security, improved documentation, package fixes
-
-## 🙏 Acknowledgments
-
-- Flutter team for the amazing framework
-- Firebase team for backend services  
-- Contributors to open-source packages used
-- Educational community for feedback and testing
-
----
-
-**📱 Download the app and start practicing questions from any subject today!**
+- Website: https://kinetix.engineering
+- GitHub: https://github.com/Kinetix-Engineering-Solutions

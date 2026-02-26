@@ -7,7 +7,7 @@ import 'package:past_question_paper_v1/admin/views/parent_question_create_view.d
 import 'package:past_question_paper_v1/admin/views/question_list_view.dart';
 import 'package:past_question_paper_v1/admin/views/parent_child_browser_view.dart';
 import 'package:past_question_paper_v1/admin/views/paper_upload_view.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
+import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 
 // Provider to track selected navigation index
 final adminNavigationProvider = StateProvider<int>((ref) => 0);

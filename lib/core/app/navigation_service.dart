@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:past_question_paper_v1/views/main_navigation_screen.dart';
-import 'package:past_question_paper_v1/views/login.dart';
-import 'package:past_question_paper_v1/views/onboarding_screen.dart';
+import 'package:past_question_paper_v1/core/app/main_navigation_screen.dart';
+import 'package:past_question_paper_v1/features/auth/presentation/screens/login.dart';
+import 'package:past_question_paper_v1/features/auth/presentation/screens/onboarding_screen.dart';
 
 class NavigationService {
   static final GlobalKey<NavigatorState> navigatorKey =
