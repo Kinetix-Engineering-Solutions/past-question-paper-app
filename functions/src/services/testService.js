@@ -3,6 +3,8 @@ const {
   buildQuestionQuery, 
   fetchBlueprint, 
   executeQuestionQuery,
+  fetchQuestionsForGrading,
+  fetchUserMistakeQuestionIds,
   enrichQuestionWithParent,
   hasParent 
 } = require('./databaseService');
@@ -199,6 +201,57 @@ async function processQuestionsForFormat(questions, format) {
   return processedQuestions;
 }
 
+async function generateRetryMistakesTest(params, userId) {
+  const requestedCount = params.questionCount || params.numQuestions || 20;
+  const questionCount = Math.min(Math.max(parseInt(requestedCount, 10) || 20, 1), 100);
+
+  const mistakeIds = await fetchUserMistakeQuestionIds({
+    userId,
+    subject: params.subject,
+    grade: params.grade,
+    limit: questionCount,
+  });
+
+  if (!mistakeIds || mistakeIds.length === 0) {
+    return {
+      questions: [],
+      totalQuestions: 0,
+      params,
+      generatedAt: new Date().toISOString(),
+      source: 'mistake_bank',
+    };
+  }
+
+  const questionDocs = await fetchQuestionsForGrading(mistakeIds);
+  let questionData = questionDocs.map((doc) => mapQuestionData(doc));
+
+  // Filter out parent questions (context documents)
+  questionData = questionData.filter((q) => q && !q.isParent);
+
+  const enrichedQuestions = [];
+  for (const question of questionData) {
+    let q = { ...question };
+    if (hasParent(q)) {
+      q = await enrichQuestionWithParent(q);
+    }
+    enrichedQuestions.push(q);
+  }
+
+  const numberedQuestions = enrichedQuestions.map((q, index) => ({
+    ...q,
+    questionNumber: index + 1,
+    maxMarks: q.marks || q.maxMarks || 1,
+  }));
+
+  return {
+    questions: numberedQuestions,
+    totalQuestions: numberedQuestions.length,
+    params,
+    generatedAt: new Date().toISOString(),
+    source: 'mistake_bank',
+  };
+}
+
 /**
  * Generates questions for a specific format section
  * @param {Object} formatConfig - Format configuration from blueprint
@@ -248,7 +301,7 @@ async function generateQuestionsForFormat(formatConfig, params) {
  * @param {Object} params - Test generation parameters
  * @returns {Object} - Generated test data
  */
-async function generateTestPaper(params) {
+async function generateTestPaper(params, userId) {
   console.log('Generating test with params:', params);
 
   // ✅ SHORT ANSWER FIX: Removed special routing - now treated like MCQs (individual documents)
@@ -257,6 +310,12 @@ async function generateTestPaper(params) {
   //   console.log(`📝 Generating short answer test in ${params.mode || 'pqp'} mode`);
   //   return generateShortAnswerTest(params);
   // }
+
+  // Retry mistakes mode: pull questions from user's mistake bank
+  if ((params.mode || '').toString().toLowerCase() === 'retry_mistakes') {
+    console.log('🔁 Generating retry-mistakes test');
+    return generateRetryMistakesTest(params, userId);
+  }
 
   // Special handling for topic-based tests (no blueprint needed)
   if (params.mode === 'by_topic' && params.topic) {

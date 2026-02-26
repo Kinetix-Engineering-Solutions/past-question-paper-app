@@ -1,16 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
-import 'package:past_question_paper_v1/widgets/subject_3d_carousel.dart';
 
-/// Traditional list view for subjects (alternative to 3D carousel)
+class SubjectOption {
+  final String name;
+  final Color color;
+  final bool isAvailable;
+  final String subtitle;
+
+  SubjectOption({
+    required this.name,
+    required this.color,
+    required this.isAvailable,
+    required this.subtitle,
+  });
+}
+
+class SubjectPqpMetrics {
+  final int? lastScorePercent;
+  final String? paceLabel;
+  final int? unansweredCount;
+
+  const SubjectPqpMetrics({
+    this.lastScorePercent,
+    this.paceLabel,
+    this.unansweredCount,
+  });
+
+  bool get hasAnyData =>
+      lastScorePercent != null || paceLabel != null || unansweredCount != null;
+}
+
+/// Traditional list view for browsing subjects.
 class SubjectListView extends StatelessWidget {
   final List<SubjectOption> subjects;
   final Function(SubjectOption subject, int index) onSubjectSelected;
+  final Map<String, SubjectPqpMetrics>? pqpMetricsBySubject;
 
   const SubjectListView({
     Key? key,
     required this.subjects,
     required this.onSubjectSelected,
+    this.pqpMetricsBySubject,
   }) : super(key: key);
 
   @override
@@ -36,6 +66,7 @@ class SubjectListView extends StatelessWidget {
       itemBuilder: (context, index) {
         final subject = subjects[index];
         final isAvailable = subject.isAvailable;
+        final pqpMetrics = pqpMetricsBySubject?[subject.name];
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
@@ -119,6 +150,33 @@ class SubjectListView extends StatelessWidget {
                                 color: colorScheme.onSurfaceVariant,
                               ),
                             ),
+
+                            if (isAvailable &&
+                                (pqpMetrics?.hasAnyData ?? false))
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'PQP last: ${pqpMetrics?.lastScorePercent != null ? '${pqpMetrics!.lastScorePercent}%' : '—'} • Pace: ${pqpMetrics?.paceLabel ?? '—'}',
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      'Unanswered last: ${pqpMetrics?.unansweredCount?.toString() ?? '—'}',
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
                           ],
                         ),
                       ),

@@ -74,6 +74,10 @@ service cloud.firestore {
       match /sessions/{sessionId} {
         allow read, write: if isOwner(userId);
       }
+
+      match /mistake_bank/{entryId} {
+        allow read, write: if isOwner(userId);
+      }
     }
     
     // ============================================

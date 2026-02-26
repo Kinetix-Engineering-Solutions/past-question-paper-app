@@ -3,10 +3,41 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:past_question_paper_v1/model/user.dart';
 import 'package:past_question_paper_v1/model/question.dart';
+import 'package:past_question_paper_v1/model/mistake_bank_entry.dart';
 
 class FirestoreDatabaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseFunctions _functions = FirebaseFunctions.instance;
+
+  Stream<List<MistakeBankEntry>> watchMistakeBankEntries({
+    required String subject,
+    int limit = 200,
+  }) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return const Stream<List<MistakeBankEntry>>.empty();
+    }
+
+    var query = _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('mistake_bank')
+        .where('subject', isEqualTo: subject);
+
+    // Keep this minimal (no orderBy) to avoid requiring composite indexes.
+    return query.limit(limit).snapshots().map((snapshot) {
+      final entries = snapshot.docs.map(MistakeBankEntry.fromFirestore).toList();
+      // Sort client-side: unmastered first, then most recently seen.
+      entries.sort((a, b) {
+        final masteredCompare = (a.isMastered ? 1 : 0) - (b.isMastered ? 1 : 0);
+        if (masteredCompare != 0) return masteredCompare;
+        final aSeen = a.lastSeenAt?.millisecondsSinceEpoch ?? 0;
+        final bSeen = b.lastSeenAt?.millisecondsSinceEpoch ?? 0;
+        return bSeen.compareTo(aSeen);
+      });
+      return entries;
+    });
+  }
 
   /// Saves a user to Firestore
   Future<void> saveUser(AppUser user) async {

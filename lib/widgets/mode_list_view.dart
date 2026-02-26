@@ -15,7 +15,7 @@ class ModeOption {
   });
 }
 
-/// Traditional list view for practice modes (alternative to 3D carousel)
+/// Traditional list view for selecting practice modes.
 class ModeListView extends StatelessWidget {
   final List<ModeOption> modes;
   final Function(ModeOption mode, int index) onModeSelected;

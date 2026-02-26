@@ -1,4 +1,5 @@
 const functions = require('firebase-functions');
+const functionsV1 = require('firebase-functions/v1');
 const {onCall, HttpsError} = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 const cors = require('cors')({ origin: true });
@@ -61,7 +62,7 @@ async function cleanupUserAccount(uid) {
 }
 
 // Auth trigger: cascade deletion of Firestore + Storage after auth account removal.
-exports.onUserDeleteCleanup = functions.auth.user().onDelete(async (user) => {
+exports.onUserDeleteCleanup = functionsV1.auth.user().onDelete(async (user) => {
   const uid = user.uid;
   try {
     await cleanupUserAccount(uid);
@@ -137,7 +138,16 @@ exports.generateTest = onCall(
     }
     
     // Generate test using modular service
-    const testData = await generateTestPaper(params);
+    const testData = await generateTestPaper(params, userId);
+
+    // Friendly error for retry mistakes when there is nothing to retry
+    if ((params.mode || '').toString().toLowerCase() === 'retry_mistakes' &&
+        (!testData || !Array.isArray(testData.questions) || testData.questions.length === 0)) {
+      throw new HttpsError(
+        'not-found',
+        'No mistakes to retry yet. Complete a practice session first.'
+      );
+    }
     
     // Remove sensitive data before sending to client
     const sanitizedQuestions = testData.questions.map(question => {

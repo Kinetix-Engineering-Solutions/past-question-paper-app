@@ -12,7 +12,6 @@ import 'package:past_question_paper_v1/views/login.dart';
 import 'package:past_question_paper_v1/views/main_navigation_screen.dart';
 import 'package:past_question_paper_v1/views/onboarding_screen.dart';
 import 'package:past_question_paper_v1/views/signup_screen.dart';
-import 'package:past_question_paper_v1/views/email_verification_screen.dart';
 import 'package:past_question_paper_v1/widgets/connectivity_banner.dart';
 
 void main() async {

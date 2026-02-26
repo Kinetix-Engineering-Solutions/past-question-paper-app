@@ -5,10 +5,9 @@ import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/utils/app_constants.dart';
 import 'package:past_question_paper_v1/utils/haptic_feedback.dart';
 import 'package:past_question_paper_v1/viewmodels/home_viewmodel.dart';
-import 'package:past_question_paper_v1/viewmodels/view_mode_viewmodel.dart';
+import 'package:past_question_paper_v1/viewmodels/session_history_viewmodel.dart';
 import 'package:past_question_paper_v1/views/profile_screen.dart';
 import 'package:past_question_paper_v1/views/test_configuration_screen.dart';
-import 'package:past_question_paper_v1/widgets/subject_3d_carousel.dart';
 import 'package:past_question_paper_v1/widgets/subject_list_view.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -17,10 +16,10 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final homeState = ref.watch(homeViewModelProvider);
+    final asyncHistory = ref.watch(sessionHistoryViewModelProvider);
     final user = homeState.user;
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final viewMode = ref.watch(viewModeProvider);
 
     // 🚀 MVP: Lock to Grade 12 only
     final userGrade = 12; // Force Grade 12 for MVP release
@@ -39,21 +38,6 @@ class HomeScreen extends ConsumerWidget {
           style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         actions: [
-          // View mode toggle button
-          IconButton(
-            tooltip: viewMode.homeViewMode == ViewMode.carousel3D
-                ? 'Switch to list view'
-                : 'Switch to 3D carousel',
-            onPressed: () {
-              AppHaptics.light();
-              ref.read(viewModeProvider.notifier).toggleHomeViewMode();
-            },
-            icon: Icon(
-              viewMode.homeViewMode == ViewMode.carousel3D
-                  ? Icons.view_list
-                  : Icons.view_carousel,
-            ),
-          ),
           IconButton(
             tooltip: 'Profile',
             onPressed: () {
@@ -67,106 +51,48 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          switchInCurve: Curves.easeInOut,
-          switchOutCurve: Curves.easeInOut,
-          transitionBuilder: (child, animation) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          child: viewMode.homeViewMode == ViewMode.carousel3D
-              ? _SubjectCarouselSection(
-                  subjects: subjects,
-                  selectedGrade: userGrade,
-                )
-              : _SubjectListSection(
-                  subjects: subjects,
-                  selectedGrade: userGrade,
-                ),
+        child: _SubjectListSection(
+          subjects: subjects,
+          selectedGrade: userGrade,
+          historyEntries: asyncHistory.maybeWhen(
+            data: (entries) => entries,
+            orElse: () => const <SessionHistoryEntry>[],
+          ),
         ),
       ),
     );
   }
 }
 
-// --- Subject Carousel Section ---
-class _SubjectCarouselSection extends StatelessWidget {
-  final List<String> subjects;
-  final int selectedGrade;
+String? _paceLabelForLastPqp(SessionHistoryEntry entry) {
+  final durationMinutes = entry.durationMinutes;
+  final sessionSeconds = entry.sessionDurationSeconds;
+  final totalQuestions = entry.totalQuestions;
 
-  const _SubjectCarouselSection({
-    required this.subjects,
-    required this.selectedGrade,
-  });
+  if (durationMinutes == null || durationMinutes <= 0) return null;
+  if (sessionSeconds == null || sessionSeconds <= 0) return null;
+  if (totalQuestions <= 0) return null;
 
-  @override
-  Widget build(BuildContext context) {
-    if (subjects.isEmpty) {
-      return Center(
-        child: Text(
-          'No subjects selected for this grade.\nGo to your profile to add subjects.',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-      );
-    }
+  final targetSecondsPerQuestion = (durationMinutes * 60) / totalQuestions;
+  final actualSecondsPerQuestion = sessionSeconds / totalQuestions;
+  if (targetSecondsPerQuestion <= 0) return null;
 
-    // Subject color palette - PQP brand colors
-    final subjectColors = [
-      AppColors.brandCyan, // Cyan - question mark highlight
-      AppColors.brandMagenta, // Magenta - playful accent
-      AppColors.brandLavender, // Lavender - supportive accent
-      AppColors.brandTeal, // Teal - geometric accent
-      AppColors.accent, // Orange - primary action
-      AppColors.brandCyan, // Repeat for more subjects
-      AppColors.brandMagenta,
-      AppColors.brandLavender,
-    ];
-
-    final subjectOptions = subjects.asMap().entries.map((entry) {
-      final index = entry.key;
-      final subject = entry.value;
-      final isAvailable = AppConstants.isSubjectAvailable(subject);
-
-      return SubjectOption(
-        name: subject,
-        color: subjectColors[index % subjectColors.length],
-        isAvailable: isAvailable,
-        subtitle: isAvailable
-            ? 'Paper 1 & 2 Available'
-            : 'Questions being prepared',
-      );
-    }).toList();
-
-    return Subject3DCarousel(
-      subjects: subjectOptions,
-      onSubjectSelected: (subject, index) {
-        AppHaptics.light();
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => TestConfigurationScreen(
-              subject: subject.name,
-              grade: selectedGrade,
-              subjectColor: subject.color,
-            ),
-          ),
-        );
-      },
-    );
-  }
+  final ratio = actualSecondsPerQuestion / targetSecondsPerQuestion;
+  if (ratio > 1.15) return 'Slow';
+  if (ratio < 0.85) return 'Fast';
+  return 'On pace';
 }
 
 // --- Subject List Section ---
 class _SubjectListSection extends StatelessWidget {
   final List<String> subjects;
   final int selectedGrade;
+  final List<SessionHistoryEntry> historyEntries;
 
   const _SubjectListSection({
     required this.subjects,
     required this.selectedGrade,
+    required this.historyEntries,
   });
 
   @override
@@ -210,8 +136,33 @@ class _SubjectListSection extends StatelessWidget {
       );
     }).toList();
 
+    final Map<String, SubjectPqpMetrics> pqpMetricsBySubject = {
+      for (final subject in subjectOptions)
+        subject.name: () {
+          final lastPqp = historyEntries
+              .where((e) => e.isPastPaper && e.subject == subject.name)
+              .cast<SessionHistoryEntry?>()
+              .firstWhere((e) => e != null, orElse: () => null);
+
+          if (lastPqp == null) {
+            return const SubjectPqpMetrics();
+          }
+
+          final unansweredCount = lastPqp.results
+              .where((r) => r['wasUnanswered'] == true)
+              .length;
+
+          return SubjectPqpMetrics(
+            lastScorePercent: lastPqp.percentage.round(),
+            paceLabel: _paceLabelForLastPqp(lastPqp),
+            unansweredCount: unansweredCount,
+          );
+        }(),
+    };
+
     return SubjectListView(
       subjects: subjectOptions,
+      pqpMetricsBySubject: pqpMetricsBySubject,
       onSubjectSelected: (subject, index) {
         AppHaptics.light();
         Navigator.push(

@@ -222,6 +222,8 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
     if (isPQPMode) return 'Past Paper';
     if (isSprintMode) return 'Sprint';
     switch (modeKey) {
+      case 'retry_mistakes':
+        return 'Retry Mistakes';
       case 'quick_practice':
         return 'Sprint';
       case 'by_topic':

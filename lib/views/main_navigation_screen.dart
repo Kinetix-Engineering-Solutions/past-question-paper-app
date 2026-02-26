@@ -50,7 +50,7 @@ class MainNavigationScreen extends ConsumerWidget {
                 _NavItem(
                   ref: ref,
                   icon: Icons.history,
-                  label: 'PQP History',
+                  label: 'PQP Progress',
                   index: 2,
                   currentIndex: currentIndex,
                 ),

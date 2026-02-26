@@ -127,6 +127,10 @@ class QuestionRepository {
             throw Exception(
               'No questions found for the topic "$topic". This topic may not have questions available yet.',
             );
+          } else if (mode == 'retry_mistakes') {
+            throw Exception(
+              'No mistakes to retry yet. Complete a practice session first.',
+            );
           } else {
             throw Exception(
               'No questions found for your selection. Please try different criteria.',

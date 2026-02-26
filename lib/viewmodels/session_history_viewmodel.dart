@@ -15,6 +15,7 @@ class SessionHistoryEntry {
     required this.percentage,
     required this.metadata,
     required this.statistics,
+    this.results = const <Map<String, dynamic>>[],
     this.paper,
     this.durationMinutes,
     this.sessionDurationSeconds,
@@ -24,6 +25,7 @@ class SessionHistoryEntry {
     final metadata = _castMap(data['metadata']);
     final statistics = _castMap(data['statistics']);
     final sessionMetadata = _castMap(metadata['sessionMetadata']);
+    final results = _castListOfMaps(data['results']);
 
     final fallbackPrimary = _tryParseDate(data['savedAt']);
     final fallbackSecondary =
@@ -78,6 +80,7 @@ class SessionHistoryEntry {
       ),
       metadata: metadata,
       statistics: statistics,
+      results: results,
     );
   }
 
@@ -95,6 +98,7 @@ class SessionHistoryEntry {
   final int? sessionDurationSeconds;
   final Map<String, dynamic> metadata;
   final Map<String, dynamic> statistics;
+  final List<Map<String, dynamic>> results;
 
   bool get isPastPaper {
     final flags = _castMap(metadata['flags']);
@@ -138,6 +142,14 @@ class SessionHistoryEntry {
       return value.map((key, val) => MapEntry(key.toString(), val));
     }
     return <String, dynamic>{};
+  }
+
+  static List<Map<String, dynamic>> _castListOfMaps(dynamic value) {
+    if (value is! List) {
+      return const <Map<String, dynamic>>[];
+    }
+
+    return value.whereType<Map>().map(_castMap).toList();
   }
 
   static String? _stringOrNull(dynamic value) {

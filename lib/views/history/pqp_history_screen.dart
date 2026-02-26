@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:past_question_paper_v1/model/mistake_bank_entry.dart';
+import 'package:past_question_paper_v1/providers/auth_providers.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/viewmodels/session_history_viewmodel.dart';
 import 'package:past_question_paper_v1/widgets/shimmer_loading.dart';
@@ -68,14 +70,14 @@ class _HistoryErrorView extends StatelessWidget {
   }
 }
 
-class _HistoryContent extends StatelessWidget {
+class _HistoryContent extends ConsumerWidget {
   const _HistoryContent({required this.entries, required this.onRefresh});
 
   final List<SessionHistoryEntry> entries;
   final Future<void> Function() onRefresh;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (entries.isEmpty) {
       return RefreshIndicator(
         onRefresh: onRefresh,
@@ -88,8 +90,9 @@ class _HistoryContent extends StatelessWidget {
       );
     }
 
+    final firestore = ref.watch(firestoreDatabaseProvider);
     final summary = _HistorySummary.fromEntries(entries);
-    final groupedEntries = _groupByDay(entries);
+    final readinessSubjects = _buildSubjectReadiness(entries);
 
     return RefreshIndicator(
       onRefresh: onRefresh,
@@ -99,38 +102,321 @@ class _HistoryContent extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
         children: [
           _SummaryCard(summary: summary),
-          const SizedBox(height: 24),
-          for (final group in groupedEntries) ...[
-            _DaySectionHeader(
-              date: group.date,
-              sessionCount: group.entries.length,
-            ),
-            const SizedBox(height: 12),
-            for (final entry in group.entries) ...[
-              _HistoryEntryCard(entry: entry),
-              const SizedBox(height: 16),
-            ],
-          ],
+          const SizedBox(height: 16),
+          _ExamReadinessSection(
+            subjects: readinessSubjects,
+            mistakeBankStreamForSubject: (subject) =>
+                firestore.watchMistakeBankEntries(subject: subject),
+          ),
         ],
       ),
     );
   }
 
-  List<_HistoryDayGroup> _groupByDay(List<SessionHistoryEntry> entries) {
-    final Map<DateTime, List<SessionHistoryEntry>> grouped = {};
+  List<_SubjectReadiness> _buildSubjectReadiness(
+    List<SessionHistoryEntry> entries,
+  ) {
+    final bySubject = <String, List<SessionHistoryEntry>>{};
     for (final entry in entries) {
-      final day = DateTime(
-        entry.completedAt.year,
-        entry.completedAt.month,
-        entry.completedAt.day,
-      );
-      grouped.putIfAbsent(day, () => <SessionHistoryEntry>[]).add(entry);
+      bySubject
+          .putIfAbsent(entry.subject, () => <SessionHistoryEntry>[])
+          .add(entry);
     }
 
-    final sortedKeys = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
-    return sortedKeys
-        .map((date) => _HistoryDayGroup(date: date, entries: grouped[date]!))
-        .toList();
+    final subjects = bySubject.keys.toList()..sort();
+    return subjects.map((subject) {
+      final subjectEntries =
+          bySubject[subject] ?? const <SessionHistoryEntry>[];
+      final pqpEntries = subjectEntries.where((e) => e.isPastPaper).toList();
+      final recent = pqpEntries.take(5).toList();
+      final last = recent.isNotEmpty ? recent.first : null;
+      final previous = recent.length > 1 ? recent[1] : null;
+
+      final averageLast3 = recent.take(3).isEmpty
+          ? null
+          : (recent.take(3).fold<double>(0, (sum, e) => sum + e.percentage) /
+                    recent.take(3).length)
+                .round();
+
+      final lastScore = last?.percentage.round();
+      final trendDelta = (last != null && previous != null)
+          ? (last.percentage - previous.percentage).round()
+          : null;
+
+      return _SubjectReadiness(
+        subject: subject,
+        gradeLabel: last?.grade,
+        lastScore: lastScore,
+        averageLast3: averageLast3,
+        trendDelta: trendDelta,
+        pqpAttemptCount: pqpEntries.length,
+      );
+    }).toList();
+  }
+}
+
+class _SubjectReadiness {
+  const _SubjectReadiness({
+    required this.subject,
+    required this.gradeLabel,
+    required this.lastScore,
+    required this.averageLast3,
+    required this.trendDelta,
+    required this.pqpAttemptCount,
+  });
+
+  final String subject;
+  final String? gradeLabel;
+  final int? lastScore;
+  final int? averageLast3;
+  final int? trendDelta;
+  final int pqpAttemptCount;
+}
+
+class _ExamReadinessSection extends StatelessWidget {
+  const _ExamReadinessSection({
+    required this.subjects,
+    required this.mistakeBankStreamForSubject,
+  });
+
+  final List<_SubjectReadiness> subjects;
+  final Stream<List<MistakeBankEntry>> Function(String subject)
+  mistakeBankStreamForSubject;
+
+  @override
+  Widget build(BuildContext context) {
+    if (subjects.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(title: 'Exam readiness'),
+        const SizedBox(height: 12),
+        for (final subject in subjects) ...[
+          _SubjectReadinessCard(
+            readiness: subject,
+            mistakesStream: mistakeBankStreamForSubject(subject.subject),
+          ),
+          const SizedBox(height: 12),
+        ],
+      ],
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    return Text(
+      title,
+      style: textTheme.titleSmall?.copyWith(
+        fontWeight: FontWeight.w700,
+        color: colorScheme.onSurface,
+      ),
+    );
+  }
+}
+
+class _SubjectReadinessCard extends StatelessWidget {
+  const _SubjectReadinessCard({
+    required this.readiness,
+    required this.mistakesStream,
+  });
+
+  final _SubjectReadiness readiness;
+  final Stream<List<MistakeBankEntry>> mistakesStream;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final lastScoreText = readiness.lastScore != null
+        ? '${readiness.lastScore}%'
+        : '—';
+    final avgText = readiness.averageLast3 != null
+        ? '${readiness.averageLast3}%'
+        : '—';
+
+    final trend = readiness.trendDelta;
+    final trendText = trend == null
+        ? '—'
+        : (trend == 0 ? '0' : (trend > 0 ? '+$trend' : '$trend'));
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.35),
+        ),
+      ),
+      child: StreamBuilder<List<MistakeBankEntry>>(
+        stream: mistakesStream,
+        builder: (context, snapshot) {
+          final mistakes = snapshot.data ?? const <MistakeBankEntry>[];
+          final unmastered = mistakes.where((e) => !e.isMastered).toList();
+
+          final hasEnoughPqpData = readiness.pqpAttemptCount >= 3;
+          final avg3 = readiness.averageLast3;
+
+          final String readinessLabel;
+          final Color readinessColor;
+          if (!hasEnoughPqpData || avg3 == null) {
+            readinessLabel = 'Building';
+            readinessColor = colorScheme.onSurfaceVariant;
+          } else {
+            final isReady = avg3 >= 60 && unmastered.length <= 10;
+            if (isReady) {
+              readinessLabel = 'Ready';
+              readinessColor = AppColors.accent;
+            } else {
+              readinessLabel = 'Needs work';
+              readinessColor = colorScheme.onSurfaceVariant;
+            }
+          }
+
+          final topicCounts = <String, int>{};
+          for (final entry in unmastered) {
+            final topic = (entry.topic?.trim().isNotEmpty ?? false)
+                ? entry.topic!.trim()
+                : 'Unknown topic';
+            topicCounts[topic] = (topicCounts[topic] ?? 0) + 1;
+          }
+
+          final topTopics = topicCounts.entries.toList()
+            ..sort((a, b) {
+              final countCompare = b.value.compareTo(a.value);
+              if (countCompare != 0) return countCompare;
+              return a.key.toLowerCase().compareTo(b.key.toLowerCase());
+            });
+
+          final topTopicText = topTopics.isEmpty
+              ? '—'
+              : topTopics.take(2).map((e) => e.key).join(' • ');
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      readiness.subject,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: readinessColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: readinessColor.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Text(
+                      readinessLabel,
+                      style: textTheme.labelMedium?.copyWith(
+                        color: readinessColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  if (readiness.gradeLabel != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 10),
+                      child: Text(
+                        readiness.gradeLabel!,
+                        style: textTheme.labelMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  _SummaryStat(
+                    label: 'Last',
+                    value: lastScoreText,
+                    helper: 'PQP',
+                  ),
+                  const SizedBox(width: 16),
+                  _SummaryStat(
+                    label: 'Avg (3)',
+                    value: avgText,
+                    helper: 'recent',
+                  ),
+                  const SizedBox(width: 16),
+                  _SummaryStat(
+                    label: 'Trend',
+                    value: trendText,
+                    helper: 'vs prev',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Based on ${readiness.pqpAttemptCount} PQP attempt${readiness.pqpAttemptCount == 1 ? '' : 's'}',
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 16,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${unmastered.length} unmastered mistakes',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Weak topics: $topTopicText',
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (unmastered.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                LinearProgressIndicator(
+                  value: (unmastered.length / (mistakes.length)).clamp(0, 1),
+                  backgroundColor: colorScheme.surfaceContainerHighest,
+                  color: AppColors.accent,
+                  minHeight: 6,
+                ),
+              ],
+            ],
+          );
+        },
+      ),
+    );
   }
 }
 
@@ -200,7 +486,7 @@ class _SummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Practice History Overview',
+            'PQP Progress Overview',
             style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
@@ -289,170 +575,6 @@ class _SummaryStat extends StatelessWidget {
   }
 }
 
-class _DaySectionHeader extends StatelessWidget {
-  const _DaySectionHeader({required this.date, required this.sessionCount});
-
-  final DateTime date;
-  final int sessionCount;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          _formatDay(date),
-          style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            '$sessionCount session${sessionCount == 1 ? '' : 's'}',
-            style: textTheme.labelSmall,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _HistoryEntryCard extends StatelessWidget {
-  const _HistoryEntryCard({required this.entry});
-
-  final SessionHistoryEntry entry;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    final modeColor = entry.isPastPaper
-        ? AppColors.accent
-        : entry.isSprint
-        ? colorScheme.primary
-        : colorScheme.onSurfaceVariant;
-
-    final configured = entry.configuredDuration;
-    final session = entry.sessionDuration;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.35),
-        ),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      entry.subject,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    if (entry.paper != null)
-                      Text(
-                        entry.paper!,
-                        style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${entry.percentage.round()}%',
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    '${entry.score}/${entry.totalMarks} marks',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _ModeChip(label: entry.modeLabel, color: modeColor),
-              _InfoChip(label: 'Grade ${entry.grade}'),
-              _InfoChip(label: _formatTime(entry.completedAt)),
-              if (configured != null)
-                _InfoChip(label: 'Planned ${_formatDuration(configured)}'),
-              if (session != null)
-                _InfoChip(label: 'Spent ${_formatDuration(session)}'),
-              _InfoChip(label: '${entry.totalQuestions} questions'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ModeChip extends StatelessWidget {
-  const _ModeChip({required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      backgroundColor: color.withValues(alpha: 0.1),
-      side: BorderSide(color: color.withValues(alpha: 0.2)),
-      label: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(color: color),
-      ),
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Chip(
-      backgroundColor: colorScheme.surfaceContainerHighest,
-      label: Text(label, style: Theme.of(context).textTheme.labelMedium),
-      side: BorderSide.none,
-    );
-  }
-}
-
 class _EmptyHistoryState extends StatelessWidget {
   const _EmptyHistoryState();
 
@@ -467,46 +589,4 @@ class _EmptyHistoryState extends StatelessWidget {
       onAction: () => Navigator.of(context).maybePop(),
     );
   }
-}
-
-class _HistoryDayGroup {
-  const _HistoryDayGroup({required this.date, required this.entries});
-
-  final DateTime date;
-  final List<SessionHistoryEntry> entries;
-}
-
-String _formatDay(DateTime date) {
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  final month = months[date.month - 1];
-  return '$month ${date.day}, ${date.year}';
-}
-
-String _formatTime(DateTime date) {
-  final hour = date.hour % 12 == 0 ? 12 : date.hour % 12;
-  final minute = date.minute.toString().padLeft(2, '0');
-  final period = date.hour >= 12 ? 'PM' : 'AM';
-  return '$hour:$minute $period';
-}
-
-String _formatDuration(Duration duration) {
-  final hours = duration.inHours;
-  final minutes = duration.inMinutes.remainder(60);
-  if (hours > 0) {
-    return '${hours}h ${minutes}m';
-  }
-  return '${minutes}m';
 }

@@ -3,16 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/utils/app_colors.dart';
 import 'package:past_question_paper_v1/utils/app_constants.dart';
-import 'package:past_question_paper_v1/utils/haptic_feedback.dart';
-import 'package:past_question_paper_v1/viewmodels/view_mode_viewmodel.dart';
-import 'package:past_question_paper_v1/widgets/topic_3d_carousel.dart';
 import 'package:past_question_paper_v1/widgets/topic_list_view.dart';
-import 'package:past_question_paper_v1/widgets/mode_3d_carousel.dart'
-    as carousel;
 import 'package:past_question_paper_v1/widgets/mode_list_view.dart' as list;
 
 import '../repositories/question_repository.dart';
 import 'practice_screen.dart';
+import 'mistake_bank_screen.dart';
 
 // ViewModel to handle the logic for this screen
 final testConfigurationViewModelProvider =
@@ -145,7 +141,7 @@ class TestConfigurationViewModel extends StateNotifier<String?> {
 }
 
 // Enum for test modes
-enum TestMode { fullExam, quickPractice, byTopic }
+enum TestMode { fullExam, quickPractice, byTopic, retryMistakes }
 
 // Enum for journey node position
 enum JourneyPosition { start, middle, end }
@@ -179,7 +175,6 @@ class _TestConfigurationScreenState
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final viewMode = ref.watch(viewModeProvider);
 
     return Scaffold(
       backgroundColor: colorScheme.background,
@@ -191,6 +186,29 @@ class _TestConfigurationScreenState
         foregroundColor: (_selectedMode != null || widget.subjectColor != null)
             ? Colors.white
             : colorScheme.onBackground,
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MistakeBankScreen(
+                    subject: widget.subject,
+                    grade: widget.grade,
+                    subjectColor: widget.subjectColor,
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.bookmarks_outlined),
+            label: const Text('Mistakes'),
+            style: TextButton.styleFrom(
+              foregroundColor: (_selectedMode != null || widget.subjectColor != null)
+                  ? Colors.white
+                  : colorScheme.onBackground,
+            ),
+          ),
+        ],
         elevation: 0,
         leading: _selectedMode != null
             ? IconButton(
@@ -202,24 +220,6 @@ class _TestConfigurationScreenState
                 },
               )
             : null,
-        actions: [
-          // View mode toggle button (show when mode selection or in By Topic view)
-          if (_selectedMode == null || _selectedMode == TestMode.byTopic)
-            IconButton(
-              tooltip: viewMode.testConfigViewMode == ViewMode.carousel3D
-                  ? 'Switch to list view'
-                  : 'Switch to 3D carousel',
-              onPressed: () {
-                AppHaptics.light();
-                ref.read(viewModeProvider.notifier).toggleTestConfigViewMode();
-              },
-              icon: Icon(
-                viewMode.testConfigViewMode == ViewMode.carousel3D
-                    ? Icons.view_list
-                    : Icons.view_carousel,
-              ),
-            ),
-        ],
       ),
       body: _selectedMode == null
           ? _buildModeSelection()
@@ -227,19 +227,10 @@ class _TestConfigurationScreenState
     );
   }
 
-  // Mode selection screen with both carousel and list views
+  // Mode selection screen showing available practice modes
   Widget _buildModeSelection() {
-    final viewMode = ref.watch(viewModeProvider);
-
     final modeOptions = [
       {
-        'carousel': carousel.ModeOption(
-          title: 'By Topic',
-          subtitle: 'Master the basics',
-          icon: Icons.bookmark_border,
-          color: AppColors.accent,
-          level: 1,
-        ),
         'list': list.ModeOption(
           name: 'By Topic',
           description: 'Master the basics with focused topic practice',
@@ -249,13 +240,6 @@ class _TestConfigurationScreenState
         'mode': TestMode.byTopic,
       },
       {
-        'carousel': carousel.ModeOption(
-          title: 'Quick Practice',
-          subtitle: 'Speed challenge',
-          icon: Icons.timer_outlined,
-          color: AppColors.accent,
-          level: 2,
-        ),
         'list': list.ModeOption(
           name: 'Quick Practice',
           description: 'Speed challenge with mixed questions',
@@ -265,13 +249,15 @@ class _TestConfigurationScreenState
         'mode': TestMode.quickPractice,
       },
       {
-        'carousel': carousel.ModeOption(
-          title: 'Full Exam',
-          subtitle: 'Final boss!',
-          icon: Icons.article,
+        'list': list.ModeOption(
+          name: 'Retry Mistakes',
+          description: 'Review questions you missed or skipped',
+          icon: Icons.refresh,
           color: AppColors.accent,
-          level: 3,
         ),
+        'mode': TestMode.retryMistakes,
+      },
+      {
         'list': list.ModeOption(
           name: 'Full Exam',
           description: 'Complete exam simulation - the final boss!',
@@ -282,33 +268,16 @@ class _TestConfigurationScreenState
       },
     ];
 
-    if (viewMode.testConfigViewMode == ViewMode.carousel3D) {
-      return carousel.Mode3DCarousel(
-        modes: modeOptions
-            .map((option) => option['carousel'] as carousel.ModeOption)
-            .toList(),
-        onModeSelected: (mode) {
-          final selectedOption = modeOptions.firstWhere(
-            (option) =>
-                (option['carousel'] as carousel.ModeOption).level == mode.level,
-          );
-          setState(() {
-            _selectedMode = selectedOption['mode'] as TestMode;
-          });
-        },
-      );
-    } else {
-      return list.ModeListView(
-        modes: modeOptions
-            .map((option) => option['list'] as list.ModeOption)
-            .toList(),
-        onModeSelected: (mode, index) {
-          setState(() {
-            _selectedMode = modeOptions[index]['mode'] as TestMode;
-          });
-        },
-      );
-    }
+    return list.ModeListView(
+      modes: modeOptions
+          .map((option) => option['list'] as list.ModeOption)
+          .toList(),
+      onModeSelected: (mode, index) {
+        setState(() {
+          _selectedMode = modeOptions[index]['mode'] as TestMode;
+        });
+      },
+    );
   }
 
   // Configuration screen based on selected mode
@@ -332,6 +301,12 @@ class _TestConfigurationScreenState
           grade: widget.grade,
           subject: widget.subject,
           subjectColor: widget.subjectColor,
+          modeColor: modeColor,
+        );
+      case TestMode.retryMistakes:
+        return _RetryMistakesView(
+          grade: widget.grade,
+          subject: widget.subject,
           modeColor: modeColor,
         );
     }
@@ -572,6 +547,58 @@ class _QuickPracticeViewState extends ConsumerState<_QuickPracticeView> {
   }
 }
 
+// --- View for "Retry Mistakes" ---
+class _RetryMistakesView extends ConsumerStatefulWidget {
+  final int grade;
+  final String subject;
+  final Color? modeColor;
+
+  const _RetryMistakesView({
+    required this.grade,
+    required this.subject,
+    this.modeColor,
+  });
+
+  @override
+  ConsumerState<_RetryMistakesView> createState() => _RetryMistakesViewState();
+}
+
+class _RetryMistakesViewState extends ConsumerState<_RetryMistakesView> {
+  @override
+  Widget build(BuildContext context) {
+    final loadingButtonId = ref.watch(testConfigurationViewModelProvider);
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildStartCard(
+          context,
+          title: 'Start Retry',
+          subtitle: 'Focus on questions you missed or skipped',
+          icon: Icons.refresh,
+          isLoading: loadingButtonId == 'retry_mistakes_start',
+          onTap: () {
+            ref
+                .read(testConfigurationViewModelProvider.notifier)
+                .startTest(
+                  context,
+                  {
+                    'grade': widget.grade,
+                    'subject': widget.subject,
+                    'mode': 'retry_mistakes',
+                    'paper': 'p1',
+                    'questionCount': 20,
+                  },
+                  'retry_mistakes_start',
+                  modeKey: 'retry_mistakes',
+                );
+          },
+        ),
+      ],
+    );
+  }
+}
+
 // --- View for "By Topic" Tab ---
 class _ByTopicView extends ConsumerWidget {
   final int grade;
@@ -588,107 +615,50 @@ class _ByTopicView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final loadingButtonId = ref.watch(testConfigurationViewModelProvider);
-    final viewMode = ref.watch(viewModeProvider);
     final topics = AppConstants.topicsBySubject[subject] ?? [];
 
     return Column(
       children: [
-        // Animated content switch
         Expanded(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            switchInCurve: Curves.easeInOut,
-            switchOutCurve: Curves.easeInOut,
-            transitionBuilder: (child, animation) {
-              return FadeTransition(opacity: animation, child: child);
+          child: TopicListView(
+            key: const ValueKey('topic_list'),
+            topics: topics,
+            loadingTopicId: loadingButtonId,
+            modeColor: modeColor,
+            onTopicSelected: (topic, index) {
+              final buttonId = 'topic_$index';
+              final topicColors = [
+                AppColors.brandCyan,
+                AppColors.brandMagenta,
+                AppColors.brandLavender,
+                AppColors.brandTeal,
+                AppColors.accent,
+                AppColors.brandCyan,
+                AppColors.brandMagenta,
+                AppColors.brandLavender,
+              ];
+              final topicColor = topicColors[index % topicColors.length];
+
+              ref
+                  .read(testConfigurationViewModelProvider.notifier)
+                  .startTest(
+                    context,
+                    {
+                      'grade': grade,
+                      'subject': subject,
+                      'mode': 'by_topic',
+                      'topic': topic,
+                      'paper': 'p1',
+                      'topicColor': topicColor.value, // Pass color as int
+                    },
+                    buttonId,
+                    modeKey: 'by_topic',
+                    sessionMetadata: {
+                      'topic': topic,
+                      'topicColor': topicColor.value,
+                    },
+                  );
             },
-            child: viewMode.testConfigViewMode == ViewMode.carousel3D
-                ? Topic3DCarousel(
-                    key: const ValueKey('topic_carousel'),
-                    topics: topics,
-                    loadingTopicId: loadingButtonId,
-                    modeColor: modeColor,
-                    onTopicSelected: (topic, index) {
-                      final buttonId = 'topic_$index';
-                      // Get topic color from the same palette used in carousel
-                      final topicColors = [
-                        AppColors.brandCyan,
-                        AppColors.brandMagenta,
-                        AppColors.brandLavender,
-                        AppColors.brandTeal,
-                        AppColors.accent,
-                        AppColors.brandCyan,
-                        AppColors.brandMagenta,
-                        AppColors.brandLavender,
-                      ];
-                      final topicColor =
-                          topicColors[index % topicColors.length];
-
-                      ref
-                          .read(testConfigurationViewModelProvider.notifier)
-                          .startTest(
-                            context,
-                            {
-                              'grade': grade,
-                              'subject': subject,
-                              'mode': 'by_topic',
-                              'topic': topic,
-                              'paper': 'p1',
-                              'topicColor':
-                                  topicColor.value, // Pass color as int
-                            },
-                            buttonId,
-                            modeKey: 'by_topic',
-                            sessionMetadata: {
-                              'topic': topic,
-                              'topicColor': topicColor.value,
-                            },
-                          );
-                    },
-                  )
-                : TopicListView(
-                    key: const ValueKey('topic_list'),
-                    topics: topics,
-                    loadingTopicId: loadingButtonId,
-                    modeColor: modeColor,
-                    onTopicSelected: (topic, index) {
-                      final buttonId = 'topic_$index';
-                      // Get topic color from the same palette used in list view
-                      final topicColors = [
-                        AppColors.brandCyan,
-                        AppColors.brandMagenta,
-                        AppColors.brandLavender,
-                        AppColors.brandTeal,
-                        AppColors.accent,
-                        AppColors.brandCyan,
-                        AppColors.brandMagenta,
-                        AppColors.brandLavender,
-                      ];
-                      final topicColor =
-                          topicColors[index % topicColors.length];
-
-                      ref
-                          .read(testConfigurationViewModelProvider.notifier)
-                          .startTest(
-                            context,
-                            {
-                              'grade': grade,
-                              'subject': subject,
-                              'mode': 'by_topic',
-                              'topic': topic,
-                              'paper': 'p1',
-                              'topicColor':
-                                  topicColor.value, // Pass color as int
-                            },
-                            buttonId,
-                            modeKey: 'by_topic',
-                            sessionMetadata: {
-                              'topic': topic,
-                              'topicColor': topicColor.value,
-                            },
-                          );
-                    },
-                  ),
           ),
         ),
       ],

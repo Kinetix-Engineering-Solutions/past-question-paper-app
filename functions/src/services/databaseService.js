@@ -247,6 +247,159 @@ async function saveUserTestResults(userId, resultData) {
 }
 
 // ============================================================================
+// Mistake Bank
+// ============================================================================
+
+function normalizeModeKey(modeKey) {
+  return (modeKey || '').toString().trim().toLowerCase();
+}
+
+function toSafeScalar(value) {
+  if (value === undefined) return null;
+  if (value === null) return null;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return value;
+  if (typeof value === 'boolean') return value;
+  return null;
+}
+
+function buildMistakeMetadataSnapshot(question, fallback = {}) {
+  const q = question || {};
+  const pqpData = q.pqpData && typeof q.pqpData === 'object' ? q.pqpData : {};
+
+  return {
+    subject: toSafeScalar(q.subject ?? fallback.subject),
+    paper: toSafeScalar(q.paper ?? fallback.paper),
+    grade: toSafeScalar(q.grade ?? fallback.grade),
+    topic: toSafeScalar(q.topic ?? fallback.topic),
+    year: toSafeScalar(q.year ?? fallback.year),
+    season: toSafeScalar(q.season ?? fallback.season),
+    format: toSafeScalar(q.format ?? q.questionType ?? fallback.format),
+    questionType: toSafeScalar(q.questionType ?? fallback.questionType),
+    marks: toSafeScalar(q.maxMarks ?? q.marks ?? fallback.marks),
+    pqpQuestionNumber: toSafeScalar(pqpData.questionNumber ?? q.questionNumber ?? fallback.pqpQuestionNumber),
+  };
+}
+
+/**
+ * Upserts mistake bank entries based on grading results.
+ * Rules:
+ * - Unanswered and incorrect results are stored as mistakes.
+ * - In retry mode (modeKey == 'retry_mistakes'), first correct marks the question as mastered.
+ */
+async function upsertMistakeBankEntries({ userId, results, questionsById, metadata = {} }) {
+  if (!userId || typeof userId !== 'string') {
+    console.warn('[MistakeBank] Skipping upsert: invalid userId');
+    return;
+  }
+
+  if (!Array.isArray(results) || results.length === 0) {
+    return;
+  }
+
+  const sessionModeKey = normalizeModeKey(metadata?.sessionMetadata?.modeKey);
+  const isRetryMistakes = sessionModeKey === 'retry_mistakes';
+  const now = admin.firestore.FieldValue.serverTimestamp();
+  const increment = admin.firestore.FieldValue.increment;
+
+  const userMistakesRef = admin
+    .firestore()
+    .collection('users')
+    .doc(userId)
+    .collection('mistake_bank');
+
+  const batch = admin.firestore().batch();
+
+  for (const result of results) {
+    const questionId = result?.questionId;
+    if (!questionId || typeof questionId !== 'string') continue;
+
+    const wasUnanswered = result?.wasUnanswered === true;
+    const isCorrect = result?.isCorrect === true;
+    const shouldStoreMistake = wasUnanswered || !isCorrect;
+    const shouldMarkMastered = isRetryMistakes && isCorrect;
+
+    if (!shouldStoreMistake && !shouldMarkMastered) {
+      continue;
+    }
+
+    const question = (questionsById && questionsById[questionId]) ? questionsById[questionId] : null;
+    const snapshot = buildMistakeMetadataSnapshot(question, {
+      subject: metadata?.subject,
+      paper: metadata?.paper,
+      grade: metadata?.grade,
+    });
+
+    const docRef = userMistakesRef.doc(questionId);
+
+    const payload = {
+      questionId,
+      ...snapshot,
+      isMastered: shouldMarkMastered ? true : false,
+      masteredAt: shouldMarkMastered ? now : null,
+      lastOutcome: wasUnanswered ? 'unanswered' : (isCorrect ? 'correct' : 'incorrect'),
+      lastSeenAt: now,
+      updatedAt: now,
+      createdAt: now,
+      timesSeen: increment(1),
+      timesUnanswered: wasUnanswered ? increment(1) : increment(0),
+      timesIncorrect: (!wasUnanswered && !isCorrect) ? increment(1) : increment(0),
+      timesCorrectOnRetry: shouldMarkMastered ? increment(1) : increment(0),
+    };
+
+    // Ensure existing mastered questions stay mastered once achieved.
+    // We do this by only ever setting isMastered to true; for non-master events, we keep it false in payload,
+    // but merge will not necessarily overwrite an existing true if client later sets false.
+    // To avoid toggling, we write isMastered only when mastering.
+    if (!shouldMarkMastered) {
+      delete payload.isMastered;
+      delete payload.masteredAt;
+      delete payload.timesCorrectOnRetry;
+    }
+
+    batch.set(docRef, payload, { merge: true });
+  }
+
+  try {
+    await batch.commit();
+    console.log(`[MistakeBank] Upserted entries for uid=${userId}`);
+  } catch (e) {
+    console.error(`[MistakeBank] Failed upserting entries for uid=${userId}`, e);
+  }
+}
+
+/**
+ * Fetches unmastered mistake question IDs for retry.
+ */
+async function fetchUserMistakeQuestionIds({ userId, subject, grade, limit = 20 }) {
+  if (!userId || typeof userId !== 'string') {
+    throw new functions.https.HttpsError('unauthenticated', 'User is required.');
+  }
+  if (!subject) {
+    throw new functions.https.HttpsError('invalid-argument', 'Subject is required.');
+  }
+
+  const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
+
+  let query = admin
+    .firestore()
+    .collection('users')
+    .doc(userId)
+    .collection('mistake_bank')
+    .where('subject', '==', subject)
+    // masteredAt == null matches both missing and explicit null fields
+    .where('masteredAt', '==', null)
+    .limit(safeLimit);
+
+  if (typeof grade === 'number') {
+    query = query.where('grade', '==', grade);
+  }
+
+  const snap = await query.get();
+  return snap.docs.map((d) => d.id);
+}
+
+// ============================================================================
 // OPTION 3: Parent-Child Relationship Functions
 // ============================================================================
 
@@ -413,6 +566,8 @@ module.exports = {
   fetchBlueprint,
   executeQuestionQuery,
   fetchQuestionsForGrading,
+  upsertMistakeBankEntries,
+  fetchUserMistakeQuestionIds,
   saveUserTestResults,
   // Option 3: Parent-child functions
   getParentQuestion,

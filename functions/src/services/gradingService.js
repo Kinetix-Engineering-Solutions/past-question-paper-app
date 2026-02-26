@@ -1,5 +1,5 @@
 const { safeArray } = require('../helpers/dataHelpers');
-const { fetchQuestionsForGrading, saveUserTestResults } = require('./databaseService');
+const { fetchQuestionsForGrading, saveUserTestResults, upsertMistakeBankEntries } = require('./databaseService');
 const { gradeShortAnswer, gradeShortAnswerSubmissions } = require('./shortAnswerGradingService');
 
 /**
@@ -476,6 +476,18 @@ async function gradeTestSubmission(params) {
     gradedAt: gradedAtIso,
     userId: userId
   };
+
+  // Persist Mistake Bank (best-effort; does not block returning grading results)
+  if (userId) {
+    upsertMistakeBankEntries({
+      userId,
+      results,
+      questionsById: questionsMap,
+      metadata: gradingResult.metadata,
+    }).catch((e) => {
+      console.error('[MistakeBank] Error while upserting mistake bank:', e);
+    });
+  }
 
   // Save results to user's profile (non-blocking)
   if (userId) {
