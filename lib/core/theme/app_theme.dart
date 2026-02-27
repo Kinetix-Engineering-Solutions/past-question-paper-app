@@ -81,7 +81,7 @@ class AppTheme {
         shadowColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide.none,
+          side: BorderSide(color: neutralBorder, width: isDark ? 1 : 0.6),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -171,12 +171,12 @@ class AppTheme {
       iconTheme: IconThemeData(color: ink, size: 24),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: isDark ? AppColorsDark.neutralCard : AppColors.ink,
-        selectedItemColor: accent,
+        selectedItemColor: Colors.white,
         unselectedItemColor: neutralSoft,
-        selectedIconTheme: IconThemeData(color: accent, size: 24),
+        selectedIconTheme: const IconThemeData(color: Colors.white, size: 24),
         unselectedIconTheme: IconThemeData(color: neutralSoft, size: 22),
-        selectedLabelStyle: TextStyle(
-          color: accent,
+        selectedLabelStyle: const TextStyle(
+          color: Colors.white,
           fontSize: 11,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.1,
@@ -191,6 +191,26 @@ class AppTheme {
         elevation: 8,
         enableFeedback: true,
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: isDark ? AppColorsDark.neutralCard : AppColors.ink,
+        indicatorColor: Colors.white.withOpacity(isDark ? 0.14 : 0.10),
+        labelTextStyle: MaterialStateProperty.resolveWith((states) {
+          final isSelected = states.contains(MaterialState.selected);
+          return TextStyle(
+            color: isSelected ? Colors.white : neutralSoft,
+            fontSize: isSelected ? 12 : 11,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            letterSpacing: 0.1,
+          );
+        }),
+        iconTheme: MaterialStateProperty.resolveWith((states) {
+          final isSelected = states.contains(MaterialState.selected);
+          return IconThemeData(
+            color: isSelected ? Colors.white : neutralSoft,
+            size: isSelected ? 24 : 22,
+          );
+        }),
+      ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: neutralCard,
         surfaceTintColor: Colors.transparent,
@@ -204,7 +224,7 @@ class AppTheme {
         activeTrackColor: accent,
         inactiveTrackColor: accentSoft,
         thumbColor: accent,
-        overlayColor: const Color(0x33FF7A1A),
+        overlayColor: accent.withOpacity(0.2),
         valueIndicatorColor: accent,
         trackHeight: 4,
       ),
@@ -217,7 +237,7 @@ class AppTheme {
         backgroundColor: accent,
         foregroundColor: colorScheme.onPrimary,
         elevation: 2,
-        splashColor: const Color(0x33FF7A1A),
+        splashColor: accent.withOpacity(0.2),
       ),
       switchTheme: SwitchThemeData(
         thumbColor: MaterialStateProperty.resolveWith(

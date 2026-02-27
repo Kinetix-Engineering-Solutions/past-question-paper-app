@@ -426,6 +426,18 @@ class FirestoreDatabaseService {
     }
   }
 
+  /// Updates the user's profile photo URL.
+  Future<void> updateUserProfilePhoto(String userId, String photoUrl) async {
+    try {
+      await _firestore.collection('users').doc(userId).set({
+        'photoUrl': photoUrl,
+      }, SetOptions(merge: true));
+    } catch (e) {
+      print('Error updating user profile photo: $e');
+      rethrow;
+    }
+  }
+
   // ===== Option 3: Parent-Child Question Methods =====
 
   /// Fetches a parent question by ID

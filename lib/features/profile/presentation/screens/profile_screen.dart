@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 import 'package:past_question_paper_v1/core/shared/utils/app_constants.dart';
@@ -20,7 +21,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   int? _selectedGrade;
   List<String> _selectedSubjects = [];
   bool _isSaving = false;
+  bool _isUploadingProfilePhoto = false;
   PackageInfo? _packageInfo;
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void didChangeDependencies() {
@@ -84,6 +87,56 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  Future<void> _pickAndUploadProfilePhoto() async {
+    final user = ref.read(profileViewModelProvider).valueOrNull;
+    if (user == null || _isUploadingProfilePhoto) {
+      return;
+    }
+
+    try {
+      final pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (pickedFile == null) {
+        return;
+      }
+
+      setState(() => _isUploadingProfilePhoto = true);
+
+      final imageBytes = await pickedFile.readAsBytes();
+      await ref
+          .read(profileViewModelProvider.notifier)
+          .updateProfilePhoto(
+            imageBytes: imageBytes,
+            fileName: pickedFile.name,
+          );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Profile picture updated.'),
+          backgroundColor: AppColors.accent,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update profile picture: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingProfilePhoto = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final userState = ref.watch(profileViewModelProvider);
@@ -129,16 +182,70 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 32,
-                      backgroundColor: AppColors.accent.withOpacity(0.1),
-                      child: Text(
-                        (user.name ?? 'S').substring(0, 1).toUpperCase(),
-                        style: textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.accent,
+                    Stack(
+                      children: [
+                        CircleAvatar(
+                          radius: 32,
+                          backgroundColor: AppColors.accent.withOpacity(0.1),
+                          backgroundImage:
+                              (user.photoUrl != null &&
+                                  user.photoUrl!.isNotEmpty)
+                              ? NetworkImage(user.photoUrl!)
+                              : null,
+                          child:
+                              (user.photoUrl == null || user.photoUrl!.isEmpty)
+                              ? Text(
+                                  (user.name ?? 'S')
+                                      .substring(0, 1)
+                                      .toUpperCase(),
+                                  style: textTheme.headlineMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.accent,
+                                  ),
+                                )
+                              : null,
                         ),
-                      ),
+                        Positioned(
+                          right: -2,
+                          bottom: -2,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(14),
+                              onTap: _isUploadingProfilePhoto
+                                  ? null
+                                  : _pickAndUploadProfilePhoto,
+                              child: Container(
+                                height: 28,
+                                width: 28,
+                                decoration: BoxDecoration(
+                                  color: AppColors.accent,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: colorScheme.cardBackground,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: _isUploadingProfilePhoto
+                                    ? const Padding(
+                                        padding: EdgeInsets.all(6),
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation(
+                                            Colors.white,
+                                          ),
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.camera_alt_outlined,
+                                        size: 14,
+                                        color: Colors.white,
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(width: 16),
                     Expanded(

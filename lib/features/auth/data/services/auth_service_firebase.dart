@@ -72,8 +72,6 @@ class AuthServiceFirebase implements IAuthService {
           }
         }
 
-        await _auth.signOut();
-
         throw AuthException(
           '⚠️ Email Not Verified\n\n'
           'Please verify your email address first.\n\n'

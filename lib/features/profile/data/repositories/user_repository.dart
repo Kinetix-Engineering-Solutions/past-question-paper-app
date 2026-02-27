@@ -1,17 +1,22 @@
 import 'package:past_question_paper_v1/features/profile/domain/entities/user.dart';
 import 'package:past_question_paper_v1/core/shared/services/firestore_database_firebase.dart';
+import 'package:past_question_paper_v1/core/shared/services/storage_service.dart';
 import 'package:past_question_paper_v1/features/auth/data/services/iauthservice.dart';
 import 'package:past_question_paper_v1/Exceptions/auth_exception.dart';
+import 'dart:typed_data';
 
 class UserRepository {
   final IAuthService _authService;
   final FirestoreDatabaseService _database;
+  final StorageService _storage;
 
   UserRepository({
     required IAuthService authService,
     FirestoreDatabaseService? database,
+    StorageService? storage,
   }) : _authService = authService,
-       _database = database ?? FirestoreDatabaseService();
+       _database = database ?? FirestoreDatabaseService(),
+       _storage = storage ?? StorageService();
 
   Stream<AppUser?> get userAuthState => _authService.authStateChanges;
 
@@ -79,7 +84,6 @@ class UserRepository {
       }
 
       if (!firebaseUser.emailVerified) {
-        await _authService.signOut();
         throw AuthException(
           '✉️ Account Created Successfully!\n\n'
           'We\'ve sent a verification link to ${firebaseUser.email ?? 'your email'}.\n\n'
@@ -172,6 +176,35 @@ class UserRepository {
       return await _database.getAvailableSubjects(grade: grade);
     } catch (e) {
       throw Exception('Failed to load available subjects.');
+    }
+  }
+
+  /// Uploads and persists the current user's profile photo.
+  Future<AppUser> updateProfilePhoto({
+    required Uint8List imageBytes,
+    required String fileName,
+  }) async {
+    final user = _authService.currentUser;
+    if (user == null) {
+      throw AuthException(
+        'No user is currently signed in.',
+        code: 'no-current-user',
+      );
+    }
+
+    try {
+      final downloadUrl = await _storage.uploadImage(
+        imageBytes: imageBytes,
+        fileName: fileName,
+        folder: 'profile_images/${user.id}',
+      );
+
+      await _database.updateUserProfilePhoto(user.id, downloadUrl);
+
+      final updatedUser = await getUserFromFirestore(user.id);
+      return updatedUser ?? user.copyWith(photoUrl: downloadUrl);
+    } catch (e) {
+      throw Exception('Failed to update profile photo.');
     }
   }
 

@@ -23,10 +23,15 @@ class AppColors {
   ); // soft cream cards (clear contrast from background)
   static const Color neutralBorder = Color(0xFFE0E0DD); // subtle warm border
 
-  // Accent orange (single chromatic color in otherwise monochrome palette)
-  static const Color accent = Color(0xFFFF7A1A); // primary action / highlight
+  // Accent color (single chromatic color in otherwise monochrome palette)
+  static const Color accent = Color.fromARGB(
+    255,
+    113,
+    113,
+    117,
+  ); // primary action / highlight
   static const Color accentSoft = Color(
-    0xFFFFF4EB,
+    0xFFEEF0FF,
   ); // very light tint background
 
   // Logo accent palette (used sparingly for illustrations & special moments)
@@ -52,9 +57,7 @@ class AppColorsDark {
   static const Color ink = Color(
     0xFFF0F0F0,
   ); // Brightened primary text for better readability
-  static const Color paper = Color(
-    0xFF1A1A1A,
-  ); // Lightened from 0F0F0F to reduce harshness
+  static const Color paper = Color(0xFF08081B); // Requested dark-mode base
 
   static const Color neutralMid = Color(
     0xFFB8B8B8,
@@ -63,12 +66,14 @@ class AppColorsDark {
     0xFF8C8C8C,
   ); // Brightened tertiary text
   static const Color neutralCard = Color(
-    0xFF242424,
-  ); // Lightened from 1E1E1E for better contrast
-  static const Color neutralBorder = Color(0xFF3A3A3A); // Lightened from 2F2F2F
+    0xFF13132A,
+  ); // Related lighter shade of paper for card contrast
+  static const Color neutralBorder = Color(
+    0xFF313451,
+  ); // Clear card/input separation in dark mode
 
   static const Color accent = AppColors.accent;
-  static const Color accentSoft = Color(0xFF40230F);
+  static const Color accentSoft = Color(0xFF1E2248);
 
   static const Color brandCharcoal = AppColors.brandCharcoal;
   static const Color brandCyan = AppColors.brandCyan;

@@ -10,6 +10,41 @@ import 'package:past_question_paper_v1/features/profile/presentation/screens/pro
 import 'package:past_question_paper_v1/features/practice/presentation/screens/test_configuration_screen.dart';
 import 'package:past_question_paper_v1/features/practice/presentation/widgets/subject_list_view.dart';
 
+final subjectPqpMetricsBySubjectProvider =
+    Provider<Map<String, SubjectPqpMetrics>>((ref) {
+      final asyncHistory = ref.watch(sessionHistoryViewModelProvider);
+      final historyEntries =
+          asyncHistory.asData?.value ?? const <SessionHistoryEntry>[];
+
+      final Map<String, SubjectPqpMetrics> metricsBySubject = {};
+      for (final subject in AppConstants.allSubjects) {
+        SessionHistoryEntry? lastPqp;
+        for (final entry in historyEntries) {
+          if (entry.isPastPaper && entry.subject == subject) {
+            lastPqp = entry;
+            break;
+          }
+        }
+
+        if (lastPqp == null) {
+          metricsBySubject[subject] = const SubjectPqpMetrics();
+          continue;
+        }
+
+        final unansweredCount = lastPqp.results
+            .where((r) => r['wasUnanswered'] == true)
+            .length;
+
+        metricsBySubject[subject] = SubjectPqpMetrics(
+          lastScorePercent: lastPqp.percentage.round(),
+          paceLabel: _paceLabelForLastPqp(lastPqp),
+          unansweredCount: unansweredCount,
+        );
+      }
+
+      return metricsBySubject;
+    });
+
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -21,11 +56,11 @@ class HomeScreen extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    // 🚀 MVP: Lock to Grade 12 only
-    final userGrade = 12; // Force Grade 12 for MVP release
+    final userGrade = homeState.selectedGrade;
 
     // 🚀 MVP: Show all subjects but mark unavailable ones as "Coming Soon"
     final subjects = AppConstants.allSubjects;
+    final pqpMetricsBySubject = ref.watch(subjectPqpMetricsBySubjectProvider);
 
     return Scaffold(
       backgroundColor: colorScheme.background,
@@ -40,24 +75,38 @@ class HomeScreen extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: 'Profile',
+            icon: const Icon(Icons.settings_outlined),
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const ProfileScreen()),
               );
             },
-            icon: const Icon(Icons.settings_outlined),
           ),
         ],
       ),
       body: SafeArea(
-        child: _SubjectListSection(
-          subjects: subjects,
-          selectedGrade: userGrade,
-          historyEntries: asyncHistory.maybeWhen(
-            data: (entries) => entries,
-            orElse: () => const <SessionHistoryEntry>[],
-          ),
+        child: Column(
+          children: [
+            asyncHistory.when(
+              loading: () => const LinearProgressIndicator(minHeight: 2),
+              error: (error, stackTrace) => _HistoryStatusBanner(
+                message: 'Could not load recent progress.',
+                actionLabel: 'Retry',
+                onAction: () => ref
+                    .read(sessionHistoryViewModelProvider.notifier)
+                    .refresh(),
+              ),
+              data: (_) => const SizedBox.shrink(),
+            ),
+            Expanded(
+              child: _SubjectListSection(
+                subjects: subjects,
+                selectedGrade: userGrade,
+                pqpMetricsBySubject: pqpMetricsBySubject,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -87,12 +136,12 @@ String? _paceLabelForLastPqp(SessionHistoryEntry entry) {
 class _SubjectListSection extends StatelessWidget {
   final List<String> subjects;
   final int selectedGrade;
-  final List<SessionHistoryEntry> historyEntries;
+  final Map<String, SubjectPqpMetrics> pqpMetricsBySubject;
 
   const _SubjectListSection({
     required this.subjects,
     required this.selectedGrade,
-    required this.historyEntries,
+    required this.pqpMetricsBySubject,
   });
 
   @override
@@ -136,30 +185,6 @@ class _SubjectListSection extends StatelessWidget {
       );
     }).toList();
 
-    final Map<String, SubjectPqpMetrics> pqpMetricsBySubject = {
-      for (final subject in subjectOptions)
-        subject.name: () {
-          final lastPqp = historyEntries
-              .where((e) => e.isPastPaper && e.subject == subject.name)
-              .cast<SessionHistoryEntry?>()
-              .firstWhere((e) => e != null, orElse: () => null);
-
-          if (lastPqp == null) {
-            return const SubjectPqpMetrics();
-          }
-
-          final unansweredCount = lastPqp.results
-              .where((r) => r['wasUnanswered'] == true)
-              .length;
-
-          return SubjectPqpMetrics(
-            lastScorePercent: lastPqp.percentage.round(),
-            paceLabel: _paceLabelForLastPqp(lastPqp),
-            unansweredCount: unansweredCount,
-          );
-        }(),
-    };
-
     return SubjectListView(
       subjects: subjectOptions,
       pqpMetricsBySubject: pqpMetricsBySubject,
@@ -176,6 +201,61 @@ class _SubjectListSection extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _HistoryStatusBanner extends StatelessWidget {
+  final String message;
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  const _HistoryStatusBanner({
+    required this.message,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.error_outline,
+            color: colorScheme.onErrorContainer,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onErrorContainer,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: onAction,
+            child: Text(
+              actionLabel,
+              style: textTheme.labelLarge?.copyWith(
+                color: colorScheme.onErrorContainer,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

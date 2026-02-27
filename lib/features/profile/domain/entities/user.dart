@@ -5,6 +5,7 @@ class AppUser {
   final String id;
   final String? email;
   final String? name;
+  final String? photoUrl;
 
   // --- Personalization fields are now directly on the AppUser model ---
   final int? grade;
@@ -14,6 +15,7 @@ class AppUser {
     required this.id,
     this.email,
     this.name,
+    this.photoUrl,
     this.grade,
     this.selectedSubjects,
   });
@@ -29,6 +31,7 @@ class AppUser {
       id: doc.id,
       email: data['email'],
       name: data['name'],
+      photoUrl: data['photoUrl']?.toString(),
       grade: data['grade'],
       // Ensure selectedSubjects is always a List<String>
       selectedSubjects: data['selectedSubjects'] != null
@@ -43,6 +46,7 @@ class AppUser {
       id: firebaseUser.uid,
       email: firebaseUser.email,
       name: firebaseUser.displayName,
+      photoUrl: firebaseUser.photoURL,
       // Preferences will be null for a new user until they are set
       grade: null,
       selectedSubjects: [],
@@ -54,6 +58,7 @@ class AppUser {
     return {
       'email': email,
       'name': name,
+      'photoUrl': photoUrl,
       'grade': grade,
       'selectedSubjects': selectedSubjects,
     };
@@ -64,6 +69,7 @@ class AppUser {
     String? id,
     String? email,
     String? name,
+    String? photoUrl,
     int? grade,
     List<String>? selectedSubjects,
   }) {
@@ -71,6 +77,7 @@ class AppUser {
       id: id ?? this.id,
       email: email ?? this.email,
       name: name ?? this.name,
+      photoUrl: photoUrl ?? this.photoUrl,
       grade: grade ?? this.grade,
       selectedSubjects: selectedSubjects ?? this.selectedSubjects,
     );

@@ -585,8 +585,6 @@ class _EmptyHistoryState extends StatelessWidget {
       title: 'No practice history yet',
       message:
           'Complete a session in any mode and your results will appear here. Past papers and sprints are saved automatically.',
-      actionLabel: 'Back to subjects',
-      onAction: () => Navigator.of(context).maybePop(),
     );
   }
 }

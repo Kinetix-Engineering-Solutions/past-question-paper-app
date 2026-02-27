@@ -21,12 +21,38 @@ class _EmailVerificationScreenState
   bool _isChecking = false;
 
   Future<void> _resendVerificationEmail() async {
+    if (_isChecking || _isResending) return;
+
     setState(() {
       _isResending = true;
     });
 
     try {
       final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        if (mounted) {
+          CustomSnackBar.show(
+            context: context,
+            message: 'Session expired. Please sign in again.',
+            isError: true,
+          );
+        }
+        await _goBackToLogin();
+        return;
+      }
+
+      if (user.emailVerified) {
+        if (mounted) {
+          CustomSnackBar.show(
+            context: context,
+            message: 'Your email is already verified.',
+            isError: false,
+          );
+        }
+        await NavigationService.navigateToOnboarding();
+        return;
+      }
+
       if (user != null && !user.emailVerified) {
         await user.sendEmailVerification();
 
@@ -56,6 +82,8 @@ class _EmailVerificationScreenState
   }
 
   Future<void> _checkVerificationStatus() async {
+    if (_isChecking || _isResending) return;
+
     setState(() {
       _isChecking = true;
     });
@@ -90,6 +118,7 @@ class _EmailVerificationScreenState
         }
 
         // Navigate to onboarding or home
+        if (!mounted) return;
         await NavigationService.navigateToOnboarding();
       } else {
         if (mounted) {
@@ -130,6 +159,8 @@ class _EmailVerificationScreenState
 
   @override
   Widget build(BuildContext context) {
+    final isBusy = _isChecking || _isResending;
+
     return Scaffold(
       backgroundColor: AppColors.paper,
       appBar: AppBar(
@@ -137,169 +168,192 @@ class _EmailVerificationScreenState
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppColors.ink),
-          onPressed: _goBackToLogin,
+          onPressed: isBusy ? null : _goBackToLogin,
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Title
-              Text(
-                'Verify Your Email',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.ink,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-
-              // Description
-              Text(
-                'We\'ve sent a verification link to:',
-                style: TextStyle(fontSize: 16, color: AppColors.neutralMid),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-
-              // Email address
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.neutralCard,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.neutralBorder),
-                ),
-                child: Text(
-                  widget.email,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.ink,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Spam folder reminder
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.accent.withOpacity(0.3)),
-                ),
-                child: Row(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.all(24.0),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(Icons.info_outline, color: AppColors.accent, size: 20),
-                    const SizedBox(width: 12),
-                    Expanded(
+                    // Title
+                    Text(
+                      'Verify Your Email',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.ink,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Description
+                    Text(
+                      'We\'ve sent a verification link to:',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.neutralMid,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Email address
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.neutralCard,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.neutralBorder),
+                      ),
                       child: Text(
-                        'Please check your inbox and spam folder for the verification link.',
-                        style: TextStyle(fontSize: 14, color: AppColors.ink),
+                        widget.email,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.ink,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Spam folder reminder
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.accent.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            color: AppColors.accent,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Please check your inbox and spam folder for the verification link.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Check verification button
+                    ElevatedButton(
+                      onPressed: isBusy ? null : _checkVerificationStatus,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accent,
+                        foregroundColor: AppColors.neutralCard,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: _isChecking
+                          ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.neutralCard,
+                                ),
+                              ),
+                            )
+                          : Text(
+                              'I\'ve Verified My Email',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: AppColors.neutralCard,
+                              ),
+                            ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Resend email button
+                    OutlinedButton(
+                      onPressed: isBusy ? null : _resendVerificationEmail,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.accent,
+                        side: BorderSide(color: AppColors.accent, width: 2),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: _isResending
+                          ? SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.accent,
+                                ),
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.refresh, color: AppColors.accent),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Resend Verification Email',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                    color: AppColors.accent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Back to login button
+                    TextButton(
+                      onPressed: isBusy ? null : _goBackToLogin,
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.neutralMid,
+                      ),
+                      child: Text(
+                        'Back to Login',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.neutralMid,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
-
-              // Check verification button
-              ElevatedButton(
-                onPressed: _isChecking ? null : _checkVerificationStatus,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  foregroundColor: AppColors.neutralCard,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 2,
-                ),
-                child: _isChecking
-                    ? SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            AppColors.neutralCard,
-                          ),
-                        ),
-                      )
-                    : Text(
-                        'I\'ve Verified My Email',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: AppColors.neutralCard,
-                        ),
-                      ),
-              ),
-              const SizedBox(height: 16),
-
-              // Resend email button
-              OutlinedButton(
-                onPressed: _isResending ? null : _resendVerificationEmail,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.accent,
-                  side: BorderSide(color: AppColors.accent, width: 2),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: _isResending
-                    ? SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            AppColors.accent,
-                          ),
-                        ),
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.refresh, color: AppColors.accent),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Resend Verification Email',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                              color: AppColors.accent,
-                            ),
-                          ),
-                        ],
-                      ),
-              ),
-              const SizedBox(height: 16),
-
-              // Back to login button
-              TextButton(
-                onPressed: _goBackToLogin,
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.neutralMid,
-                ),
-                child: Text(
-                  'Back to Login',
-                  style: TextStyle(fontSize: 14, color: AppColors.neutralMid),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

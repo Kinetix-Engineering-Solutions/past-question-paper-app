@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/features/profile/domain/entities/user.dart';
 import 'package:past_question_paper_v1/features/profile/data/repositories/user_repository.dart';
 import 'package:past_question_paper_v1/features/auth/providers/auth_providers.dart'; // Assuming your userRepo provider is here
+import 'dart:typed_data';
 
 // Riverpod provider for the ProfileViewModel
 final profileViewModelProvider =
@@ -47,10 +48,25 @@ class ProfileViewModel extends StateNotifier<AsyncValue<AppUser?>> {
       state = AsyncValue.error(e, st);
     }
   }
+
+  Future<void> updateProfilePhoto({
+    required Uint8List imageBytes,
+    required String fileName,
+  }) async {
+    try {
+      final updatedUser = await _userRepository.updateProfilePhoto(
+        imageBytes: imageBytes,
+        fileName: fileName,
+      );
+      state = AsyncValue.data(updatedUser);
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
 
-final availableSubjectsProvider =
-    FutureProvider.autoDispose.family<List<String>, int?>((ref, grade) async {
+final availableSubjectsProvider = FutureProvider.autoDispose
+    .family<List<String>, int?>((ref, grade) async {
       final userRepository = ref.watch(userRepositoryProvider);
       return userRepository.getAvailableSubjects(grade: grade);
     });
