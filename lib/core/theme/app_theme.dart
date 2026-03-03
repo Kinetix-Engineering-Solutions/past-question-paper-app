@@ -81,7 +81,7 @@ class AppTheme {
         shadowColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: neutralBorder, width: isDark ? 1 : 0.6),
+          side: BorderSide.none,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(

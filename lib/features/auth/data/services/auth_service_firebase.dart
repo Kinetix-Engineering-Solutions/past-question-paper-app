@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:past_question_paper_v1/features/profile/domain/entities/user.dart';
@@ -8,15 +9,19 @@ import 'package:past_question_paper_v1/Exceptions/auth_exception.dart';
 
 class AuthServiceFirebase implements IAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFunctions _functions = FirebaseFunctions.instance;
   final FirestoreDatabaseService _database = FirestoreDatabaseService();
   static const String _emailForSignInKey = 'email_for_link_sign_in';
+  static const String _verificationLastSentAtKeyPrefix =
+      'verification_email_last_sent_at_';
+  static const int _verificationCooldownSeconds = 60;
 
   // Configure Firebase ActionCodeSettings for email link sign-in
   final ActionCodeSettings actionCodeSettings = ActionCodeSettings(
     url: 'https://vibe-code-4c59f.firebaseapp.com',
     handleCodeInApp: true,
     //iOSBundleId: 'com.example.ios',
-    androidPackageName: 'com.example.past_question_paper_v1',
+    androidPackageName: 'com.kinetix.past_question_paper',
     androidInstallApp: true,
     androidMinimumVersion: '12',
   );
@@ -62,21 +67,16 @@ class AuthServiceFirebase implements IAuthService {
 
       final user = result.user;
       if (user != null && !user.emailVerified) {
-        try {
-          await user.sendEmailVerification();
-        } catch (verificationError) {
-          if (kDebugMode) {
-            debugPrint(
-              '⚠️ Failed to send verification email: $verificationError',
-            );
-          }
-        }
+        // Don't auto-send a new verification email on every sign-in attempt.
+        // Each call to generateEmailVerificationLink() invalidates previous
+        // links, so repeated sign-ins would make already-sent links expire.
+        // The user can explicitly resend from the EmailVerificationScreen.
 
         throw AuthException(
           '⚠️ Email Not Verified\n\n'
           'Please verify your email address first.\n\n'
-          'We\'ve sent a verification link to ${user.email ?? 'your email'}. '
-          'Check your inbox (and spam folder), click the link, then sign in again.',
+          'Check your inbox (and spam folder) for the verification link '
+          'we sent to ${user.email ?? 'your email'}, then sign in again.',
           code: 'email-not-verified',
         );
       }
@@ -115,9 +115,14 @@ class AuthServiceFirebase implements IAuthService {
 
       if (result.user != null && !(result.user!.emailVerified)) {
         try {
-          await result.user!.sendEmailVerification();
+          await sendVerificationEmail();
         } catch (verificationError) {
-          if (kDebugMode) {
+          final isExpectedCooldown =
+              verificationError is AuthException &&
+              (verificationError.code == 'verification-cooldown' ||
+                  verificationError.code == 'too-many-requests');
+
+          if (kDebugMode && !isExpectedCooldown) {
             debugPrint(
               '⚠️ Failed to send verification email after sign up: $verificationError',
             );
@@ -161,6 +166,113 @@ class AuthServiceFirebase implements IAuthService {
     } on FirebaseAuthException catch (e) {
       throw AuthException.fromFirebaseAuth(e);
     }
+  }
+
+  @override
+  Future<void> sendVerificationEmail() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw AuthException(
+        'Session expired. Please sign in again.',
+        code: 'no-current-user',
+      );
+    }
+
+    if (user.emailVerified) {
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final cooldownSecondsRemaining = await _getVerificationCooldownRemaining(
+      prefs,
+      user.uid,
+    );
+    if (cooldownSecondsRemaining > 0) {
+      throw AuthException(
+        'Please wait $cooldownSecondsRemaining seconds before requesting another verification email.',
+        code: 'verification-cooldown',
+      );
+    }
+
+    try {
+      final callable = _functions.httpsCallable('createEmailVerificationLink');
+      await callable.call();
+      await _markVerificationEmailSent(prefs, user.uid);
+    } on FirebaseFunctionsException catch (e) {
+      if (e.code == 'resource-exhausted') {
+        throw AuthException(
+          e.message ??
+              'Please wait a moment before requesting another verification email.',
+          code: 'verification-cooldown',
+        );
+      }
+
+      if (e.code == 'unauthenticated') {
+        throw AuthException(
+          'Session expired. Please sign in again.',
+          code: 'no-current-user',
+        );
+      }
+
+      if (e.code == 'failed-precondition') {
+        throw AuthException(
+          e.message ??
+              'Email verification service is not configured. Please contact support.',
+          code: 'verification-config-error',
+        );
+      }
+
+      if (kDebugMode) {
+        debugPrint(
+          '❌ createEmailVerificationLink function error — '
+          'code: ${e.code} | message: ${e.message} | details: ${e.details}',
+        );
+      }
+
+      throw AuthException(
+        e.message ?? 'Failed to send verification email. Please try again.',
+        code: 'verification-email-failed',
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint(
+          '❌ sendVerificationEmail unexpected error — '
+          'type: ${e.runtimeType} | value: $e',
+        );
+      }
+      throw AuthException(
+        'Failed to send verification email. Please try again.',
+        code: 'verification-email-failed',
+      );
+    }
+  }
+
+  String _verificationSentAtKeyForUser(String userId) {
+    return '$_verificationLastSentAtKeyPrefix$userId';
+  }
+
+  Future<int> _getVerificationCooldownRemaining(
+    SharedPreferences prefs,
+    String userId,
+  ) async {
+    final key = _verificationSentAtKeyForUser(userId);
+    final lastSentAtMillis = prefs.getInt(key);
+    if (lastSentAtMillis == null) {
+      return 0;
+    }
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final elapsedSeconds = ((now - lastSentAtMillis) / 1000).floor();
+    final remaining = _verificationCooldownSeconds - elapsedSeconds;
+    return remaining > 0 ? remaining : 0;
+  }
+
+  Future<void> _markVerificationEmailSent(
+    SharedPreferences prefs,
+    String userId,
+  ) async {
+    final key = _verificationSentAtKeyForUser(userId);
+    await prefs.setInt(key, DateTime.now().millisecondsSinceEpoch);
   }
 
   /// Completes the sign-in process with the received email link

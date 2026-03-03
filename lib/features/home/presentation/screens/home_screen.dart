@@ -68,20 +68,57 @@ class HomeScreen extends ConsumerWidget {
         backgroundColor: colorScheme.background,
         automaticallyImplyLeading: false,
         elevation: 0,
-        title: Text(
-          'Hello, ${resolvePreferredFirstName(user)}!',
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        titleSpacing: 16,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Hello, ${resolvePreferredFirstName(user)}',
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: colorScheme.onBackground,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'Grade $userGrade • ${subjects.length} subjects',
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
         actions: [
-          IconButton(
-            tooltip: 'Profile',
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ProfileScreen()),
-              );
-            },
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: IconButton(
+              tooltip: 'Profile',
+              icon: Container(
+                height: 34,
+                width: 34,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colorScheme.surface,
+                  border: Border.all(
+                    color: colorScheme.outline.withOpacity(0.3),
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  resolveInitials(user),
+                  style: textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                );
+              },
+            ),
           ),
         ],
       ),

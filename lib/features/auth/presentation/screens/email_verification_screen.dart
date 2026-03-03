@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 import 'package:past_question_paper_v1/core/app/navigation_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:past_question_paper_v1/Exceptions/auth_exception.dart';
+import 'package:past_question_paper_v1/features/auth/providers/auth_providers.dart';
 import 'package:past_question_paper_v1/widgets/custom_snackbar.dart';
 
 class EmailVerificationScreen extends ConsumerStatefulWidget {
@@ -53,16 +55,25 @@ class _EmailVerificationScreenState
         return;
       }
 
-      if (user != null && !user.emailVerified) {
-        await user.sendEmailVerification();
+      if (!user.emailVerified) {
+        await ref.read(authServiceProvider).sendVerificationEmail();
 
         if (mounted) {
           CustomSnackBar.show(
             context: context,
-            message: 'Verification email sent! Check your inbox.',
+            message:
+                'Verification email sent! Check your inbox and spam folder.',
             isError: false,
           );
         }
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        CustomSnackBar.show(
+          context: context,
+          message: e.message,
+          isError: true,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -233,10 +244,10 @@ class _EmailVerificationScreenState
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.accent.withOpacity(0.1),
+                        color: AppColors.accent.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.accent.withOpacity(0.3),
+                          color: AppColors.accent.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(

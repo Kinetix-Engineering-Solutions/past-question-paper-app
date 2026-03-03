@@ -29,6 +29,9 @@ abstract class IAuthService {
   /// Sends a sign-in link to the user's email
   Future<void> sendSignInLinkToEmail(String email);
 
+  /// Sends a custom branded email verification message via backend callable.
+  Future<void> sendVerificationEmail();
+
   /// Completes the sign-in process with the received email link
   Future<UserCredential> signInWithEmailLink(String email, String emailLink);
 
