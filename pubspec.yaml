@@ -16,7 +16,8 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.1.5+7 # UI/UX polish: offline connectivity, auth improvements, dark mode shimmer fix
+version: 0.1.6+8 # Next Play Store release
+
 
 environment:
   sdk: ^3.8.0
@@ -54,6 +55,10 @@ dependencies:
   
   # Image handling
   image_picker: ^1.0.7
+  file_picker: ^8.1.2
+  
+  # PDF viewer
+  syncfusion_flutter_pdfviewer: ^28.2.7
   
   # Utility packages
   shared_preferences: ^2.3.2
@@ -65,6 +70,7 @@ dependencies:
   confetti: ^0.7.0
   connectivity_plus: ^6.1.1
   package_info_plus: ^8.1.2
+  device_info_plus: ^11.5.0
 
 dev_dependencies:
   flutter_lints: ^5.0.0
@@ -124,12 +130,11 @@ flutter_launcher_icons:
 
 flutter_native_splash:
   color: "#F5F5F5"
-  color_dark: "#262626"
-  image: assets/images/splash_logo.png
-  image_dark: assets/images/splash_logo.png
+  image: assets/images/splash_screen.png
+  fullscreen: true
+  android_gravity: center
+  ios_content_mode: center
   android_12:
     image: assets/images/splash_logo.png
-    image_dark: assets/images/splash_logo.png
     icon_background_color: "#F5F5F5"
-    icon_background_color_dark: "#262626"
   web: false

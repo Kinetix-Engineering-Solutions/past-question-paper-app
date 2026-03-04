@@ -29,6 +29,7 @@ echo.
 echo ========================================
 echo Deployment Complete!
 echo ========================================
-echo Your admin portal is now live at:
-echo https://vibe-code-4c59f.web.app
+echo Your admin portal was deployed to hosting target: admin
+echo Map your admin custom domain ^(e.g. admin.pastquestionpapers.com^)
+echo to Firebase site: vibe-code-4c59f-admin
 echo ========================================

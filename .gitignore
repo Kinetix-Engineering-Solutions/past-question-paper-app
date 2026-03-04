@@ -69,6 +69,10 @@ macos/Runner/GoogleService-Info.plist
 secrets.yaml
 secrets.json
 api_keys.json
+android/app/key.properties
+android/key.properties
+android/**/*.jks
+android/**/*.keystore
 
 # Database and storage files
 *.db

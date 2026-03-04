@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:past_question_paper_v1/services/storage_service.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
+import 'package:past_question_paper_v1/core/shared/services/storage_service.dart';
+import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 
 /// Widget for picking and uploading images
 class ImageUploadWidget extends StatefulWidget {

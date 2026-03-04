@@ -10,6 +10,21 @@
   },
   "hosting": [
     {
+      "target": "app",
+      "public": "build/web",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    },
+    {
       "target": "admin",
       "public": "build/web_admin",
       "ignore": [

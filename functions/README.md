@@ -51,6 +51,34 @@ Grades submitted test answers and returns detailed results.
 - Overall statistics (score, percentage, grade)
 - Detailed grading breakdown
 
+### `createEmailVerificationLink`
+Generates a Firebase email verification link using the Admin SDK and sends a branded email via Titan SMTP.
+
+**Auth:**
+- Requires authenticated user (`request.auth.uid`)
+
+**Behavior:**
+- Rejects requests if account has no email
+- Returns early if email is already verified
+- Applies a 60-second resend cooldown per user
+- Sends branded verification email using Titan SMTP (`nodemailer`)
+
+**Required environment variables:**
+- `TITAN_SMTP_USER`
+- `TITAN_SMTP_PASSWORD`
+- `TITAN_FROM_EMAIL`
+- `EMAIL_VERIFICATION_CONTINUE_URL`
+
+**Optional environment variables:**
+- `TITAN_SMTP_HOST` (default: `smtp.titan.email`)
+- `TITAN_SMTP_PORT` (default: `587`)
+- `TITAN_SMTP_SECURE` (default: `false` when port `587`, `true` when port `465`)
+- `TITAN_SMTP_REQUIRE_TLS` (default: `true` when port `587`)
+- `TITAN_FROM_NAME` (default: `Past Question Papers`)
+- `EMAIL_VERIFICATION_ANDROID_PACKAGE_NAME`
+- `EMAIL_VERIFICATION_ANDROID_MIN_VERSION`
+- `EMAIL_VERIFICATION_IOS_BUNDLE_ID`
+
 ## 📁 Service Modules
 
 ### Data Helpers (`src/helpers/dataHelpers.js`)
@@ -194,3 +222,31 @@ To test functions locally:
 ```bash
 firebase emulators:start --only functions
 ```
+
+## ✉️ Titan SMTP Quick Setup
+
+1. Copy the template file and create your local env file:
+   ```bash
+   cd functions
+   cp .env.example .env
+   ```
+   On Windows PowerShell:
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+2. Open `.env` and set your real Titan SMTP password in `TITAN_SMTP_PASSWORD`.
+
+3. Deploy functions so env values are applied:
+   ```bash
+   cd ..
+   firebase deploy --only functions
+   ```
+
+Recommended Titan values from your setup:
+- `TITAN_SMTP_HOST=smtp.titan.email`
+- `TITAN_SMTP_PORT=587`
+- `TITAN_SMTP_SECURE=false`
+- `TITAN_SMTP_REQUIRE_TLS=true`
+- `TITAN_SMTP_USER=support@pastquestionpapers.com`
+- `TITAN_FROM_EMAIL=support@pastquestionpapers.com`

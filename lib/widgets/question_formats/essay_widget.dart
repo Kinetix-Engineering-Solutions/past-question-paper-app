@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/model/question.dart';
-import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
+import 'package:past_question_paper_v1/features/practice/domain/entities/question.dart';
+import 'package:past_question_paper_v1/features/practice/presentation/viewmodels/practice_viewmodel.dart';
 
 class EssayWidget extends ConsumerStatefulWidget {
   final Question question;
@@ -67,7 +67,8 @@ class _EssayWidgetState extends ConsumerState<EssayWidget> {
                   Expanded(
                     child: Text(
                       'Essay Question',
-                      style: textTheme.titleMedium?.copyWith(
+                      style:
+                          textTheme.titleMedium?.copyWith(
                             color: colorScheme.primary,
                             fontWeight: FontWeight.w600,
                           ) ??
@@ -85,7 +86,8 @@ class _EssayWidgetState extends ConsumerState<EssayWidget> {
                 '• Structure your answer with clear introduction, body, and conclusion\n'
                 '• Support your points with relevant examples\n'
                 '• Write in complete sentences and paragraphs',
-                style: textTheme.bodySmall?.copyWith(
+                style:
+                    textTheme.bodySmall?.copyWith(
                       color: colorScheme.primary,
                       height: 1.4,
                     ) ??
@@ -104,7 +106,8 @@ class _EssayWidgetState extends ConsumerState<EssayWidget> {
           focusNode: _focusNode,
           maxLines: 12,
           minLines: 8,
-          style: textTheme.bodyLarge?.copyWith(
+          style:
+              textTheme.bodyLarge?.copyWith(
                 fontSize: 16,
                 color: colorScheme.onSurface,
                 height: 1.5,
@@ -118,8 +121,10 @@ class _EssayWidgetState extends ConsumerState<EssayWidget> {
             hintText:
                 'Write your essay here...\n\n'
                 'Tip: Start with an outline of your main points, then elaborate on each point with examples and explanations.',
-            hintStyle: textTheme.bodyMedium?.copyWith(
-                  color: textTheme.bodyMedium?.color?.withOpacity(0.6) ??
+            hintStyle:
+                textTheme.bodyMedium?.copyWith(
+                  color:
+                      textTheme.bodyMedium?.color?.withOpacity(0.6) ??
                       colorScheme.onSurfaceVariant,
                   fontSize: 15,
                   height: 1.4,
@@ -179,7 +184,8 @@ class _EssayWidgetState extends ConsumerState<EssayWidget> {
               const SizedBox(width: 8),
               Text(
                 'Word count: $_wordCount',
-                style: textTheme.bodyMedium?.copyWith(
+                style:
+                    textTheme.bodyMedium?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ) ??
@@ -192,7 +198,8 @@ class _EssayWidgetState extends ConsumerState<EssayWidget> {
               const Spacer(),
               Text(
                 'Marks: ${widget.question.marks}',
-                style: textTheme.bodyMedium?.copyWith(
+                style:
+                    textTheme.bodyMedium?.copyWith(
                       color: colorScheme.primary,
                       fontWeight: FontWeight.w600,
                     ) ??
@@ -217,7 +224,8 @@ class _EssayWidgetState extends ConsumerState<EssayWidget> {
             Expanded(
               child: Text(
                 'Take time to plan your answer. Quality is more important than quantity.',
-                style: textTheme.bodySmall?.copyWith(
+                style:
+                    textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                       fontStyle: FontStyle.italic,
                     ) ??

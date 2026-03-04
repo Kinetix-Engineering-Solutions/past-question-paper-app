@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/model/question.dart';
-import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
+import 'package:past_question_paper_v1/features/practice/domain/entities/question.dart';
+import 'package:past_question_paper_v1/features/practice/presentation/viewmodels/practice_viewmodel.dart';
 
 class ShortAnswerWidget extends ConsumerStatefulWidget {
   final Question question;
@@ -54,7 +54,8 @@ class _ShortAnswerWidgetState extends ConsumerState<ShortAnswerWidget> {
               Expanded(
                 child: Text(
                   'Type your answer below. Be specific and clear.',
-                  style: textTheme.bodyMedium?.copyWith(
+                  style:
+                      textTheme.bodyMedium?.copyWith(
                         color: colorScheme.primary,
                         fontWeight: FontWeight.w600,
                       ) ??
@@ -74,20 +75,18 @@ class _ShortAnswerWidgetState extends ConsumerState<ShortAnswerWidget> {
           focusNode: _focusNode,
           maxLines: 3,
           minLines: 3,
-          style: textTheme.bodyLarge?.copyWith(
-                color: colorScheme.onSurface,
-              ) ??
+          style:
+              textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface) ??
               TextStyle(fontSize: 16, color: colorScheme.onSurface),
           decoration: InputDecoration(
             hintText: 'Enter your answer here...',
-            hintStyle: textTheme.bodyMedium?.copyWith(
-                  color: textTheme.bodyMedium?.color?.withOpacity(0.6) ??
+            hintStyle:
+                textTheme.bodyMedium?.copyWith(
+                  color:
+                      textTheme.bodyMedium?.color?.withOpacity(0.6) ??
                       colorScheme.onSurfaceVariant,
                 ) ??
-                TextStyle(
-                  color: colorScheme.onSurfaceVariant,
-                  fontSize: 16,
-                ),
+                TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 16),
             filled: true,
             fillColor: colorScheme.surface,
             border: OutlineInputBorder(
@@ -131,15 +130,23 @@ class _ShortAnswerWidgetState extends ConsumerState<ShortAnswerWidget> {
         const SizedBox(height: 12),
         Row(
           children: [
-            Icon(Icons.info_outline, color: colorScheme.onSurfaceVariant, size: 16),
+            Icon(
+              Icons.info_outline,
+              color: colorScheme.onSurfaceVariant,
+              size: 16,
+            ),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
                 'Marks: ${widget.question.marks} • Be concise but complete',
-                style: textTheme.bodySmall?.copyWith(
+                style:
+                    textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
                     ) ??
-                    TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 12),
+                    TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
               ),
             ),
           ],

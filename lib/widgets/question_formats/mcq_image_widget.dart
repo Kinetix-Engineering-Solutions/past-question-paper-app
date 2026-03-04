@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/model/question.dart';
-import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
+import 'package:past_question_paper_v1/features/practice/domain/entities/question.dart';
+import 'package:past_question_paper_v1/features/practice/presentation/viewmodels/practice_viewmodel.dart';
 
 class MCQImageWidget extends ConsumerWidget {
   final Question question;
@@ -20,7 +20,8 @@ class MCQImageWidget extends ConsumerWidget {
       return Center(
         child: Text(
           'No image options available',
-          style: textTheme.bodyMedium?.copyWith(
+          style:
+              textTheme.bodyMedium?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ) ??
               TextStyle(fontSize: 16, color: colorScheme.onSurfaceVariant),
@@ -49,9 +50,7 @@ class MCQImageWidget extends ConsumerWidget {
                 .answerQuestion(question.id, imageUrl);
           },
           child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
             child: Stack(
               children: [
                 ClipRRect(
@@ -92,10 +91,11 @@ class MCQImageWidget extends ConsumerWidget {
                                     SizedBox(height: 8),
                                     Text(
                                       'Image failed to load',
-                                      style: textTheme.bodySmall?.copyWith(
-                                        fontSize: 12,
-                                        color: colorScheme.onSurfaceVariant,
-                                      ) ??
+                                      style:
+                                          textTheme.bodySmall?.copyWith(
+                                            fontSize: 12,
+                                            color: colorScheme.onSurfaceVariant,
+                                          ) ??
                                           TextStyle(
                                             fontSize: 12,
                                             color: colorScheme.onSurfaceVariant,
