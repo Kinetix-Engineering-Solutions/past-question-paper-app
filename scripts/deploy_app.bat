@@ -1,11 +1,11 @@
 @echo off
-REM Deploy Admin Portal to Firebase Hosting
+REM Deploy Main App to Firebase Hosting
 echo ========================================
-echo Building Admin Portal for Web
+echo Building Main App for Web
 echo ========================================
 
-REM Build Flutter web app targeting admin entry point
-flutter build web --target=lib/main_admin.dart --output=build/web_admin
+REM Build Flutter web app targeting main entry point
+flutter build web --target=lib/main.dart --output=build/web
 
 if %ERRORLEVEL% NEQ 0 (
     echo Build failed!
@@ -17,8 +17,8 @@ echo ========================================
 echo Deploying to Firebase Hosting
 echo ========================================
 
-REM Deploy to Firebase Hosting (admin target)
-firebase deploy --only hosting:admin
+REM Deploy to Firebase Hosting (app target)
+firebase deploy --only hosting:app
 
 if %ERRORLEVEL% NEQ 0 (
     echo Deployment failed!
@@ -29,7 +29,6 @@ echo.
 echo ========================================
 echo Deployment Complete!
 echo ========================================
-echo Your admin portal was deployed to hosting target: admin
-echo Map your admin custom domain ^(e.g. admin.pastquestionpapers.com^)
-echo to Firebase site: vibe-code-4c59f-admin
+echo Your main app is now live at the domain mapped to site:
+echo vibe-code-4c59f
 echo ========================================

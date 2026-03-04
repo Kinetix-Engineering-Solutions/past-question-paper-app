@@ -408,6 +408,18 @@ class FirestoreDatabaseService {
     }
   }
 
+  /// Updates the user's display name.
+  Future<void> updateUserName(String userId, String name) async {
+    try {
+      await _firestore.collection('users').doc(userId).set({
+        'name': name,
+      }, SetOptions(merge: true));
+    } catch (e) {
+      print('Error updating user name: $e');
+      rethrow;
+    }
+  }
+
   /// Updates the user's document with their selected grade and subjects.
   Future<void> updateUserPreferences(
     String userId,

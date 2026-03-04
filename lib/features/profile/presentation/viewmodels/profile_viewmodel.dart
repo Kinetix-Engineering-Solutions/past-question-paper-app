@@ -8,13 +8,15 @@ import 'dart:typed_data';
 final profileViewModelProvider =
     StateNotifierProvider<ProfileViewModel, AsyncValue<AppUser?>>((ref) {
       final userRepository = ref.watch(userRepositoryProvider);
-      return ProfileViewModel(userRepository);
+      return ProfileViewModel(userRepository, ref);
     });
 
 class ProfileViewModel extends StateNotifier<AsyncValue<AppUser?>> {
   final UserRepository _userRepository;
+  final Ref _ref;
 
-  ProfileViewModel(this._userRepository) : super(const AsyncValue.loading()) {
+  ProfileViewModel(this._userRepository, this._ref)
+    : super(const AsyncValue.loading()) {
     _loadUserData();
   }
 
@@ -59,6 +61,18 @@ class ProfileViewModel extends StateNotifier<AsyncValue<AppUser?>> {
         fileName: fileName,
       );
       state = AsyncValue.data(updatedUser);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Updates the user's display name and refreshes the state.
+  Future<void> updateUserName({required String name}) async {
+    try {
+      await _userRepository.updateUserName(name: name);
+      await _loadUserData();
+      // Invalidate auth state so home screen picks up the new name
+      _ref.invalidate(authStateProvider);
     } catch (e) {
       rethrow;
     }

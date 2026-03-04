@@ -6,7 +6,6 @@ function assertVerificationEmailConfig() {
   const requiredEnvVars = [
     'RESEND_API_KEY',
     'RESEND_FROM_EMAIL',
-    'EMAIL_VERIFICATION_CONTINUE_URL',
   ];
 
   const missing = requiredEnvVars.filter((key) => !process.env[key]);
@@ -16,29 +15,6 @@ function assertVerificationEmailConfig() {
       `Missing email verification configuration: ${missing.join(', ')}`,
     );
   }
-}
-
-function buildActionCodeSettings() {
-  const actionCodeSettings = {
-    url: process.env.EMAIL_VERIFICATION_CONTINUE_URL,
-    handleCodeInApp: false,
-  };
-
-  const androidPackageName = process.env.EMAIL_VERIFICATION_ANDROID_PACKAGE_NAME;
-  if (androidPackageName) {
-    actionCodeSettings.android = {
-      packageName: androidPackageName,
-      installApp: true,
-      minimumVersion: process.env.EMAIL_VERIFICATION_ANDROID_MIN_VERSION || '1',
-    };
-  }
-
-  const iosBundleId = process.env.EMAIL_VERIFICATION_IOS_BUNDLE_ID;
-  if (iosBundleId) {
-    actionCodeSettings.iOS = { bundleId: iosBundleId };
-  }
-
-  return actionCodeSettings;
 }
 
 function buildEmailHtml({ recipientName, verificationLink }) {
@@ -66,7 +42,17 @@ function buildEmailHtml({ recipientName, verificationLink }) {
         <p style="line-height: 1.6; color: #525252; font-size: 13px;">
           If the button does not work, copy and paste this link into your browser:
         </p>
-        <p style="word-break: break-all; color: #FF7A1A; font-size: 13px;">${verificationLink}</p>
+        <p style="margin: 0 0 8px 0;">
+          <a
+            href="${verificationLink}"
+            style="color: #FF7A1A; font-size: 13px; font-weight: 600; text-decoration: underline;"
+          >
+            Open verification link
+          </a>
+        </p>
+        <p style="line-height: 1.5; color: #A3A3A3; font-size: 12px; margin: 0;">
+          You can also long-press or right-click the link above and open it in your browser.
+        </p>
         <hr style="border: none; border-top: 1px solid #E5E5E5; margin: 24px 0;" />
         <p style="line-height: 1.5; color: #A3A3A3; font-size: 12px; text-align: center;">
           If you did not create this account, you can safely ignore this email.
@@ -100,7 +86,7 @@ async function sendVerificationEmail({ to, recipientName, verificationLink }) {
 async function createVerificationLinkAndSendEmail({ email, displayName }) {
   const verificationLink = await admin
     .auth()
-    .generateEmailVerificationLink(email, buildActionCodeSettings());
+    .generateEmailVerificationLink(email);
 
   await sendVerificationEmail({
     to: email,

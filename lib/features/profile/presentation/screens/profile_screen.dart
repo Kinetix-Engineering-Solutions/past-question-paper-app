@@ -7,7 +7,6 @@ import 'package:past_question_paper_v1/core/shared/utils/app_constants.dart';
 import 'package:past_question_paper_v1/core/shared/utils/loading_state.dart';
 import 'package:past_question_paper_v1/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_v1/features/profile/presentation/viewmodels/profile_viewmodel.dart';
-import 'package:past_question_paper_v1/core/theme/theme_viewmodel.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -141,7 +140,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final userState = ref.watch(profileViewModelProvider);
     final authViewModel = ref.watch(authViewModelProvider.notifier);
-    final themeState = ref.watch(themeViewModelProvider);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -252,10 +250,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            user.name ?? 'Student',
-                            style: textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w600,
+                          GestureDetector(
+                            onTap: () =>
+                                _showNameEditDialog(context, user.name),
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    user.name ?? 'Student',
+                                    style: textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Icon(
+                                  Icons.edit_outlined,
+                                  size: 16,
+                                  color: colorScheme.textSecondary,
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -305,7 +320,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       onTap: () => _showSubjectSelector(context),
                     ),
                     _buildDivider(colorScheme),
-                    _buildThemeTile(context, themeState.mode),
+                    _buildThemeTile(context),
                   ],
                 ),
               ),
@@ -545,68 +560,46 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildThemeTile(BuildContext context, ThemeMode mode) {
+  Widget _buildThemeTile(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    String getModeLabel(ThemeMode mode) {
-      switch (mode) {
-        case ThemeMode.system:
-          return 'System Default';
-        case ThemeMode.light:
-          return 'Light';
-        case ThemeMode.dark:
-          return 'Dark';
-      }
-    }
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => _showThemeSelector(context),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Row(
-            children: [
-              Icon(
-                mode == ThemeMode.dark
-                    ? Icons.dark_mode_outlined
-                    : mode == ThemeMode.light
-                    ? Icons.light_mode_outlined
-                    : Icons.brightness_auto_outlined,
-                color: colorScheme.textSecondary,
-                size: 24,
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Theme',
-                      style: textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      getModeLabel(mode),
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: colorScheme.textSecondary.withOpacity(0.5),
-              ),
-            ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Row(
+        children: [
+          Icon(
+            Icons.light_mode_outlined,
+            color: colorScheme.textSecondary,
+            size: 24,
           ),
-        ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Theme',
+                  style: textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Light',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.lock_outline,
+            size: 16,
+            color: colorScheme.textSecondary.withOpacity(0.5),
+          ),
+        ],
       ),
     );
   }
@@ -896,88 +889,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  void _showThemeSelector(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final currentMode = ref.read(themeViewModelProvider).mode;
-
-    final options = [
-      (
-        mode: ThemeMode.system,
-        label: 'System Default',
-        icon: Icons.brightness_auto_outlined,
-      ),
-      (mode: ThemeMode.light, label: 'Light', icon: Icons.light_mode_outlined),
-      (mode: ThemeMode.dark, label: 'Dark', icon: Icons.dark_mode_outlined),
-    ];
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: colorScheme.cardBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: colorScheme.textSecondary.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Select Theme',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ...options.map((option) {
-                final isSelected = option.mode == currentMode;
-
-                return ListTile(
-                  leading: Icon(
-                    option.icon,
-                    color: isSelected
-                        ? AppColors.accent
-                        : colorScheme.textSecondary,
-                  ),
-                  title: Text(
-                    option.label,
-                    style: TextStyle(
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.normal,
-                    ),
-                  ),
-                  trailing: isSelected
-                      ? Icon(Icons.check, color: AppColors.accent)
-                      : null,
-                  onTap: () {
-                    ref
-                        .read(themeViewModelProvider.notifier)
-                        .setThemeMode(option.mode);
-                    Navigator.pop(context);
-                  },
-                );
-              }).toList(),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   void _showAboutDialog(BuildContext context) {
     showAboutDialog(
       context: context,
@@ -1192,6 +1103,152 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _showNameEditDialog(BuildContext context, String? currentName) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final nameController = TextEditingController(text: currentName ?? '');
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colorScheme.cardBackground,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colorScheme.textSecondary.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Edit Name',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: nameController,
+                    autofocus: true,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: InputDecoration(
+                      labelText: 'Your name',
+                      hintText: 'Enter your full name',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.accent,
+                          width: 2,
+                        ),
+                      ),
+                      prefixIcon: const Icon(Icons.person_outline),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: isSaving
+                          ? null
+                          : () async {
+                              final name = nameController.text.trim();
+                              if (name.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Name cannot be empty.'),
+                                    backgroundColor: Colors.redAccent,
+                                  ),
+                                );
+                                return;
+                              }
+                              setSheetState(() => isSaving = true);
+                              try {
+                                await ref
+                                    .read(profileViewModelProvider.notifier)
+                                    .updateUserName(name: name);
+                                if (mounted) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(
+                                    this.context,
+                                  ).showSnackBar(
+                                    SnackBar(
+                                      content: const Text('Name updated!'),
+                                      backgroundColor: AppColors.accent,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                setSheetState(() => isSaving = false);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Failed to update name: $e',
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accent,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: isSaving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : const Text(
+                              'Save',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/features/auth/providers/auth_providers.dart';
+import 'package:past_question_paper_v1/features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 import 'package:past_question_paper_v1/core/shared/utils/app_constants.dart';
 import 'package:past_question_paper_v1/core/app/main_navigation_screen.dart';
@@ -17,8 +18,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   int _currentPage = 0;
 
   // --- Local state for user selections ---
+  final TextEditingController _nameController = TextEditingController();
   int? _selectedGrade;
   final List<String> _selectedSubjects = [];
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
 
   void _onPageChanged(int page) {
     setState(() {
@@ -34,8 +42,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _finishOnboarding() async {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your name.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
     if (_selectedGrade == null || _selectedSubjects.isEmpty) {
-      // Show a snackbar if selections are not made
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select your grade and at least one subject.'),
@@ -47,12 +65,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     // Save preferences to Firestore using the UserRepository
     try {
+      await ref.read(userRepositoryProvider).updateUserName(name: name);
       await ref
           .read(userRepositoryProvider)
           .updateUserPreferences(
             grade: _selectedGrade!,
             subjects: _selectedSubjects,
           );
+      await ref.read(authViewModelProvider.notifier).refreshUser();
 
       // Navigate to the main app screen
       Navigator.of(context).pushReplacement(
@@ -72,6 +92,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget build(BuildContext context) {
     final pages = [
       _buildWelcomePage(),
+      _buildNamePage(),
       _buildGradeSelectionPage(),
       _buildSubjectSelectionPage(),
     ];
@@ -124,7 +145,68 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
   }
 
-  // --- Page 2: Grade Selection ---
+  // --- Page 2: Name Input ---
+  Widget _buildNamePage() {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.person_outline, size: 80, color: AppColors.accent),
+          const SizedBox(height: 24),
+          const Text(
+            'What should we call you?',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppColors.ink,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Enter your first name or nickname.',
+            style: TextStyle(fontSize: 16, color: AppColors.neutralMid),
+          ),
+          const SizedBox(height: 32),
+          TextField(
+            controller: _nameController,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.next,
+            onSubmitted: (_) => _nextPage(),
+            style: const TextStyle(fontSize: 18, color: AppColors.ink),
+            decoration: InputDecoration(
+              hintText: 'e.g. Thabo',
+              hintStyle: const TextStyle(color: AppColors.neutralSoft),
+              filled: true,
+              fillColor: AppColors.neutralCard,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.neutralBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.neutralBorder,
+                  width: 2,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: AppColors.accent, width: 2),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Page 3: Grade Selection ---
   Widget _buildGradeSelectionPage() {
     return Padding(
       padding: const EdgeInsets.all(24.0),

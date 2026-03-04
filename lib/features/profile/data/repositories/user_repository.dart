@@ -150,6 +150,23 @@ class UserRepository {
     }
   }
 
+  /// Updates the current user's display name in Firestore.
+  Future<void> updateUserName({required String name}) async {
+    final user = _authService.currentUser;
+    if (user == null) {
+      throw AuthException(
+        'No user is currently signed in.',
+        code: 'no-current-user',
+      );
+    }
+
+    try {
+      await _database.updateUserName(user.id, name);
+    } catch (e) {
+      throw Exception('Failed to update user name.');
+    }
+  }
+
   /// Updates the current user's grade and subject preferences in Firestore.
   Future<void> updateUserPreferences({
     required int grade,

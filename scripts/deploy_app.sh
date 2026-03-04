@@ -1,12 +1,12 @@
 #!/bin/bash
-# Deploy Admin Portal to Firebase Hosting
+# Deploy Main App to Firebase Hosting
 
 echo "========================================"
-echo "Building Admin Portal for Web"
+echo "Building Main App for Web"
 echo "========================================"
 
-# Build Flutter web app targeting admin entry point
-flutter build web --target=lib/main_admin.dart --output=build/web_admin
+# Build Flutter web app targeting main entry point
+flutter build web --target=lib/main.dart --output=build/web
 
 if [ $? -ne 0 ]; then
     echo "Build failed!"
@@ -18,8 +18,8 @@ echo "========================================"
 echo "Deploying to Firebase Hosting"
 echo "========================================"
 
-# Deploy to Firebase Hosting (admin target)
-firebase deploy --only hosting:admin
+# Deploy to Firebase Hosting (app target)
+firebase deploy --only hosting:app
 
 if [ $? -ne 0 ]; then
     echo "Deployment failed!"
@@ -30,7 +30,6 @@ echo ""
 echo "========================================"
 echo "Deployment Complete!"
 echo "========================================"
-echo "Your admin portal was deployed to hosting target: admin"
-echo "Map your admin custom domain (e.g. admin.pastquestionpapers.com)"
-echo "to Firebase site: vibe-code-4c59f-admin"
+echo "Your main app is now live at the domain mapped to site:"
+echo "vibe-code-4c59f"
 echo "========================================"
