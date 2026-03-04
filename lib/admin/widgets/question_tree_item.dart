@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:past_question_paper_v1/admin/viewmodels/parent_child_browser_viewmodel.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
+import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 
 /// Tree item widget for displaying parent and child questions
 class QuestionTreeItem extends StatelessWidget {

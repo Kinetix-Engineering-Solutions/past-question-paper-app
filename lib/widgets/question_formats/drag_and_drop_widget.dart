@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/model/question.dart';
-import 'package:past_question_paper_v1/model/drag_and_drop models/drag_item.dart';
-import 'package:past_question_paper_v1/model/drag_and_drop models/drop_target.dart';
-import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
+import 'package:past_question_paper_v1/features/practice/domain/entities/question.dart';
+import 'package:past_question_paper_v1/features/practice/domain/entities/drag_drop/drag_item.dart';
+import 'package:past_question_paper_v1/features/practice/domain/entities/drag_drop/drop_target.dart';
+import 'package:past_question_paper_v1/features/practice/presentation/viewmodels/practice_viewmodel.dart';
 import 'package:past_question_paper_v1/widgets/latex_text.dart';
 
 class DragAndDropWidget extends ConsumerStatefulWidget {
@@ -113,12 +113,17 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.touch_app_outlined, color: _colorScheme.primary, size: 20),
+                  Icon(
+                    Icons.touch_app_outlined,
+                    color: _colorScheme.primary,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Drag items from below to the correct drop zones above',
-                      style: _textTheme.bodyMedium?.copyWith(
+                      style:
+                          _textTheme.bodyMedium?.copyWith(
                             color: _colorScheme.primary,
                             fontWeight: FontWeight.w600,
                           ) ??
@@ -134,7 +139,11 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.info_outline, color: _colorScheme.primary, size: 16),
+                  Icon(
+                    Icons.info_outline,
+                    color: _colorScheme.primary,
+                    size: 16,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -387,10 +396,7 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
         decoration: BoxDecoration(
           color: _colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: _colorScheme.outlineVariant,
-            width: 2,
-          ),
+          border: Border.all(color: _colorScheme.outlineVariant, width: 2),
           boxShadow: [
             BoxShadow(
               color: _colorScheme.shadow.withOpacity(0.08),
@@ -514,8 +520,9 @@ class _DragAndDropWidgetState extends ConsumerState<DragAndDropWidget> {
           LinearProgressIndicator(
             value: progress,
             backgroundColor: _colorScheme.outlineVariant.withOpacity(0.3),
-            color:
-                progress == 1.0 ? _colorScheme.tertiary : _colorScheme.primary,
+            color: progress == 1.0
+                ? _colorScheme.tertiary
+                : _colorScheme.primary,
             minHeight: 6,
           ),
         ],

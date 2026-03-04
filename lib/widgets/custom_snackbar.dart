@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:past_question_paper_v1/utils/haptic_feedback.dart';
+import 'package:past_question_paper_v1/core/shared/utils/haptic_feedback.dart';
 
 class CustomSnackBar {
   static void show({
@@ -8,6 +8,9 @@ class CustomSnackBar {
     bool isError = false,
     int durationSeconds = 3,
   }) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+
     // Add haptic feedback
     if (isError) {
       AppHaptics.error();
@@ -15,7 +18,11 @@ class CustomSnackBar {
       AppHaptics.success();
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.clearSnackBars();
+
+    late final ScaffoldFeatureController<SnackBar, SnackBarClosedReason>
+    controller;
+    controller = messenger.showSnackBar(
       SnackBar(
         content: Row(
           children: [
@@ -39,7 +46,7 @@ class CustomSnackBar {
           label: 'Dismiss',
           textColor: Colors.white,
           onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            controller.close();
           },
         ),
       ),

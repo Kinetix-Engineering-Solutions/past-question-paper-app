@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/model/question.dart';
-import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
+import 'package:past_question_paper_v1/features/practice/domain/entities/question.dart';
+import 'package:past_question_paper_v1/features/practice/presentation/viewmodels/practice_viewmodel.dart';
 import 'package:past_question_paper_v1/widgets/latex_text.dart';
 
 class MCQTextWidget extends ConsumerWidget {
@@ -28,8 +28,6 @@ class MCQTextWidget extends ConsumerWidget {
         //     padding: const EdgeInsets.only(bottom: 12.0),
         //     child: Image.network(question.imageUrl!),
         //   ),
-
-
         ...question.options.map((option) {
           final isSelected = selectedOption == option;
           return Padding(
@@ -49,7 +47,11 @@ class MCQTextWidget extends ConsumerWidget {
                 ),
                 title: LatexText(option),
                 trailing: isSelected
-          ? Icon(Icons.check_circle, color: colorScheme.primary, size: 24)
+                    ? Icon(
+                        Icons.check_circle,
+                        color: colorScheme.primary,
+                        size: 24,
+                      )
                     : null,
                 onTap: () {
                   ref

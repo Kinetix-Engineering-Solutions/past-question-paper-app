@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
+import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 
 /// Reusable empty state widget for displaying placeholder content
 ///

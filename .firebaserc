@@ -3,8 +3,11 @@
   "targets": {
     "vibe-code-4c59f": {
       "hosting": {
-        "admin": [
+        "app": [
           "vibe-code-4c59f"
+        ],
+        "admin": [
+          "vibe-code-4c59f-admin"
         ]
       }
     }

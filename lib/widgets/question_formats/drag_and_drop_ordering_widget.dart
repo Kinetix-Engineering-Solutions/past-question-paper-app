@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/model/question.dart';
-import 'package:past_question_paper_v1/model/drag_and_drop models/drag_item.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
-import 'package:past_question_paper_v1/viewmodels/practice_viewmodel.dart';
+import 'package:past_question_paper_v1/features/practice/domain/entities/question.dart';
+import 'package:past_question_paper_v1/features/practice/domain/entities/drag_drop/drag_item.dart';
+import 'package:past_question_paper_v1/core/theme/app_colors.dart';
+import 'package:past_question_paper_v1/features/practice/presentation/viewmodels/practice_viewmodel.dart';
 import 'package:past_question_paper_v1/widgets/latex_text.dart';
 
 class DragAndDropOrderingWidget extends ConsumerStatefulWidget {
@@ -176,7 +176,8 @@ class _DragAndDropOrderingWidgetState
                   Expanded(
                     child: Text(
                       'Arrange steps in the correct order',
-                      style: _textTheme.bodyMedium?.copyWith(
+                      style:
+                          _textTheme.bodyMedium?.copyWith(
                             color: _colorScheme.primary,
                             fontWeight: FontWeight.w600,
                           ) ??
@@ -192,7 +193,11 @@ class _DragAndDropOrderingWidgetState
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.info_outline, color: _colorScheme.primary, size: 16),
+                  Icon(
+                    Icons.info_outline,
+                    color: _colorScheme.primary,
+                    size: 16,
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(

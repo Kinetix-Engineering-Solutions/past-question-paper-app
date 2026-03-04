@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:past_question_paper_v1/model/question.dart';
+import 'package:past_question_paper_v1/features/practice/domain/entities/question.dart';
 
 void main() {
   group('PQP Mode Tests', () {

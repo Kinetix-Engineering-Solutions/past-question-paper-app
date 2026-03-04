@@ -5,7 +5,7 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
 
-const { generateBlueprintCompliantTest } = require('../src/services/enhancedTestService');
+const { generateBlueprintCompliantTest } = require('../src/modules/test_generation/services/enhancedTest.service');
 
 async function testGeneration() {
   console.log('🧪 Testing Smart Compensation Algorithm\n');

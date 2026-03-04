@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:past_question_paper_v1/model/question.dart';
+import 'package:past_question_paper_v1/features/practice/domain/entities/question.dart';
 import 'package:past_question_paper_v1/widgets/latex_text.dart';
 
 /// Widget that displays parent question context for child questions
@@ -12,7 +12,7 @@ class ParentQuestionContextCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     // Only show if question has parent context
     if (!question.hasParent || question.parentContext == null) {
       return const SizedBox.shrink();
@@ -106,7 +106,9 @@ class ParentQuestionContextCard extends StatelessWidget {
                           Icon(
                             Icons.broken_image_outlined,
                             size: 48,
-                            color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+                            color: colorScheme.onSurfaceVariant.withOpacity(
+                              0.5,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Text(

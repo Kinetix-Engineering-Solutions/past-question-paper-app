@@ -74,6 +74,10 @@ service cloud.firestore {
       match /sessions/{sessionId} {
         allow read, write: if isOwner(userId);
       }
+
+      match /mistake_bank/{entryId} {
+        allow read, write: if isOwner(userId);
+      }
     }
     
     // ============================================
@@ -97,6 +101,16 @@ service cloud.firestore {
     match /blueprints/{blueprintId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin(); // Admin can create/edit blueprints
+    }
+    
+    // ============================================
+    // Past Question Papers (PDFs)
+    // ============================================
+    
+    // Papers collection - authenticated users can read, admins can write
+    match /papers/{paperId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin(); // Admin can upload/edit/delete papers
     }
     
     // ============================================

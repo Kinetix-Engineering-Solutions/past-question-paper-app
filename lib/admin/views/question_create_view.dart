@@ -10,7 +10,7 @@ import 'package:past_question_paper_v1/admin/widgets/drag_drop_section.dart';
 import 'package:past_question_paper_v1/admin/widgets/metadata_section.dart';
 import 'package:past_question_paper_v1/admin/widgets/availability_section.dart';
 import 'package:past_question_paper_v1/admin/widgets/question_preview_panel.dart';
-import 'package:past_question_paper_v1/utils/app_colors.dart';
+import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 
 /// Question Creation Form - Refactored with separate widget sections
 class QuestionCreateView extends ConsumerStatefulWidget {

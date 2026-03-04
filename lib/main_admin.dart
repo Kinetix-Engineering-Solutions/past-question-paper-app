@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/admin/views/admin_root_view.dart';
 import 'package:past_question_paper_v1/firebase_options.dart';
-import 'package:past_question_paper_v1/utils/app_theme.dart';
+import 'package:past_question_paper_v1/core/theme/app_theme.dart';
 
 /// Entry point for Admin Portal (Web)
 /// This is a simplified version without authentication for quick data entry
