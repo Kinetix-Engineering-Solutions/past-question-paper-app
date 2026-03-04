@@ -40,6 +40,32 @@ case "$1" in
             xdg-open "$pr_url"
         fi
         ;;
+    "promote-staging")
+        echo "Preparing develop -> staging promotion..."
+        git checkout develop
+        git pull origin develop
+        git push origin develop
+        pr_url="https://github.com/Kinetix-Engineering-Solutions/past-question-paper-v0.01/compare/staging...develop?quick_pull=1"
+        echo "Create PR at: $pr_url"
+        if command -v open &> /dev/null; then
+            open "$pr_url"
+        elif command -v xdg-open &> /dev/null; then
+            xdg-open "$pr_url"
+        fi
+        ;;
+    "promote-master")
+        echo "Preparing staging -> master promotion..."
+        git checkout staging
+        git pull origin staging
+        git push origin staging
+        pr_url="https://github.com/Kinetix-Engineering-Solutions/past-question-paper-v0.01/compare/master...staging?quick_pull=1"
+        echo "Create PR at: $pr_url"
+        if command -v open &> /dev/null; then
+            open "$pr_url"
+        elif command -v xdg-open &> /dev/null; then
+            xdg-open "$pr_url"
+        fi
+        ;;
     *)
         echo "Simple Git Workflow Helper"
         echo ""
@@ -47,10 +73,14 @@ case "$1" in
         echo "  feature [name]    Create new feature branch"
         echo "  fix [name]        Create new fix branch"
         echo "  finish            Push branch and open PR"
+        echo "  promote-staging   Open PR develop -> staging"
+        echo "  promote-master    Open PR staging -> master"
         echo ""
         echo "Examples:"
         echo "  ./scripts/git-workflow.sh feature login-page"
         echo "  ./scripts/git-workflow.sh fix crash-bug"
         echo "  ./scripts/git-workflow.sh finish"
+        echo "  ./scripts/git-workflow.sh promote-staging"
+        echo "  ./scripts/git-workflow.sh promote-master"
         ;;
 esac

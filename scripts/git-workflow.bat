@@ -42,6 +42,26 @@ if "%1"=="finish" (
     goto :end
 )
 
+if "%1"=="promote-staging" (
+    echo Preparing develop -^> staging promotion...
+    git checkout develop
+    git pull origin develop
+    git push origin develop
+    start https://github.com/Kinetix-Engineering-Solutions/past-question-paper-v0.01/compare/staging...develop?quick_pull=1
+    echo PR opened for develop -^> staging.
+    goto :end
+)
+
+if "%1"=="promote-master" (
+    echo Preparing staging -^> master promotion...
+    git checkout staging
+    git pull origin staging
+    git push origin staging
+    start https://github.com/Kinetix-Engineering-Solutions/past-question-paper-v0.01/compare/master...staging?quick_pull=1
+    echo PR opened for staging -^> master.
+    goto :end
+)
+
 echo Unknown command: %1
 
 :help
@@ -51,10 +71,14 @@ echo Commands:
 echo   feature [name]    Create new feature branch
 echo   fix [name]        Create new fix branch  
 echo   finish            Push branch and open PR
+echo   promote-staging   Open PR develop -^> staging
+echo   promote-master    Open PR staging -^> master
 echo.
 echo Examples:
 echo   scripts\git-workflow.bat feature login-page
 echo   scripts\git-workflow.bat fix crash-bug
 echo   scripts\git-workflow.bat finish
+echo   scripts\git-workflow.bat promote-staging
+echo   scripts\git-workflow.bat promote-master
 
 :end
