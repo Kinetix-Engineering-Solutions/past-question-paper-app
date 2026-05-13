@@ -65,13 +65,16 @@ Quick Conversions:
         itemBuilder: (context, i) {
           final item = aids[i];
           return ListTile(
-            leading: Icon(item.icon, color: Theme.of(context).colorScheme.primary),
+            leading: Icon(
+              item.icon,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             title: Text(item.title),
             subtitle: Text(item.subtitle),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => _AidDetailScreen(item: item),
-            )),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => _AidDetailScreen(item: item)),
+            ),
           );
         },
       ),
@@ -84,7 +87,12 @@ class _AidItem {
   final String subtitle;
   final IconData icon;
   final String body;
-  const _AidItem({required this.title, required this.subtitle, required this.icon, required this.body});
+  const _AidItem({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.body,
+  });
 }
 
 class _AidDetailScreen extends StatelessWidget {

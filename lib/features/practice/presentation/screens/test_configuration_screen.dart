@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 import 'package:past_question_paper_v1/core/shared/utils/app_constants.dart';
+import 'package:past_question_paper_v1/features/practice/presentation/widgets/topic_mode_selector_sheet.dart';
 import 'package:past_question_paper_v1/features/practice/presentation/widgets/topic_list_view.dart';
 import 'package:past_question_paper_v1/features/practice/presentation/widgets/mode_list_view.dart'
     as list;
@@ -10,6 +11,7 @@ import 'package:past_question_paper_v1/features/practice/presentation/widgets/mo
 import 'package:past_question_paper_v1/features/practice/data/repositories/question_repository.dart';
 import 'practice_screen.dart';
 import 'mistake_bank_screen.dart';
+import 'topic_pdf_view_screen.dart';
 
 // ViewModel to handle the logic for this screen
 final testConfigurationViewModelProvider =
@@ -627,7 +629,36 @@ class _ByTopicView extends ConsumerWidget {
             topics: topics,
             loadingTopicId: loadingButtonId,
             modeColor: modeColor,
-            onTopicSelected: (topic, index) {
+            onTopicSelected: (topic, index) async {
+              final selection =
+                  await showModalBottomSheet<TopicModeSelectionResult>(
+                    context: context,
+                    isScrollControlled: true,
+                    builder: (_) => TopicModeSelectorSheet(
+                      topic: topic,
+                      initialSubject: subject,
+                      initialGrade: grade,
+                    ),
+                  );
+
+              if (selection == null || !context.mounted) {
+                return;
+              }
+
+              if (selection.mode == TopicPracticeMode.pdfView) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TopicPdfViewScreen(
+                      topic: topic,
+                      subject: selection.subject,
+                      grade: selection.grade,
+                    ),
+                  ),
+                );
+                return;
+              }
+
               final buttonId = 'topic_$index';
               final topicColors = [
                 AppColors.brandCyan,
@@ -646,9 +677,10 @@ class _ByTopicView extends ConsumerWidget {
                   .startTest(
                     context,
                     {
-                      'grade': grade,
-                      'subject': subject,
+                      'grade': selection.grade,
+                      'subject': selection.subject,
                       'mode': 'by_topic',
+                      'practiceMode': 'topic_quiz',
                       'topic': topic,
                       'paper': 'p1',
                       'topicColor': topicColor.value, // Pass color as int
@@ -656,6 +688,9 @@ class _ByTopicView extends ConsumerWidget {
                     buttonId,
                     modeKey: 'by_topic',
                     sessionMetadata: {
+                      'practiceMode': 'topic_quiz',
+                      'subject': selection.subject,
+                      'grade': selection.grade,
                       'topic': topic,
                       'topicColor': topicColor.value,
                     },

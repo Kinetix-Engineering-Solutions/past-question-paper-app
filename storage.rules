@@ -80,6 +80,13 @@ service firebase.storage {
       allow write: if isAdmin() && isImage() && isValidSize(10);
       allow delete: if isAdmin();
     }
+
+    // OCR source images - admin-only write, public read for debugging/preview
+    match /ocr_source_images/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isImage() && isValidSize(10);
+      allow delete: if isAdmin();
+    }
     
     // ============================================
     // Past Question Paper PDFs

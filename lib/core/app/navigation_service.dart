@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:past_question_paper_v1/core/app/main_navigation_screen.dart';
-import 'package:past_question_paper_v1/features/auth/presentation/screens/login.dart';
-import 'package:past_question_paper_v1/features/auth/presentation/screens/onboarding_screen.dart';
+import 'package:past_question_paper_v1/features/home/presentation/screens/home_screen.dart';
 
 class NavigationService {
   static final GlobalKey<NavigatorState> navigatorKey =
@@ -15,7 +13,7 @@ class NavigationService {
     if (nav == null) return;
 
     await nav.pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
       (route) => false, // Remove all previous routes
     );
   }
@@ -26,7 +24,7 @@ class NavigationService {
     if (nav == null) return;
 
     await nav.pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
       (route) => false, // Remove all previous routes
     );
   }
@@ -37,7 +35,7 @@ class NavigationService {
     if (nav == null) return;
 
     await nav.pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
       (route) => false, // Remove all previous routes
     );
   }

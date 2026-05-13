@@ -252,13 +252,13 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
   }
 
   /// Send password reset email in the UI
-  Future<void> sendPasswordResetEmailInUI({
+  Future<bool> sendPasswordResetEmailInUI({
     required String email,
     required BuildContext context,
     required GlobalKey<FormState> formKey,
   }) async {
     // Validate form
-    if (!formKey.currentState!.validate()) return;
+    if (!formKey.currentState!.validate()) return false;
 
     try {
       // Set loading state
@@ -274,12 +274,14 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
       state = const AsyncValue.data(null);
 
       // Show success message
-      if (!context.mounted) return;
+      if (!context.mounted) return true;
       CustomSnackBar.show(
         context: context,
         message: 'Password reset email sent. Please check your inbox.',
         isError: false,
       );
+
+      return true;
     } on AuthException catch (e) {
       // Update auth state with error
       state = AsyncValue.error(e.message, StackTrace.current);
@@ -292,6 +294,8 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
           isError: true,
         );
       }
+
+      return false;
     } catch (e) {
       // Handle unexpected errors
       state = AsyncValue.error(
@@ -306,6 +310,8 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
           isError: true,
         );
       }
+
+      return false;
     } finally {
       // Reset loading state
       _ref.read(loadingStateProvider.notifier).state = false;

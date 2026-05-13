@@ -1,66 +1,100 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:past_question_paper_v1/core/shared/models/app_metadata.dart';
 import 'package:past_question_paper_v1/features/profile/domain/entities/user.dart';
 import 'package:past_question_paper_v1/core/theme/app_colors.dart';
-import 'package:past_question_paper_v1/core/shared/utils/app_constants.dart';
 import 'package:past_question_paper_v1/core/shared/utils/haptic_feedback.dart';
 import 'package:past_question_paper_v1/features/home/presentation/viewmodels/home_viewmodel.dart';
+import 'package:past_question_paper_v1/features/home/presentation/viewmodels/app_metadata_viewmodel.dart';
 import 'package:past_question_paper_v1/features/history/presentation/viewmodels/session_history_viewmodel.dart';
-import 'package:past_question_paper_v1/features/profile/presentation/screens/profile_screen.dart';
-import 'package:past_question_paper_v1/features/practice/presentation/screens/test_configuration_screen.dart';
-import 'package:past_question_paper_v1/features/practice/presentation/widgets/subject_list_view.dart';
+import 'package:past_question_paper_v1/flashcard_screen.dart';
 
-final subjectPqpMetricsBySubjectProvider =
-    Provider<Map<String, SubjectPqpMetrics>>((ref) {
-      final asyncHistory = ref.watch(sessionHistoryViewModelProvider);
-      final historyEntries =
-          asyncHistory.asData?.value ?? const <SessionHistoryEntry>[];
+const String _allSubjectsFilter = 'All';
+const String _anyPaperFilter = 'Any';
 
-      final Map<String, SubjectPqpMetrics> metricsBySubject = {};
-      for (final subject in AppConstants.allSubjects) {
-        SessionHistoryEntry? lastPqp;
-        for (final entry in historyEntries) {
-          if (entry.isPastPaper && entry.subject == subject) {
-            lastPqp = entry;
-            break;
-          }
-        }
+final _homeSelectedSubjectProvider = StateProvider<String>(
+  (ref) => _allSubjectsFilter,
+);
+final _homeSearchQueryProvider = StateProvider<String>((ref) => '');
+final _homeSortByProvider = StateProvider<String>((ref) => 'A-Z');
+final _homeSelectedPaperProvider = StateProvider<String>(
+  (ref) => _anyPaperFilter,
+);
 
-        if (lastPqp == null) {
-          metricsBySubject[subject] = const SubjectPqpMetrics();
-          continue;
-        }
-
-        final unansweredCount = lastPqp.results
-            .where((r) => r['wasUnanswered'] == true)
-            .length;
-
-        metricsBySubject[subject] = SubjectPqpMetrics(
-          lastScorePercent: lastPqp.percentage.round(),
-          paceLabel: _paceLabelForLastPqp(lastPqp),
-          unansweredCount: unansweredCount,
-        );
-      }
-
-      return metricsBySubject;
-    });
-
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(appMetadataViewModelProvider.notifier).refresh();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref; // keep API compatible with previous build signature
     final homeState = ref.watch(homeViewModelProvider);
+    final metadataState = ref.watch(appMetadataViewModelProvider);
     final asyncHistory = ref.watch(sessionHistoryViewModelProvider);
     final user = homeState.user;
+    final selectedSubject = ref.watch(_homeSelectedSubjectProvider);
+    final searchQuery = ref.watch(_homeSearchQueryProvider);
+    final sortBy = ref.watch(_homeSortByProvider);
+    final selectedPaper = ref.watch(_homeSelectedPaperProvider);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    final userGrade = homeState.selectedGrade;
+    if (metadataState.isLoading && metadataState.metadata == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
-    // 🚀 MVP: Show all subjects but mark unavailable ones as "Coming Soon"
-    final subjects = AppConstants.allSubjects;
-    final pqpMetricsBySubject = ref.watch(subjectPqpMetricsBySubjectProvider);
+    if (metadataState.metadata == null) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  metadataState.errorMessage ??
+                      'Please connect to the internet to download your subjects for the first time.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                FilledButton(
+                  onPressed: () =>
+                      ref.read(appMetadataViewModelProvider.notifier).refresh(),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final preferredSubjects = _resolvePreferredSubjects(
+      user,
+      metadataState.metadata!,
+    );
+    final allTopics = _buildTopicItems(
+      metadataState.metadata!,
+      preferredSubjects,
+    );
+    final visibleTopics = _applyFilters(
+      topics: allTopics,
+      selectedSubject: selectedSubject,
+      searchQuery: searchQuery,
+      sortBy: sortBy,
+    );
 
     return Scaffold(
       backgroundColor: colorScheme.background,
@@ -73,7 +107,7 @@ class HomeScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Hello, ${resolvePreferredFirstName(user)}',
+              'Past Question Papers',
               style: textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: colorScheme.onBackground,
@@ -81,7 +115,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              'Grade $userGrade • ${subjects.length} subjects',
+              'Browse past paper topics',
               style: textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -89,37 +123,13 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: IconButton(
-              tooltip: 'Profile',
-              icon: Container(
-                height: 34,
-                width: 34,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: colorScheme.surface,
-                  border: Border.all(
-                    color: colorScheme.outline.withOpacity(0.3),
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  resolveInitials(user),
-                  style: textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                );
-              },
-            ),
+          IconButton(
+            tooltip: 'Refresh topics',
+            icon: const Icon(Icons.refresh),
+            onPressed: () =>
+                ref.read(appMetadataViewModelProvider.notifier).refresh(),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
@@ -137,10 +147,43 @@ class HomeScreen extends ConsumerWidget {
               data: (_) => const SizedBox.shrink(),
             ),
             Expanded(
-              child: _SubjectListSection(
-                subjects: subjects,
-                selectedGrade: userGrade,
-                pqpMetricsBySubject: pqpMetricsBySubject,
+              child: _TopicDiscoverySection(
+                subjects: preferredSubjects,
+                selectedSubject: selectedSubject,
+                selectedPaper: selectedPaper,
+                searchQuery: searchQuery,
+                sortBy: sortBy,
+                topics: visibleTopics,
+                totalTopicCount: allTopics.length,
+                onSubjectChanged: (subject) {
+                  ref.read(_homeSelectedSubjectProvider.notifier).state =
+                      subject;
+                },
+                onPaperChanged: (paper) {
+                  ref.read(_homeSelectedPaperProvider.notifier).state = paper;
+                },
+                onSearchChanged: (query) {
+                  ref.read(_homeSearchQueryProvider.notifier).state = query;
+                },
+                onSortChanged: (sort) {
+                  ref.read(_homeSortByProvider.notifier).state = sort;
+                },
+                onTopicTap: (topic) {
+                  AppHaptics.light();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FlashcardScreen(
+                        subjectId: topic.subject,
+                        topicId: _toTopicId(topic.topic),
+                        topicTitle: topic.topic,
+                        initialPaper: selectedPaper == _anyPaperFilter
+                            ? null
+                            : selectedPaper,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ],
@@ -148,98 +191,654 @@ class HomeScreen extends ConsumerWidget {
       ),
     );
   }
+
+  List<String> _resolvePreferredSubjects(AppUser? user, AppMetadata metadata) {
+    // For now, always use the subjects defined in remote metadata so
+    // the UI shows all available subjects (e.g., Mathematics, Physical Sciences).
+    final all = metadata.subjects.map((s) => s.id).toList()..sort();
+    return all;
+  }
+
+  List<_TopicHomeItem> _buildTopicItems(
+    AppMetadata metadata,
+    List<String> subjects,
+  ) {
+    final items = <_TopicHomeItem>[];
+
+    final byId = {for (final subject in metadata.subjects) subject.id: subject};
+
+    for (final subject in subjects) {
+      final topics = byId[subject]?.topics ?? const <String>[];
+      for (final topic in topics) {
+        final hashSeed = '$subject::$topic';
+        final estimatedQuestions = 8 + (hashSeed.hashCode.abs() % 28);
+        items.add(
+          _TopicHomeItem(
+            subject: subject,
+            topic: topic,
+            estimatedQuestions: estimatedQuestions,
+            isSubjectAvailable: true,
+          ),
+        );
+      }
+    }
+
+    return items;
+  }
+
+  List<_TopicHomeItem> _applyFilters({
+    required List<_TopicHomeItem> topics,
+    required String selectedSubject,
+    required String searchQuery,
+    required String sortBy,
+  }) {
+    var filtered = topics;
+
+    if (selectedSubject != _allSubjectsFilter) {
+      filtered = filtered
+          .where((topic) => topic.subject == selectedSubject)
+          .toList();
+    }
+
+    final query = searchQuery.trim().toLowerCase();
+    if (query.isNotEmpty) {
+      filtered = filtered
+          .where(
+            (topic) =>
+                topic.topic.toLowerCase().contains(query) ||
+                topic.subject.toLowerCase().contains(query),
+          )
+          .toList();
+    }
+
+    filtered.sort((a, b) {
+      switch (sortBy) {
+        case 'Most questions':
+          return b.estimatedQuestions.compareTo(a.estimatedQuestions);
+        case 'Available first':
+          if (a.isSubjectAvailable == b.isSubjectAvailable) {
+            return a.topic.compareTo(b.topic);
+          }
+          return a.isSubjectAvailable ? -1 : 1;
+        case 'A-Z':
+        default:
+          return a.topic.compareTo(b.topic);
+      }
+    });
+
+    return filtered;
+  }
 }
 
-String? _paceLabelForLastPqp(SessionHistoryEntry entry) {
-  final durationMinutes = entry.durationMinutes;
-  final sessionSeconds = entry.sessionDurationSeconds;
-  final totalQuestions = entry.totalQuestions;
+class _TopicHomeItem {
+  final String subject;
+  final String topic;
+  final int estimatedQuestions;
+  final bool isSubjectAvailable;
 
-  if (durationMinutes == null || durationMinutes <= 0) return null;
-  if (sessionSeconds == null || sessionSeconds <= 0) return null;
-  if (totalQuestions <= 0) return null;
-
-  final targetSecondsPerQuestion = (durationMinutes * 60) / totalQuestions;
-  final actualSecondsPerQuestion = sessionSeconds / totalQuestions;
-  if (targetSecondsPerQuestion <= 0) return null;
-
-  final ratio = actualSecondsPerQuestion / targetSecondsPerQuestion;
-  if (ratio > 1.15) return 'Slow';
-  if (ratio < 0.85) return 'Fast';
-  return 'On pace';
+  const _TopicHomeItem({
+    required this.subject,
+    required this.topic,
+    required this.estimatedQuestions,
+    required this.isSubjectAvailable,
+  });
 }
 
-// --- Subject List Section ---
-class _SubjectListSection extends StatelessWidget {
+class _TopicDiscoverySection extends StatelessWidget {
   final List<String> subjects;
-  final int selectedGrade;
-  final Map<String, SubjectPqpMetrics> pqpMetricsBySubject;
+  final String selectedSubject;
+  final String selectedPaper;
+  final String searchQuery;
+  final String sortBy;
+  final List<_TopicHomeItem> topics;
+  final int totalTopicCount;
+  final ValueChanged<String> onSubjectChanged;
+  final ValueChanged<String> onPaperChanged;
+  final ValueChanged<String> onSearchChanged;
+  final ValueChanged<String> onSortChanged;
+  final ValueChanged<_TopicHomeItem> onTopicTap;
 
-  const _SubjectListSection({
+  const _TopicDiscoverySection({
     required this.subjects,
-    required this.selectedGrade,
-    required this.pqpMetricsBySubject,
+    required this.selectedSubject,
+    required this.selectedPaper,
+    required this.searchQuery,
+    required this.sortBy,
+    required this.topics,
+    required this.totalTopicCount,
+    required this.onSubjectChanged,
+    required this.onPaperChanged,
+    required this.onSearchChanged,
+    required this.onSortChanged,
+    required this.onTopicTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (subjects.isEmpty) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    if (subjects.isEmpty || totalTopicCount == 0) {
       return Center(
         child: Text(
-          'No subjects selected for this grade.\nGo to your profile to add subjects.',
+          'No preferred subjects found yet.\nSet your subjects in profile to personalize topics.',
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          style: textTheme.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
           ),
         ),
       );
     }
 
-    // Subject color palette - PQP brand colors
-    final subjectColors = [
-      AppColors.brandCyan, // Cyan - question mark highlight
-      AppColors.brandMagenta, // Magenta - playful accent
-      AppColors.brandLavender, // Lavender - supportive accent
-      AppColors.brandTeal, // Teal - geometric accent
-      AppColors.accent, // Orange - primary action
-      AppColors.brandCyan, // Repeat for more subjects
-      AppColors.brandMagenta,
-      AppColors.brandLavender,
-    ];
-
-    final subjectOptions = subjects.asMap().entries.map((entry) {
-      final index = entry.key;
-      final subject = entry.value;
-      final isAvailable = AppConstants.isSubjectAvailable(subject);
-
-      return SubjectOption(
-        name: subject,
-        color: subjectColors[index % subjectColors.length],
-        isAvailable: isAvailable,
-        subtitle: isAvailable
-            ? 'Paper 1 & 2 Available'
-            : 'Questions being prepared',
-      );
-    }).toList();
-
-    return SubjectListView(
-      subjects: subjectOptions,
-      pqpMetricsBySubject: pqpMetricsBySubject,
-      onSubjectSelected: (subject, index) {
-        AppHaptics.light();
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => TestConfigurationScreen(
-              subject: subject.name,
-              grade: selectedGrade,
-              subjectColor: subject.color,
+    return Column(
+      children: [
+        Container(
+          margin: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => _showFiltersBottomSheet(
+              context: context,
+              subjects: subjects,
+              selectedSubject: selectedSubject,
+              selectedPaper: selectedPaper,
+              searchQuery: searchQuery,
+              sortBy: sortBy,
+              onSubjectChanged: onSubjectChanged,
+              onPaperChanged: onPaperChanged,
+              onSearchChanged: onSearchChanged,
+              onSortChanged: onSortChanged,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Filters',
+                        style: textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _filterSummaryText(
+                          selectedSubject: selectedSubject,
+                          selectedPaper: selectedPaper,
+                          searchQuery: searchQuery,
+                          sortBy: sortBy,
+                        ),
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceVariant,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.tune,
+                    size: 20,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
           ),
-        );
-      },
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Showing ${topics.length} of $totalTopicCount topics',
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: topics.isEmpty
+              ? Center(
+                  child: Text(
+                    'No topics match these filters.',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  itemCount: topics.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final item = topics[index];
+                    final leadingColor = item.isSubjectAvailable
+                        ? AppColors.accent
+                        : colorScheme.outline;
+
+                    return Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: BorderSide(
+                          color: colorScheme.outline.withOpacity(0.2),
+                        ),
+                      ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () => onTopicTap(item),
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 4,
+                                height: 54,
+                                decoration: BoxDecoration(
+                                  color: leadingColor,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.topic,
+                                      style: textTheme.titleSmall?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: colorScheme.onSurface,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 6,
+                                      children: [
+                                        _TopicMetaTag(
+                                          label: _toDisplayCase(item.subject),
+                                          background:
+                                              colorScheme.surfaceVariant,
+                                          foreground:
+                                              colorScheme.onSurfaceVariant,
+                                        ),
+                                        _TopicMetaTag(
+                                          label: 'Past paper questions',
+                                          background: colorScheme.primary
+                                              .withOpacity(0.10),
+                                          foreground: colorScheme.primary,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(
+                                Icons.arrow_forward_ios,
+                                size: 16,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
+
+  String _filterSummaryText({
+    required String selectedSubject,
+    required String selectedPaper,
+    required String searchQuery,
+    required String sortBy,
+  }) {
+    final subjectLabel = selectedSubject == 'All'
+        ? 'All subjects'
+        : _toDisplayCase(selectedSubject);
+    final parts = <String>[subjectLabel];
+    if (selectedPaper != _anyPaperFilter) {
+      parts.add(selectedPaper);
+    }
+    parts.add(sortBy);
+    final trimmedSearch = searchQuery.trim();
+    if (trimmedSearch.isNotEmpty) {
+      parts.add('Search: $trimmedSearch');
+    }
+
+    return parts.join(' • ');
+  }
+
+  void _showFiltersBottomSheet({
+    required BuildContext context,
+    required List<String> subjects,
+    required String selectedSubject,
+    required String selectedPaper,
+    required String searchQuery,
+    required String sortBy,
+    required ValueChanged<String> onSubjectChanged,
+    required ValueChanged<String> onPaperChanged,
+    required ValueChanged<String> onSearchChanged,
+    required ValueChanged<String> onSortChanged,
+  }) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      isScrollControlled: true,
+      builder: (bottomSheetContext) => _FiltersBottomSheet(
+        subjects: subjects,
+        selectedSubject: selectedSubject,
+        selectedPaper: selectedPaper,
+        searchQuery: searchQuery,
+        sortBy: sortBy,
+        onSubjectChanged: onSubjectChanged,
+        onPaperChanged: onPaperChanged,
+        onSearchChanged: onSearchChanged,
+        onSortChanged: onSortChanged,
+      ),
+    );
+  }
+}
+
+class _TopicMetaTag extends StatelessWidget {
+  final String label;
+  final Color background;
+  final Color foreground;
+
+  const _TopicMetaTag({
+    required this.label,
+    required this.background,
+    required this.foreground,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: foreground,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _FiltersBottomSheet extends StatefulWidget {
+  final List<String> subjects;
+  final String selectedSubject;
+  final String selectedPaper;
+  final String searchQuery;
+  final String sortBy;
+  final ValueChanged<String> onSubjectChanged;
+  final ValueChanged<String> onPaperChanged;
+  final ValueChanged<String> onSearchChanged;
+  final ValueChanged<String> onSortChanged;
+
+  const _FiltersBottomSheet({
+    required this.subjects,
+    required this.selectedSubject,
+    required this.selectedPaper,
+    required this.searchQuery,
+    required this.sortBy,
+    required this.onSubjectChanged,
+    required this.onPaperChanged,
+    required this.onSearchChanged,
+    required this.onSortChanged,
+  });
+
+  @override
+  State<_FiltersBottomSheet> createState() => _FiltersBottomSheetState();
+}
+
+class _FiltersBottomSheetState extends State<_FiltersBottomSheet> {
+  late final TextEditingController _searchController;
+  late String _tempPaper;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController(text: widget.searchQuery);
+    _tempPaper = widget.selectedPaper;
+  }
+
+  @override
+  void didUpdateWidget(covariant _FiltersBottomSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedPaper != widget.selectedPaper &&
+        _tempPaper == oldWidget.selectedPaper) {
+      _tempPaper = widget.selectedPaper;
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Filters',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Done'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Search',
+              style: textTheme.labelLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _searchController,
+              onChanged: widget.onSearchChanged,
+              decoration: InputDecoration(
+                hintText: 'Search topics...',
+                prefixIcon: const Icon(Icons.search, size: 20),
+                suffixIcon: _searchController.text.trim().isNotEmpty
+                    ? IconButton(
+                        tooltip: 'Clear search',
+                        icon: const Icon(Icons.close, size: 18),
+                        onPressed: () {
+                          _searchController.clear();
+                          widget.onSearchChanged('');
+                          setState(() {});
+                        },
+                      )
+                    : null,
+                isDense: true,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Sort',
+              style: textTheme.labelLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            DropdownButtonFormField<String>(
+              value: widget.sortBy,
+              decoration: const InputDecoration(isDense: true),
+              items: const [
+                DropdownMenuItem(value: 'A-Z', child: Text('A-Z')),
+                DropdownMenuItem(
+                  value: 'Most questions',
+                  child: Text('Most questions'),
+                ),
+                DropdownMenuItem(
+                  value: 'Available first',
+                  child: Text('Available first'),
+                ),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  widget.onSortChanged(value);
+                }
+              },
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Paper',
+              style: textTheme.labelLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: const ['Any', 'Paper 1', 'Paper 2', 'Paper 3'].map((
+                value,
+              ) {
+                final isSelected = _tempPaper == value;
+                return ChoiceChip(
+                  label: Text(value),
+                  selected: isSelected,
+                  selectedColor: colorScheme.primaryContainer,
+                  backgroundColor: colorScheme.surfaceContainerLow,
+                  labelStyle: textTheme.labelMedium?.copyWith(
+                    color: isSelected
+                        ? colorScheme.onPrimaryContainer
+                        : colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  onSelected: (_) {
+                    setState(() => _tempPaper = value);
+                    widget.onPaperChanged(value);
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Subject',
+              style: textTheme.labelLarge?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  _buildSubjectSheetTile(
+                    context: context,
+                    label: 'All',
+                    selected: widget.selectedSubject == 'All',
+                    onTap: () => widget.onSubjectChanged('All'),
+                  ),
+                  ...widget.subjects.map(
+                    (subject) => _buildSubjectSheetTile(
+                      context: context,
+                      label: _toDisplayCase(subject),
+                      selected: widget.selectedSubject == subject,
+                      onTap: () => widget.onSubjectChanged(subject),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubjectSheetTile({
+    required BuildContext context,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return ListTile(
+      title: Text(label),
+      trailing: selected
+          ? Icon(Icons.check_circle, color: AppColors.accent)
+          : Icon(Icons.circle_outlined, color: colorScheme.outline),
+      onTap: onTap,
+    );
+  }
+}
+
+String _toDisplayCase(String text) {
+  return text
+      .split(RegExp(r'\s+'))
+      .where((word) => word.isNotEmpty)
+      .map((word) => '${word[0].toUpperCase()}${word.substring(1)}')
+      .join(' ');
+}
+
+String _toTopicId(String topicTitle) {
+  return topicTitle
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'_+'), '_')
+      .replaceAll(RegExp(r'^_|_$'), '');
 }
 
 class _HistoryStatusBanner extends StatelessWidget {

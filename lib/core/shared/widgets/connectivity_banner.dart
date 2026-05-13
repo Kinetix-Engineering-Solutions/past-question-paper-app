@@ -5,10 +5,10 @@ import 'package:past_question_paper_v1/core/shared/services/connectivity_service
 import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 
 /// Global banner that displays when network connectivity is lost or degraded
-/// 
+///
 /// Integrates with ConnectivityService via Riverpod to show/hide based on
 /// network status. Positioned at top of screen with slide animation.
-/// 
+///
 /// Place this widget high in the widget tree (e.g., in MaterialApp builder)
 /// to ensure it appears over all screens.
 class ConnectivityBanner extends ConsumerWidget {
@@ -55,13 +55,10 @@ class _BannerContentState extends ConsumerState<_BannerContent>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, -1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
 
     // Trigger slide-in animation
     _animationController.forward();
@@ -75,7 +72,7 @@ class _BannerContentState extends ConsumerState<_BannerContent>
 
   Future<void> _handleRetry() async {
     setState(() => _isRetrying = true);
-    
+
     try {
       await ref.recheckConnectivity();
       // Wait a moment for status to update
@@ -108,10 +105,7 @@ class _BannerContentState extends ConsumerState<_BannerContent>
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               border: Border(
-                bottom: BorderSide(
-                  color: bannerConfig.borderColor,
-                  width: 1,
-                ),
+                bottom: BorderSide(color: bannerConfig.borderColor, width: 1),
               ),
             ),
             child: Row(
@@ -155,7 +149,9 @@ class _BannerContentState extends ConsumerState<_BannerContent>
                         horizontal: 12,
                         vertical: 8,
                       ),
-                      backgroundColor: bannerConfig.textColor.withValues(alpha: 0.15),
+                      backgroundColor: bannerConfig.textColor.withValues(
+                        alpha: 0.15,
+                      ),
                     ),
                     child: _isRetrying
                         ? SizedBox(
@@ -190,8 +186,9 @@ class _BannerContentState extends ConsumerState<_BannerContent>
       case ConnectivityStatus.offline:
         return _BannerConfig(
           backgroundColor: isDark ? AppColorsDark.ink : AppColors.ink,
-          borderColor: (isDark ? AppColorsDark.ink : AppColors.ink)
-              .withValues(alpha: 0.5),
+          borderColor: (isDark ? AppColorsDark.ink : AppColors.ink).withValues(
+            alpha: 0.5,
+          ),
           icon: Icons.wifi_off_rounded,
           iconColor: AppColors.neutralCard,
           textColor: AppColors.neutralCard,
@@ -201,8 +198,9 @@ class _BannerContentState extends ConsumerState<_BannerContent>
 
       case ConnectivityStatus.degraded:
         return _BannerConfig(
-          backgroundColor:
-              isDark ? AppColorsDark.accentSoft : AppColors.accentSoft,
+          backgroundColor: isDark
+              ? AppColorsDark.accentSoft
+              : AppColors.accentSoft,
           borderColor: AppColors.accent.withValues(alpha: 0.3),
           icon: Icons.signal_wifi_connected_no_internet_4_rounded,
           iconColor: AppColors.accent,

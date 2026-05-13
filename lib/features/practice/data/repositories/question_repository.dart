@@ -8,10 +8,6 @@ final questionRepositoryProvider = Provider<QuestionRepository>((ref) {
   // You can specify the region if your functions are not in us-central1
   final functions = FirebaseFunctions.instance;
 
-  // For development, you might want to connect to the emulator
-  // Uncomment the following line if you're using the Firebase emulator
-  // functions.useFunctionsEmulator('localhost', 5001);
-
   return QuestionRepository(functions);
 });
 
@@ -58,11 +54,6 @@ class QuestionRepository {
       // Get a reference to the Cloud Function
       final callable = _functions.httpsCallable('generateTest');
 
-      print('Calling generateTest with options: $options'); // Debug
-      print(
-        'Grade: ${options['grade']} (type: ${options['grade'].runtimeType}), Subject: ${options['subject']}',
-      ); // More detailed debug
-
       // Validate that required parameters are present
       if (options['grade'] == null || options['subject'] == null) {
         throw Exception('Grade and subject are required parameters');
@@ -71,8 +62,7 @@ class QuestionRepository {
       // Call the function with the user's selected options
       final result = await callable.call(options);
 
-      print('Cloud Function result type: ${result.data.runtimeType}'); // Debug
-      print('Cloud Function result: ${result.data}'); // Debug
+      // Function completed successfully
 
       // The new modular function returns an object with questions array
       final Map<String, dynamic> responseData = _safeMapCast(result.data);

@@ -2,19 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:past_question_paper_v1/firebase_options.dart';
-import 'package:past_question_paper_v1/core/app/deep_link_handler.dart';
-import 'package:past_question_paper_v1/core/app/navigation_service.dart';
 import 'package:past_question_paper_v1/core/theme/app_theme.dart';
-import 'package:past_question_paper_v1/features/auth/presentation/viewmodels/auth_viewmodel.dart';
-import 'package:past_question_paper_v1/features/auth/presentation/screens/login.dart';
-import 'package:past_question_paper_v1/core/app/main_navigation_screen.dart';
-import 'package:past_question_paper_v1/features/auth/presentation/screens/onboarding_screen.dart';
-import 'package:past_question_paper_v1/features/auth/presentation/screens/signup_screen.dart';
 import 'package:past_question_paper_v1/core/shared/widgets/connectivity_banner.dart';
+import 'package:past_question_paper_v1/features/home/presentation/screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables (e.g. Supabase config URL).
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (_) {
+    // Intentionally ignore missing/invalid .env in release builds.
+  }
+
   // Initialize Firebase with platform-specific options
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
@@ -38,19 +41,13 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
-      title: 'STEM Question Papers',
+      title: 'Past Papers Pilot',
       debugShowCheckedModeBanner: false,
-      navigatorKey: NavigationService.navigatorKey,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light,
-      home: const AppInitializer(),
-      routes: {
-        '/login': (context) => const LoginScreen(),
-        '/signup': (context) => const SignUpScreen(),
-        '/home': (context) => const MainNavigationScreen(),
-        '/onboarding': (context) => const OnboardingScreen(),
-      },
+      home: const HomeScreen(),
+      routes: {'/home': (context) => const HomeScreen()},
       builder: (context, child) {
         return Stack(
           children: [
@@ -63,63 +60,6 @@ class MyApp extends ConsumerWidget {
             ),
           ],
         );
-      },
-    );
-  }
-}
-
-class AppInitializer extends ConsumerStatefulWidget {
-  const AppInitializer({super.key});
-
-  @override
-  ConsumerState<AppInitializer> createState() => _AppInitializerState();
-}
-
-class _AppInitializerState extends ConsumerState<AppInitializer> {
-  @override
-  void initState() {
-    super.initState();
-    _initializeDeepLinks();
-  }
-
-  Future<void> _initializeDeepLinks() async {
-    final authService = ref.read(authViewModelProvider.notifier).authService;
-    final deepLinkHandler = DeepLinkHandler(authService, context: context);
-    await deepLinkHandler.handleIncomingLinks();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final authState = ref.watch(authViewModelProvider);
-
-    return authState.when(
-      data: (user) {
-        if (user == null) {
-          // User is not logged in
-          return const LoginScreen();
-        } else if (user.hasCompletedProfile) {
-          // User is logged in and has completed profile
-          return const MainNavigationScreen();
-        } else {
-          // User is logged in but hasn't completed profile
-          return const OnboardingScreen();
-        }
-      },
-      loading: () => const Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Loading...', style: TextStyle(fontSize: 16)),
-            ],
-          ),
-        ),
-      ),
-      error: (error, stack) {
-        // On error, default to login screen
-        return const LoginScreen();
       },
     );
   }

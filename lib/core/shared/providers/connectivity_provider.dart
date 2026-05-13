@@ -4,20 +4,20 @@ import 'package:past_question_paper_v1/core/shared/services/connectivity_service
 /// Global singleton instance of ConnectivityService
 final connectivityServiceProvider = Provider<ConnectivityService>((ref) {
   final service = ConnectivityService();
-  
+
   // Ensure cleanup when provider is disposed
   ref.onDispose(() {
     service.dispose();
   });
-  
+
   return service;
 });
 
 /// Stream provider for connectivity status
-/// 
+///
 /// Widgets can watch this provider to reactively update UI based on
 /// network connectivity changes.
-/// 
+///
 /// Example usage:
 /// ```dart
 /// final connectivityStatus = ref.watch(connectivityStatusProvider);
@@ -37,9 +37,9 @@ final connectivityStatusProvider = StreamProvider<ConnectivityStatus>((ref) {
 });
 
 /// Provider for synchronous access to current connectivity status
-/// 
+///
 /// Useful when you need immediate status without watching the stream.
-/// 
+///
 /// Example:
 /// ```dart
 /// final status = ref.read(currentConnectivityStatusProvider);
@@ -54,9 +54,9 @@ final currentConnectivityStatusProvider = Provider<ConnectivityStatus>((ref) {
 });
 
 /// Helper method to manually trigger connectivity recheck
-/// 
+///
 /// Useful for "Retry" buttons in offline states.
-/// 
+///
 /// Example:
 /// ```dart
 /// ElevatedButton(

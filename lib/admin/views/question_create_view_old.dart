@@ -9,13 +9,12 @@ class QuestionCreateView extends ConsumerStatefulWidget {
   const QuestionCreateView({super.key});
 
   @override
-  ConsumerState<QuestionCreateView> createState() =>
-      _QuestionCreateViewState();
+  ConsumerState<QuestionCreateView> createState() => _QuestionCreateViewState();
 }
 
 class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Controllers
   final _questionTextController = TextEditingController();
   final _correctAnswerController = TextEditingController();
@@ -23,16 +22,16 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
   final _marksController = TextEditingController(text: '1');
   final _pqpNumberController = TextEditingController();
   final _correctOrderController = TextEditingController();
-  
+
   // MCQ options controllers
   final _optionAController = TextEditingController();
   final _optionBController = TextEditingController();
   final _optionCController = TextEditingController();
   final _optionDController = TextEditingController();
-  
+
   // Answer variations for short answer
   final List<TextEditingController> _variationControllers = [];
-  
+
   // Drag items for drag-and-drop ordering
   final List<TextEditingController> _dragItemControllers = [];
 
@@ -60,7 +59,7 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
   @override
   Widget build(BuildContext context) {
     final viewModel = ref.watch(questionCreateViewModelProvider);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Question'),
@@ -103,86 +102,84 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(24),
                     child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSectionTitle('Basic Information'),
-                    const SizedBox(height: 16),
-                    _buildBasicInfoSection(viewModel),
-                    const SizedBox(height: 32),
-                    
-                    _buildSectionTitle('Question Content'),
-                    const SizedBox(height: 16),
-                    _buildQuestionContentSection(viewModel),
-                    const SizedBox(height: 32),
-                    
-                    _buildSectionTitle('Answer Configuration'),
-                    const SizedBox(height: 16),
-                    _buildAnswerSection(viewModel),
-                    const SizedBox(height: 32),
-                    
-                    _buildSectionTitle('Metadata'),
-                    const SizedBox(height: 16),
-                    _buildMetadataSection(viewModel),
-                    const SizedBox(height: 32),
-                    
-                    _buildSectionTitle('Availability'),
-                    const SizedBox(height: 16),
-                    _buildAvailabilitySection(viewModel),
-                    const SizedBox(height: 48),
-                  ],
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle('Basic Information'),
+                        const SizedBox(height: 16),
+                        _buildBasicInfoSection(viewModel),
+                        const SizedBox(height: 32),
+
+                        _buildSectionTitle('Question Content'),
+                        const SizedBox(height: 16),
+                        _buildQuestionContentSection(viewModel),
+                        const SizedBox(height: 32),
+
+                        _buildSectionTitle('Answer Configuration'),
+                        const SizedBox(height: 16),
+                        _buildAnswerSection(viewModel),
+                        const SizedBox(height: 32),
+
+                        _buildSectionTitle('Metadata'),
+                        const SizedBox(height: 16),
+                        _buildMetadataSection(viewModel),
+                        const SizedBox(height: 32),
+
+                        _buildSectionTitle('Availability'),
+                        const SizedBox(height: 16),
+                        _buildAvailabilitySection(viewModel),
+                        const SizedBox(height: 48),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            
-            // Preview (Right side)
-            Expanded(
-              flex: 2,
-              child: Container(
-                color: Colors.grey[100],
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      color: AppColors.ink,
-                      child: Row(
-                        children: [
-                          Icon(Icons.visibility, color: AppColors.paper),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Preview',
-                            style: TextStyle(
-                              color: AppColors.paper,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+
+                // Preview (Right side)
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    color: Colors.grey[100],
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          color: AppColors.ink,
+                          child: Row(
+                            children: [
+                              Icon(Icons.visibility, color: AppColors.paper),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Preview',
+                                style: TextStyle(
+                                  color: AppColors.paper,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(24),
+                            child: _buildPreview(viewModel),
+                          ),
+                        ),
+                      ],
                     ),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(24),
-                        child: _buildPreview(viewModel),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-    ),
-  )); // Close Center and Scaffold
-}
+    ); // Close Center and Scaffold
+  }
 
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-      ),
+      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
     );
   }
 
@@ -200,7 +197,8 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
                     .toList(),
                 onChanged: (value) {
                   if (value != null) {
-                    ref.read(questionCreateViewModelProvider.notifier)
+                    ref
+                        .read(questionCreateViewModelProvider.notifier)
                         .updateSubject(value);
                   }
                 },
@@ -218,11 +216,13 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
                     .toList(),
                 onChanged: (value) {
                   if (value != null) {
-                    ref.read(questionCreateViewModelProvider.notifier)
+                    ref
+                        .read(questionCreateViewModelProvider.notifier)
                         .updateGrade(value);
                   }
                 },
-                validator: (value) => value == null ? 'Grade is required' : null,
+                validator: (value) =>
+                    value == null ? 'Grade is required' : null,
               ),
             ),
           ],
@@ -236,7 +236,8 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
               .toList(),
           onChanged: (value) {
             if (value != null) {
-              ref.read(questionCreateViewModelProvider.notifier)
+              ref
+                  .read(questionCreateViewModelProvider.notifier)
                   .updateTopic(value);
             }
           },
@@ -256,7 +257,8 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
                 ],
                 onChanged: (value) {
                   if (value != null) {
-                    ref.read(questionCreateViewModelProvider.notifier)
+                    ref
+                        .read(questionCreateViewModelProvider.notifier)
                         .updatePaper(value);
                   }
                 },
@@ -267,15 +269,13 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
               child: DropdownButtonFormField<int>(
                 value: state.year,
                 decoration: const InputDecoration(labelText: 'Year *'),
-                items: List.generate(
-                  10,
-                  (i) => DateTime.now().year - i,
-                )
+                items: List.generate(10, (i) => DateTime.now().year - i)
                     .map((y) => DropdownMenuItem(value: y, child: Text('$y')))
                     .toList(),
                 onChanged: (value) {
                   if (value != null) {
-                    ref.read(questionCreateViewModelProvider.notifier)
+                    ref
+                        .read(questionCreateViewModelProvider.notifier)
                         .updateYear(value);
                   }
                 },
@@ -293,7 +293,8 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
                 ],
                 onChanged: (value) {
                   if (value != null) {
-                    ref.read(questionCreateViewModelProvider.notifier)
+                    ref
+                        .read(questionCreateViewModelProvider.notifier)
                         .updateSeason(value);
                   }
                 },
@@ -312,15 +313,22 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
           value: state.format,
           decoration: const InputDecoration(labelText: 'Question Format *'),
           items: const [
-            DropdownMenuItem(value: 'MCQ', child: Text('Multiple Choice (MCQ)')),
-            DropdownMenuItem(value: 'short_answer', child: Text('Short Answer')),
+            DropdownMenuItem(
+              value: 'MCQ',
+              child: Text('Multiple Choice (MCQ)'),
+            ),
+            DropdownMenuItem(
+              value: 'short_answer',
+              child: Text('Short Answer'),
+            ),
             DropdownMenuItem(value: 'drag_drop', child: Text('Drag & Drop')),
             DropdownMenuItem(value: 'true_false', child: Text('True/False')),
             DropdownMenuItem(value: 'essay', child: Text('Essay')),
           ],
           onChanged: (value) {
             if (value != null) {
-              ref.read(questionCreateViewModelProvider.notifier)
+              ref
+                  .read(questionCreateViewModelProvider.notifier)
                   .updateFormat(value);
             }
           },
@@ -338,7 +346,8 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
           validator: (value) =>
               value?.isEmpty ?? true ? 'Question text is required' : null,
           onChanged: (value) {
-            ref.read(questionCreateViewModelProvider.notifier)
+            ref
+                .read(questionCreateViewModelProvider.notifier)
                 .updateQuestionText(value);
           },
         ),
@@ -399,7 +408,8 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
           ],
           onChanged: (value) {
             if (value != null) {
-              ref.read(questionCreateViewModelProvider.notifier)
+              ref
+                  .read(questionCreateViewModelProvider.notifier)
                   .updateCorrectAnswer(value);
             }
           },
@@ -432,7 +442,8 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
           validator: (value) =>
               value?.isEmpty ?? true ? 'Correct answer is required' : null,
           onChanged: (value) {
-            ref.read(questionCreateViewModelProvider.notifier)
+            ref
+                .read(questionCreateViewModelProvider.notifier)
                 .updateCorrectAnswer(value);
           },
         ),
@@ -451,7 +462,8 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
           title: const Text('Case Sensitive'),
           value: state.caseSensitive,
           onChanged: (value) {
-            ref.read(questionCreateViewModelProvider.notifier)
+            ref
+                .read(questionCreateViewModelProvider.notifier)
                 .updateCaseSensitive(value);
           },
         ),
@@ -477,17 +489,14 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
               Expanded(
                 child: Text(
                   'Students will arrange these items in the correct order',
-                  style: TextStyle(
-                    color: Colors.blue.shade700,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.blue.shade700, fontSize: 12),
                 ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Drag items list
         const Text('Drag Items (Steps to arrange):'),
         const SizedBox(height: 8),
@@ -498,20 +507,17 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
           icon: const Icon(Icons.add),
           label: const Text('Add Step'),
         ),
-        
+
         const SizedBox(height: 24),
         const Divider(),
         const SizedBox(height: 16),
-        
+
         // Correct order
         const Text('Correct Order:'),
         const SizedBox(height: 8),
         Text(
           'Arrange the steps above in the correct order by entering step numbers (e.g., 1,2,3,4)',
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.neutralMid,
-          ),
+          style: TextStyle(fontSize: 12, color: AppColors.neutralMid),
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -524,7 +530,8 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
           validator: (value) =>
               value?.isEmpty ?? true ? 'Correct order is required' : null,
           onChanged: (value) {
-            ref.read(questionCreateViewModelProvider.notifier)
+            ref
+                .read(questionCreateViewModelProvider.notifier)
                 .updateCorrectOrder(value);
           },
         ),
@@ -641,13 +648,15 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value?.isEmpty ?? true) return 'Marks is required';
-                  if (int.tryParse(value!) == null) return 'Enter a valid number';
+                  if (int.tryParse(value!) == null)
+                    return 'Enter a valid number';
                   return null;
                 },
                 onChanged: (value) {
                   final marks = int.tryParse(value);
                   if (marks != null) {
-                    ref.read(questionCreateViewModelProvider.notifier)
+                    ref
+                        .read(questionCreateViewModelProvider.notifier)
                         .updateMarks(marks);
                   }
                 },
@@ -657,16 +666,31 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
             Expanded(
               child: DropdownButtonFormField<String>(
                 value: state.cognitiveLevel,
-                decoration: const InputDecoration(labelText: 'Cognitive Level *'),
+                decoration: const InputDecoration(
+                  labelText: 'Cognitive Level *',
+                ),
                 items: const [
-                  DropdownMenuItem(value: 'Level 1', child: Text('Level 1 - Knowledge')),
-                  DropdownMenuItem(value: 'Level 2', child: Text('Level 2 - Routine')),
-                  DropdownMenuItem(value: 'Level 3', child: Text('Level 3 - Application')),
-                  DropdownMenuItem(value: 'Level 4', child: Text('Level 4 - Problem Solving')),
+                  DropdownMenuItem(
+                    value: 'Level 1',
+                    child: Text('Level 1 - Knowledge'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Level 2',
+                    child: Text('Level 2 - Routine'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Level 3',
+                    child: Text('Level 3 - Application'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Level 4',
+                    child: Text('Level 4 - Problem Solving'),
+                  ),
                 ],
                 onChanged: (value) {
                   if (value != null) {
-                    ref.read(questionCreateViewModelProvider.notifier)
+                    ref
+                        .read(questionCreateViewModelProvider.notifier)
                         .updateCognitiveLevel(value);
                   }
                 },
@@ -684,7 +708,8 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
                 ],
                 onChanged: (value) {
                   if (value != null) {
-                    ref.read(questionCreateViewModelProvider.notifier)
+                    ref
+                        .read(questionCreateViewModelProvider.notifier)
                         .updateDifficulty(value);
                   }
                 },
@@ -713,15 +738,15 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
           title: const Text('Full Exam (PQP)'),
           value: state.availableInPQP,
           onChanged: (value) {
-            ref.read(questionCreateViewModelProvider.notifier)
-                .togglePQPMode();
+            ref.read(questionCreateViewModelProvider.notifier).togglePQPMode();
           },
         ),
         CheckboxListTile(
           title: const Text('Quick Practice (Sprint)'),
           value: state.availableInSprint,
           onChanged: (value) {
-            ref.read(questionCreateViewModelProvider.notifier)
+            ref
+                .read(questionCreateViewModelProvider.notifier)
                 .toggleSprintMode();
           },
         ),
@@ -729,7 +754,8 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
           title: const Text('By Topic'),
           value: state.availableInByTopic,
           onChanged: (value) {
-            ref.read(questionCreateViewModelProvider.notifier)
+            ref
+                .read(questionCreateViewModelProvider.notifier)
                 .toggleByTopicMode();
           },
         ),
@@ -752,13 +778,11 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
                   backgroundColor: AppColors.accent.withOpacity(0.2),
                 ),
                 const SizedBox(width: 8),
-                Chip(
-                  label: Text('${state.marks} marks'),
-                ),
+                Chip(label: Text('${state.marks} marks')),
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Question text
             if (_questionTextController.text.isNotEmpty) ...[
               const Text(
@@ -769,19 +793,35 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
               Text(_questionTextController.text),
               const SizedBox(height: 16),
             ],
-            
+
             // Options (for MCQ)
             if (state.format == 'MCQ') ...[
               if (_optionAController.text.isNotEmpty)
-                _buildPreviewOption('A', _optionAController.text, state.correctAnswer == 'A'),
+                _buildPreviewOption(
+                  'A',
+                  _optionAController.text,
+                  state.correctAnswer == 'A',
+                ),
               if (_optionBController.text.isNotEmpty)
-                _buildPreviewOption('B', _optionBController.text, state.correctAnswer == 'B'),
+                _buildPreviewOption(
+                  'B',
+                  _optionBController.text,
+                  state.correctAnswer == 'B',
+                ),
               if (_optionCController.text.isNotEmpty)
-                _buildPreviewOption('C', _optionCController.text, state.correctAnswer == 'C'),
+                _buildPreviewOption(
+                  'C',
+                  _optionCController.text,
+                  state.correctAnswer == 'C',
+                ),
               if (_optionDController.text.isNotEmpty)
-                _buildPreviewOption('D', _optionDController.text, state.correctAnswer == 'D'),
+                _buildPreviewOption(
+                  'D',
+                  _optionDController.text,
+                  state.correctAnswer == 'D',
+                ),
             ],
-            
+
             // Metadata
             const SizedBox(height: 16),
             const Divider(),
@@ -828,8 +868,7 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
             ),
             const SizedBox(width: 12),
             Expanded(child: Text(text)),
-            if (isCorrect)
-              const Icon(Icons.check_circle, color: Colors.green),
+            if (isCorrect) const Icon(Icons.check_circle, color: Colors.green),
           ],
         ),
       ),
@@ -849,10 +888,7 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: TextStyle(color: AppColors.neutralMid),
-            ),
+            child: Text(value, style: TextStyle(color: AppColors.neutralMid)),
           ),
         ],
       ),
@@ -868,31 +904,36 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
         _optionCController.text,
         _optionDController.text,
       ];
-      
+
       // Collect answer variations
       final variations = _variationControllers
           .map((c) => c.text)
           .where((t) => t.isNotEmpty)
           .toList();
-      
+
       // Collect drag items
       final dragItems = _dragItemControllers
           .asMap()
           .entries
-          .map((entry) => {
-                'id': 'step_${entry.key + 1}',
-                'text': entry.value.text,
-              })
+          .map(
+            (entry) => {
+              'id': 'step_${entry.key + 1}',
+              'text': entry.value.text,
+            },
+          )
           .where((item) => (item['text'] as String).isNotEmpty)
           .toList();
-      
+
       // Update correct order in state before submitting
       if (_correctOrderController.text.isNotEmpty) {
-        ref.read(questionCreateViewModelProvider.notifier)
+        ref
+            .read(questionCreateViewModelProvider.notifier)
             .updateCorrectOrder(_correctOrderController.text);
       }
-      
-      ref.read(questionCreateViewModelProvider.notifier).submitQuestion(
+
+      ref
+          .read(questionCreateViewModelProvider.notifier)
+          .submitQuestion(
             options: options,
             answerVariations: variations,
             dragItems: dragItems,

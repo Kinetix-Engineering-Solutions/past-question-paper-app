@@ -1006,9 +1006,12 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
 
     // Only show PQP numbers if in PQP mode
     if (widget.isPQPMode) {
-      final pqpNumber = _extractMap(q?['pqpData'])?['questionNumber']?.toString();
+      final pqpNumber = _extractMap(
+        q?['pqpData'],
+      )?['questionNumber']?.toString();
       if (pqpNumber != null && pqpNumber.isNotEmpty) {
-        base = 'Question $pqpNumber • ${_currentQuestionIndex + 1}/${items.length}';
+        base =
+            'Question $pqpNumber • ${_currentQuestionIndex + 1}/${items.length}';
       }
     }
 
@@ -1019,7 +1022,9 @@ class _QuestionReviewScreenState extends State<QuestionReviewScreen> {
     // Only show PQP numbers if in PQP mode
     if (widget.isPQPMode) {
       final q = items[index]['question'] as Map<String, dynamic>?;
-      final pqpNumber = _extractMap(q?['pqpData'])?['questionNumber']?.toString();
+      final pqpNumber = _extractMap(
+        q?['pqpData'],
+      )?['questionNumber']?.toString();
       if (pqpNumber != null && pqpNumber.isNotEmpty) {
         return pqpNumber;
       }

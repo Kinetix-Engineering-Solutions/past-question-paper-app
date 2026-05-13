@@ -13,6 +13,7 @@ Current exported functions:
 - `generateTest`
 - `gradeTest`
 - `onUserDeleteCleanup`
+- `extractQuestionDraftFromImage`
 
 ## Folder Layout
 
@@ -40,6 +41,11 @@ Current exported functions:
   - `user_lifecycle/`
     - `controller.js`: auth trigger wiring.
     - `cleanup.service.js`: account cleanup logic.
+
+  - `admin_ocr/`
+    - `controller.js`: callable function handler for OCR draft extraction.
+    - `services/`
+      - `ocrDraft.service.js`
 
   - `shared/`
     - Shared Firestore/data access services consumed by multiple modules.

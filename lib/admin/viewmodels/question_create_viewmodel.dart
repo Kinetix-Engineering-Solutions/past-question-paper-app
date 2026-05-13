@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,6 +8,85 @@ final questionCreateViewModelProvider =
     StateNotifierProvider<QuestionCreateViewModel, QuestionCreateState>(
       (ref) => QuestionCreateViewModel(),
     );
+
+class OcrQuestionDraft {
+  final String format;
+  final String questionText;
+  final List<String> options;
+  final String correctAnswer;
+  final List<String> answerVariations;
+  final List<Map<String, dynamic>> dragItems;
+  final String correctOrder;
+  final String explanation;
+  final List<String> warnings;
+  final double confidence;
+
+  const OcrQuestionDraft({
+    required this.format,
+    required this.questionText,
+    required this.options,
+    required this.correctAnswer,
+    required this.answerVariations,
+    required this.dragItems,
+    required this.correctOrder,
+    required this.explanation,
+    required this.warnings,
+    required this.confidence,
+  });
+
+  factory OcrQuestionDraft.fromMap(Map<String, dynamic> data) {
+    final options = (data['options'] is Iterable)
+        ? (data['options'] as Iterable)
+              .map((item) => item?.toString() ?? '')
+              .toList()
+        : <String>[];
+
+    while (options.length < 4) {
+      options.add('');
+    }
+
+    final dragItems = (data['dragItems'] is Iterable)
+        ? (data['dragItems'] as Iterable)
+              .whereType<Map>()
+              .map(
+                (item) =>
+                    item.map((key, value) => MapEntry(key.toString(), value)),
+              )
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList()
+        : <Map<String, dynamic>>[];
+
+    final warnings = (data['warnings'] is Iterable)
+        ? (data['warnings'] as Iterable)
+              .map((item) => item?.toString() ?? '')
+              .where((item) => item.isNotEmpty)
+              .toList()
+        : <String>[];
+
+    final confidenceRaw = data['confidence'];
+    final confidence = confidenceRaw is num
+        ? confidenceRaw.toDouble()
+        : double.tryParse(confidenceRaw?.toString() ?? '') ?? 0;
+
+    return OcrQuestionDraft(
+      format: (data['format'] ?? 'MCQ').toString(),
+      questionText: (data['questionText'] ?? '').toString(),
+      options: options.take(4).toList(),
+      correctAnswer: (data['correctAnswer'] ?? '').toString(),
+      answerVariations: (data['answerVariations'] is Iterable)
+          ? (data['answerVariations'] as Iterable)
+                .map((item) => item?.toString() ?? '')
+                .where((item) => item.isNotEmpty)
+                .toList()
+          : <String>[],
+      dragItems: dragItems,
+      correctOrder: (data['correctOrder'] ?? '').toString(),
+      explanation: (data['explanation'] ?? '').toString(),
+      warnings: warnings,
+      confidence: confidence,
+    );
+  }
+}
 
 /// State for Question Creation Form
 class QuestionCreateState {
@@ -46,6 +126,13 @@ class QuestionCreateState {
   final List<String> answerVariations;
   final List<Map<String, dynamic>> dragItems;
   final String explanation;
+
+  // OCR draft state
+  final bool isExtractingOcr;
+  final String? ocrSourceImageUrl;
+  final OcrQuestionDraft? ocrDraft;
+  final int ocrDraftVersion;
+  final String? ocrErrorMessage;
 
   // UI / lifecycle state
   final bool isSubmitting;
@@ -93,6 +180,13 @@ class QuestionCreateState {
     this.dragItems = const [],
     this.explanation = '',
 
+    // OCR defaults
+    this.isExtractingOcr = false,
+    this.ocrSourceImageUrl,
+    this.ocrDraft,
+    this.ocrDraftVersion = 0,
+    this.ocrErrorMessage,
+
     // UI state
     this.isSubmitting = false,
     this.isLoading = false,
@@ -139,6 +233,13 @@ class QuestionCreateState {
     List<String>? answerVariations,
     List<Map<String, dynamic>>? dragItems,
     String? explanation,
+
+    // OCR state
+    bool? isExtractingOcr,
+    Object? ocrSourceImageUrl = _unset,
+    Object? ocrDraft = _unset,
+    int? ocrDraftVersion,
+    Object? ocrErrorMessage = _unset,
 
     // UI state
     bool? isSubmitting,
@@ -193,6 +294,18 @@ class QuestionCreateState {
       dragItems: dragItems ?? this.dragItems,
       explanation: explanation ?? this.explanation,
 
+      isExtractingOcr: isExtractingOcr ?? this.isExtractingOcr,
+      ocrSourceImageUrl: ocrSourceImageUrl == _unset
+          ? this.ocrSourceImageUrl
+          : ocrSourceImageUrl as String?,
+      ocrDraft: ocrDraft == _unset
+          ? this.ocrDraft
+          : ocrDraft as OcrQuestionDraft?,
+      ocrDraftVersion: ocrDraftVersion ?? this.ocrDraftVersion,
+      ocrErrorMessage: ocrErrorMessage == _unset
+          ? this.ocrErrorMessage
+          : ocrErrorMessage as String?,
+
       isSubmitting: isSubmitting ?? this.isSubmitting,
       isLoading: isLoading ?? this.isLoading,
       isEditMode: isEditMode ?? this.isEditMode,
@@ -220,6 +333,7 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
   QuestionCreateViewModel() : super(const QuestionCreateState());
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFunctions _functions = FirebaseFunctions.instance;
 
   void updateSubject(String value) {
     state = state.copyWith(
@@ -246,6 +360,60 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
 
   void updateSeason(String value) {
     state = state.copyWith(season: value);
+  }
+
+  void setOcrSourceImageUrl(String? imageUrl) {
+    state = state.copyWith(ocrSourceImageUrl: imageUrl, ocrErrorMessage: null);
+  }
+
+  Future<void> extractDraftFromOcrImage() async {
+    final imageUrl = state.ocrSourceImageUrl;
+    if (imageUrl == null || imageUrl.isEmpty) {
+      state = state.copyWith(
+        ocrErrorMessage: 'Upload an OCR source image first.',
+      );
+      return;
+    }
+
+    state = state.copyWith(
+      isExtractingOcr: true,
+      ocrErrorMessage: null,
+      errorMessage: null,
+      successMessage: null,
+    );
+
+    try {
+      final callable = _functions.httpsCallable(
+        'extractQuestionDraftFromImage',
+      );
+      final result = await callable.call({'imageUrl': imageUrl});
+      final responseData = _safeMapCast(result.data);
+      final draftData = _safeMapCast(responseData['draft']);
+
+      if (draftData.isEmpty) {
+        throw Exception('OCR returned an empty draft.');
+      }
+
+      final draft = OcrQuestionDraft.fromMap(draftData);
+
+      state = state.copyWith(
+        isExtractingOcr: false,
+        ocrDraft: draft,
+        ocrDraftVersion: state.ocrDraftVersion + 1,
+        ocrErrorMessage: null,
+        successMessage: 'OCR draft extracted. Review fields before saving.',
+      );
+    } on FirebaseFunctionsException catch (e) {
+      state = state.copyWith(
+        isExtractingOcr: false,
+        ocrErrorMessage: e.message ?? 'OCR extraction failed.',
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isExtractingOcr: false,
+        ocrErrorMessage: 'OCR extraction failed: $e',
+      );
+    }
   }
 
   void updateFormat(String value) {
@@ -997,6 +1165,24 @@ class QuestionCreateViewModel extends StateNotifier<QuestionCreateState> {
     }
 
     return raw;
+  }
+
+  String normalizeIncomingFormat(dynamic rawFormat) {
+    return _normalizeFormat(rawFormat);
+  }
+
+  Map<String, dynamic> _safeMapCast(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+    if (data is Map) {
+      final map = <String, dynamic>{};
+      data.forEach((key, value) {
+        map[key.toString()] = value;
+      });
+      return map;
+    }
+    return const <String, dynamic>{};
   }
 
   Future<void> _refreshParentAggregates(String parentId) async {
