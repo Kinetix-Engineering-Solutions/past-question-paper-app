@@ -70,7 +70,7 @@ class _DragAndDropOrderingWidgetState
           );
         }
       } catch (e) {
-        print('Error parsing current answer: $e');
+        debugPrint('Error parsing current answer: $e');
       }
     }
 

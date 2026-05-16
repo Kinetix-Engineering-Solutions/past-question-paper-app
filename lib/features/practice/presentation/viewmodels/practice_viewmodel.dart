@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/features/practice/domain/entities/question.dart';
 import 'package:past_question_paper_v1/features/practice/data/repositories/question_repository.dart';
@@ -116,21 +117,15 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
 
     // Check if already enriched by backend
     if (question.parentContext != null) {
-      print(
-        '✅ Question ${question.id} already has parent context from backend',
-      );
       return;
     }
 
     // Check cache first
     if (_parentCache.containsKey(question.parentQuestionId)) {
-      print('✅ Using cached parent for question ${question.id}');
       return;
     }
 
     try {
-      print('🔍 Fetching parent context for question ${question.id}');
-
       // Fetch from Firestore
       final parent = await _firestoreService.getParentQuestion(
         question.parentQuestionId!,
@@ -138,7 +133,6 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
 
       if (parent != null) {
         _parentCache[parent.id] = parent;
-        print('✅ Cached parent question ${parent.id}');
 
         // Enrich the question with parent context
         final enriched = await _firestoreService.enrichQuestionWithParent(
@@ -152,14 +146,11 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
           }).toList();
 
           state = state.copyWith(questions: updatedQuestions);
-          print('✅ Updated question ${enriched.id} with parent context');
         }
-      } else {
-        print('⚠️ Parent question not found for ${question.id}');
       }
     } catch (e) {
-      print('❌ Error loading parent context for question ${question.id}: $e');
       // Continue without parent context - not critical
+      debugPrint('Error loading parent context for question ${question.id}: $e');
     }
   }
 
@@ -310,7 +301,7 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
           'sessionDurationSeconds': sessionDurationSeconds,
       };
 
-      // ✅ FIX: Build complete submissions map INCLUDING unanswered questions
+      // Build complete submissions map INCLUDING unanswered questions
       // This ensures all questions appear in the grading results
       final completeSubmissions = <String, dynamic>{};
       for (final question in state.questions) {
@@ -318,36 +309,6 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
         completeSubmissions[question.id] =
             state.userAnswers[question.id] ?? null;
       }
-
-      // === DEBUG: Log what we're sending ===
-      print('=== SUBMITTING TEST DATA ===');
-      print('Subject: $subject');
-      print('Paper: $paper');
-      print('Total questions: ${state.questions.length}');
-      print('Mode: $modeLabel');
-      print('Answered questions: ${state.userAnswers.length}');
-      print(
-        'Unanswered questions: ${state.questions.length - state.userAnswers.length}',
-      );
-      print('User Answers:');
-      completeSubmissions.forEach((questionId, answer) {
-        print(
-          '  $questionId: ${answer == null ? "[UNANSWERED]" : '"$answer"'} (${answer.runtimeType})',
-        );
-      });
-      print('Questions with correctOrder:');
-      for (final q in state.questions) {
-        final format = q.format.toLowerCase();
-        final isDragAndDrop =
-            format == 'draganddrop' ||
-            format == 'drag-and-drop' ||
-            format == 'drag_drop' ||
-            format == 'drag and drop';
-        if (isDragAndDrop && q.correctOrder.isNotEmpty) {
-          print('  ${q.id}: correctOrder = ${q.correctOrder}');
-        }
-      }
-      print('=== END SUBMIT DATA ===\n');
 
       // Call the repository to trigger the 'gradeTest' Cloud Function
       final gradingResults = await _questionRepository.gradeTest(
@@ -363,34 +324,6 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
         isSprintMode: state.isSprintMode,
       );
 
-      // === DEBUG: Log what we received ===
-      print('=== RECEIVED GRADING RESULTS ===');
-      print('Raw response: $gradingResults');
-      if (gradingResults['results'] != null) {
-        print('Total results: ${gradingResults['results'].length}');
-        print('Individual question results:');
-        for (final result in gradingResults['results']) {
-          print('  Question ${result['questionId']}:');
-          if (result['wasUnanswered'] == true) {
-            print('    [UNANSWERED] - 0/${result['maxMarks']} marks');
-          } else if (result['format'] == 'dragAndDrop' &&
-              result['subFormat'] == 'ordering') {
-            print('    User answers: ${result['userAnswers']}');
-            print('    Correct order: ${result['correctOrder']}');
-            print(
-              '    Correct count: ${result['correctCount']}/${result['totalSteps']}',
-            );
-            print('    Is correct: ${result['isCorrect']}');
-            print('    Marks: ${result['marksAwarded']}/${result['maxMarks']}');
-          } else {
-            print(
-              '    ${result['isCorrect'] ? '✓' : '✗'} - ${result['marksAwarded']}/${result['maxMarks']} marks',
-            );
-          }
-        }
-      }
-      print('=== END GRADING RESULTS ===\n');
-
       if (!isActive) return null; // Check if still active after async operation
 
       state = state.copyWith(isSubmitting: false);
@@ -404,7 +337,7 @@ class PracticeViewModel extends StateNotifier<PracticeState> {
         'questions': state.questions.map((q) => q.toMap()).toList(),
       };
     } catch (e) {
-      print('Error submitting test: $e');
+      debugPrint('Error submitting test: $e');
       if (isActive) {
         state = state.copyWith(isSubmitting: false);
       }

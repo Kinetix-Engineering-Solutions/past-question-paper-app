@@ -69,17 +69,8 @@ class _FirebaseImageState extends State<FirebaseImage> {
         }
       }
     } catch (e) {
-      print('Error loading Firebase image: $e');
-      if (e.toString().contains('unauthorized')) {
-        print(
-          'Firebase Storage Error: Check your security rules. The current user is not authorized to access this image.',
-        );
-        print('URL: ${widget.imageUrl}');
-        print(
-          'Solution: Update Firebase Storage security rules to allow read access.',
-        );
-      }
-
+      debugPrint('Error loading Firebase image: $e');
+      
       if (mounted) {
         setState(() {
           _hasError = true;

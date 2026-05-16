@@ -48,9 +48,6 @@ class QuestionRepository {
       // }
 
       // Wait for the ID token to ensure it's ready for the function call
-      // final token = await user.getIdToken(true); // Force refresh the token
-      // print('Got ID token: ${token?.isNotEmpty ?? false}'); // Debug
-
       // Get a reference to the Cloud Function
       final callable = _functions.httpsCallable('generateTest');
 
