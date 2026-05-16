@@ -8,10 +8,6 @@ final questionRepositoryProvider = Provider<QuestionRepository>((ref) {
   // You can specify the region if your functions are not in us-central1
   final functions = FirebaseFunctions.instance;
 
-  // For development, you might want to connect to the emulator
-  // Uncomment the following line if you're using the Firebase emulator
-  // functions.useFunctionsEmulator('localhost', 5001);
-
   return QuestionRepository(functions);
 });
 
@@ -62,6 +58,8 @@ class QuestionRepository {
 
       // Call the function with the user's selected options
       final result = await callable.call(options);
+
+      // Function completed successfully
 
       // The new modular function returns an object with questions array
       final Map<String, dynamic> responseData = _safeMapCast(result.data);

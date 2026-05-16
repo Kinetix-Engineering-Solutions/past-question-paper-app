@@ -145,9 +145,53 @@ class AuthServiceFirebase implements IAuthService {
   /// This method is used when the user forgets their password
   @override
   Future<void> sendPasswordResetEmail(String email) async {
+    final normalizedEmail = email.trim();
+
     try {
-      await _auth.sendPasswordResetEmail(email: email);
+      final callable = _functions.httpsCallable('createPasswordResetLink');
+      await callable.call({'email': normalizedEmail});
+    } on FirebaseFunctionsException catch (e) {
+      final functionCode = e.code.toLowerCase();
+
+      // Fallback to Firebase Auth built-in reset flow when the custom
+      // password reset function is temporarily unavailable.
+      if (functionCode == 'unavailable' ||
+          functionCode == 'deadline-exceeded' ||
+          functionCode == 'internal' ||
+          functionCode == 'not-found') {
+        try {
+          await _auth.sendPasswordResetEmail(email: normalizedEmail);
+          return;
+        } on FirebaseAuthException catch (authError) {
+          // Keep privacy-preserving behavior identical to callable function.
+          if (authError.code == 'user-not-found') {
+            return;
+          }
+          throw AuthException.fromFirebaseAuth(authError);
+        }
+      }
+
+      if (functionCode == 'invalid-argument') {
+        throw AuthException('The email address is not valid.', code: e.code);
+      }
+
+      if (functionCode == 'failed-precondition') {
+        throw AuthException(
+          e.message ?? 'Password reset service is not configured correctly.',
+          code: e.code,
+        );
+      }
+
+      throw AuthException(
+        e.message ??
+            'Unable to send password reset email right now. Please try again.',
+        code: e.code,
+      );
     } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        // Avoid account enumeration via explicit user-not-found errors.
+        return;
+      }
       throw AuthException.fromFirebaseAuth(e);
     }
   }

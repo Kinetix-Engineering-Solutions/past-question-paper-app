@@ -7,10 +7,7 @@ const _themeModeKey = 'theme_mode';
 
 @immutable
 class ThemeState {
-  const ThemeState({
-    required this.mode,
-    required this.isLoaded,
-  });
+  const ThemeState({required this.mode, required this.isLoaded});
 
   final ThemeMode mode;
   final bool isLoaded;
@@ -24,7 +21,8 @@ class ThemeState {
 }
 
 class ThemeViewModel extends StateNotifier<ThemeState> {
-  ThemeViewModel() : super(const ThemeState(mode: ThemeMode.system, isLoaded: false)) {
+  ThemeViewModel()
+    : super(const ThemeState(mode: ThemeMode.system, isLoaded: false)) {
     _loadThemePreference();
   }
 
@@ -88,5 +86,5 @@ class ThemeViewModel extends StateNotifier<ThemeState> {
 
 final themeViewModelProvider =
     StateNotifierProvider<ThemeViewModel, ThemeState>((ref) {
-  return ThemeViewModel();
-});
+      return ThemeViewModel();
+    });

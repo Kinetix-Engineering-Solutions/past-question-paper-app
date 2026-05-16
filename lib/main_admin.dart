@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:past_question_paper_v1/admin/views/admin_root_view.dart';
 import 'package:past_question_paper_v1/firebase_options.dart';
 import 'package:past_question_paper_v1/core/theme/app_theme.dart';
@@ -10,6 +11,12 @@ import 'package:past_question_paper_v1/core/theme/app_theme.dart';
 /// Run with: flutter run -d chrome -t lib/main_admin.dart
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (_) {
+    // Intentionally ignore missing/invalid .env in release builds.
+  }
 
   // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);

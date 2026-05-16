@@ -5,11 +5,7 @@ class MessageBanner extends StatelessWidget {
   final String message;
   final bool isError;
 
-  const MessageBanner({
-    super.key,
-    required this.message,
-    this.isError = false,
-  });
+  const MessageBanner({super.key, required this.message, this.isError = false});
 
   @override
   Widget build(BuildContext context) {

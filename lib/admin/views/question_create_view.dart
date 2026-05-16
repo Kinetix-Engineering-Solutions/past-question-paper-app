@@ -60,6 +60,14 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
       (previous, next) {
         if (!mounted || next.isLoading) return;
 
+        final hasNewOcrDraft =
+            next.ocrDraft != null &&
+            next.ocrDraftVersion != (previous?.ocrDraftVersion ?? 0);
+        if (hasNewOcrDraft) {
+          _applyOcrDraftToControllers(next.ocrDraft!);
+          return;
+        }
+
         final enteredEditMode = next.isEditMode && !_hasAppliedEditState;
         if (enteredEditMode) {
           _applyStateToControllers(next);
@@ -300,6 +308,63 @@ class _QuestionCreateViewState extends ConsumerState<QuestionCreateView> {
 
     for (var i = 0; i < values.length; i++) {
       controllers[i].text = values[i];
+    }
+  }
+
+  void _applyOcrDraftToControllers(OcrQuestionDraft draft) {
+    final normalizedFormat = _viewModel.normalizeIncomingFormat(draft.format);
+
+    setState(() {
+      _viewModel.updateFormat(normalizedFormat);
+      _viewModel.updateQuestionText(draft.questionText);
+      _questionTextController.text = draft.questionText;
+
+      if (normalizedFormat == 'MCQ') {
+        final options = List<String>.from(draft.options.take(4));
+        while (options.length < 4) {
+          options.add('');
+        }
+
+        _optionAController.text = options[0];
+        _optionBController.text = options[1];
+        _optionCController.text = options[2];
+        _optionDController.text = options[3];
+
+        final normalizedAnswer = draft.correctAnswer.trim().toUpperCase();
+        if (['A', 'B', 'C', 'D'].contains(normalizedAnswer)) {
+          _viewModel.updateCorrectAnswer(normalizedAnswer);
+          _correctAnswerController.text = normalizedAnswer;
+        }
+      } else if (normalizedFormat == 'short_answer') {
+        _correctAnswerController.text = draft.correctAnswer;
+        _viewModel.updateCorrectAnswer(draft.correctAnswer);
+
+        _syncControllerList(_variationControllers, draft.answerVariations);
+      } else if (normalizedFormat == 'drag_drop') {
+        final dragTexts = draft.dragItems
+            .map((item) => item['text']?.toString() ?? '')
+            .where((text) => text.isNotEmpty)
+            .toList();
+
+        _syncControllerList(_dragItemControllers, dragTexts);
+
+        if (draft.correctOrder.isNotEmpty) {
+          _correctOrderController.text = draft.correctOrder;
+          _viewModel.updateCorrectOrder(draft.correctOrder);
+        }
+      }
+
+      if (draft.explanation.isNotEmpty) {
+        _explanationController.text = draft.explanation;
+      }
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('OCR draft applied. Review all fields before saving.'),
+        ),
+      );
     }
   }
 

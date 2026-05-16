@@ -79,6 +79,45 @@ Generates a Firebase email verification link using the Admin SDK and sends a bra
 - `EMAIL_VERIFICATION_ANDROID_MIN_VERSION`
 - `EMAIL_VERIFICATION_IOS_BUNDLE_ID`
 
+### `createPasswordResetLink`
+Generates a Firebase password reset link using the Admin SDK and sends a branded email via Resend.
+
+**Parameters:**
+- `email` (string) - Email address to send the reset link to
+
+**Returns:**
+- `success` (bool)
+- `sent` (bool)
+- `message` (string)
+
+**Required environment variables:**
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+- `PASSWORD_RESET_CONTINUE_URL`
+
+### `extractQuestionDraftFromImage`
+Extracts a draft question payload from an uploaded image URL using Mathpix OCR. Intended for admin-only content workflows.
+
+**Parameters:**
+- `imageUrl` (string, required) - Publicly reachable HTTP(S) image URL
+
+**Returns:**
+- `draft` object with inferred format and auto-fill fields:
+   - `format`
+   - `questionText`
+   - `options`
+   - `correctAnswer`
+   - `answerVariations`
+   - `dragItems`
+   - `correctOrder`
+   - `explanation`
+   - `warnings`
+   - `confidence`
+
+**Required environment variables:**
+- `MATHPIX_APP_ID`
+- `MATHPIX_APP_KEY`
+
 ## 📁 Service Modules
 
 ### Data Helpers (`src/helpers/dataHelpers.js`)

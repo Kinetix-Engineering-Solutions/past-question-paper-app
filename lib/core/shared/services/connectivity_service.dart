@@ -7,16 +7,16 @@ import 'package:flutter/foundation.dart';
 enum ConnectivityStatus {
   /// Device has network connection and internet access verified
   online,
-  
+
   /// Device has network connection but internet access unverified or slow
   degraded,
-  
+
   /// Device has no network connection
   offline,
 }
 
 /// Service for monitoring network connectivity and internet reachability
-/// 
+///
 /// Combines OS-level connectivity status with actual internet reachability
 /// checks to provide accurate offline/online state for the app.
 class ConnectivityService {
@@ -29,12 +29,12 @@ class ConnectivityService {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _debounceTimer;
   Timer? _periodicCheckTimer;
-  
+
   ConnectivityStatus _currentStatus = ConnectivityStatus.online;
-  
+
   /// Stream of connectivity status changes
   Stream<ConnectivityStatus> get statusStream => _statusController.stream;
-  
+
   /// Current connectivity status (synchronous access)
   ConnectivityStatus get currentStatus => _currentStatus;
 
@@ -49,7 +49,7 @@ class ConnectivityService {
 
     // Check initial status
     _checkConnectivity();
-    
+
     // Periodic reachability check every 30 seconds when online
     _periodicCheckTimer = Timer.periodic(
       const Duration(seconds: 30),
@@ -68,7 +68,7 @@ class ConnectivityService {
   Future<void> _checkConnectivity() async {
     try {
       final results = await _connectivity.checkConnectivity();
-      
+
       // If no connectivity at OS level, immediately mark offline
       if (results.contains(ConnectivityResult.none)) {
         _updateStatus(ConnectivityStatus.offline);
@@ -77,7 +77,7 @@ class ConnectivityService {
 
       // OS reports connectivity, now verify actual internet reachability
       final hasInternet = await _checkInternetReachability();
-      
+
       if (hasInternet) {
         _updateStatus(ConnectivityStatus.online);
       } else {
@@ -92,14 +92,15 @@ class ConnectivityService {
   }
 
   /// Check actual internet reachability with lightweight DNS lookup
-  /// 
+  ///
   /// Uses Google's public DNS (8.8.8.8) for fast, reliable checks.
   /// Timeout after 5 seconds to avoid blocking.
   Future<bool> _checkInternetReachability() async {
     try {
-      final result = await InternetAddress.lookup('google.com')
-          .timeout(const Duration(seconds: 5));
-      
+      final result = await InternetAddress.lookup(
+        'google.com',
+      ).timeout(const Duration(seconds: 5));
+
       return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
     } on SocketException catch (_) {
       return false;

@@ -10,7 +10,8 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
@@ -25,14 +26,16 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   }
 
   void _handleSendResetEmail() async {
-    await ref.read(authViewModelProvider.notifier).sendPasswordResetEmailInUI(
-      email: _emailController.text.trim(),
-      context: context,
-      formKey: _formKey,
-    );
+    final isEmailSent = await ref
+        .read(authViewModelProvider.notifier)
+        .sendPasswordResetEmailInUI(
+          email: _emailController.text.trim(),
+          context: context,
+          formKey: _formKey,
+        );
 
-    // If no error occurred, mark email as sent
-    if (mounted) {
+    // Mark success only if backend request completed successfully.
+    if (mounted && isEmailSent) {
       setState(() {
         _emailSent = true;
       });
@@ -95,12 +98,15 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     ),
 
                   // Error message display
-                  ref.watch(authViewModelProvider).whenOrNull(
-                    error: (error, stackTrace) => MessageBanner(
-                      message: error.toString(),
-                      isError: true,
-                    ),
-                  ) ?? const SizedBox.shrink(),
+                  ref
+                          .watch(authViewModelProvider)
+                          .whenOrNull(
+                            error: (error, stackTrace) => MessageBanner(
+                              message: error.toString(),
+                              isError: true,
+                            ),
+                          ) ??
+                      const SizedBox.shrink(),
 
                   // Email field
                   TextFormField(

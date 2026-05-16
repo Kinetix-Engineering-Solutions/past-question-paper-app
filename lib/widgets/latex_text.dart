@@ -22,7 +22,7 @@ class LatexText extends StatelessWidget {
     // Use theme color if no textColor is provided
     final defaultColor = textColor ?? Theme.of(context).colorScheme.onSurface;
     final errorColor = Theme.of(context).colorScheme.error;
-    
+
     final defaultStyle = TextStyle(
       fontSize: fontSize ?? 16,
       color: defaultColor,
