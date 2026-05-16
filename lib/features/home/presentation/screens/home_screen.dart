@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:past_question_paper_v1/core/shared/models/app_metadata.dart';
 import 'package:past_question_paper_v1/features/profile/domain/entities/user.dart';
 import 'package:past_question_paper_v1/core/theme/app_colors.dart';
@@ -7,19 +8,15 @@ import 'package:past_question_paper_v1/core/shared/utils/haptic_feedback.dart';
 import 'package:past_question_paper_v1/features/home/presentation/viewmodels/home_viewmodel.dart';
 import 'package:past_question_paper_v1/features/home/presentation/viewmodels/app_metadata_viewmodel.dart';
 import 'package:past_question_paper_v1/features/history/presentation/viewmodels/session_history_viewmodel.dart';
-import 'package:past_question_paper_v1/flashcard_screen.dart';
-
-const String _allSubjectsFilter = 'All';
-const String _anyPaperFilter = 'Any';
+import 'package:past_question_paper_v1/features/flashcards/presentation/screens/flashcard_screen.dart';
+import 'package:past_question_paper_v1/core/shared/widgets/ad_banner_slot.dart';
+import 'package:past_question_paper_v1/core/shared/services/ads_service.dart';
 
 final _homeSelectedSubjectProvider = StateProvider<String>(
-  (ref) => _allSubjectsFilter,
+  (ref) => '', // Will be set to first subject on metadata load
 );
 final _homeSearchQueryProvider = StateProvider<String>((ref) => '');
 final _homeSortByProvider = StateProvider<String>((ref) => 'A-Z');
-final _homeSelectedPaperProvider = StateProvider<String>(
-  (ref) => _anyPaperFilter,
-);
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -34,8 +31,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(appMetadataViewModelProvider.notifier).refresh();
+      _showFirstLaunchDialogIfNeeded();
     });
   }
+
+  Future<void> _showFirstLaunchDialogIfNeeded() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hasSeenFirstLaunchDialog = prefs.getBool('hasSeenFirstLaunchDialog') ?? false;
+
+      if (!hasSeenFirstLaunchDialog && mounted) {
+        await prefs.setBool('hasSeenFirstLaunchDialog', true);
+        _showFirstLaunchDialog();
+      }
+    } catch (e) {
+      // Silently fail if SharedPreferences has issues
+    }
+  }
+
+  void _showFirstLaunchDialog() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(
+          Icons.info_outline,
+          color: AppColors.accent,
+          size: 28,
+        ),
+        title: Text(
+          'Welcome',
+          style: textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        content: Text(
+          'Topics are organized according to the structure of NSC South African exam papers. '
+          'You\'ll find the exact topics as they appear in official examination papers to help you prepare effectively.',
+          style: textTheme.bodyMedium?.copyWith(
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +95,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final selectedSubject = ref.watch(_homeSelectedSubjectProvider);
     final searchQuery = ref.watch(_homeSearchQueryProvider);
     final sortBy = ref.watch(_homeSortByProvider);
-    final selectedPaper = ref.watch(_homeSelectedPaperProvider);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
@@ -85,13 +132,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       user,
       metadataState.metadata!,
     );
+    
+    // Auto-select first subject if not yet selected
+    if (selectedSubject.isEmpty && preferredSubjects.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(_homeSelectedSubjectProvider.notifier).state = preferredSubjects.first;
+      });
+    }
+    
     final allTopics = _buildTopicItems(
       metadataState.metadata!,
       preferredSubjects,
     );
     final visibleTopics = _applyFilters(
       topics: allTopics,
-      selectedSubject: selectedSubject,
+      selectedSubject: selectedSubject.isEmpty ? (preferredSubjects.isNotEmpty ? preferredSubjects.first : '') : selectedSubject,
       searchQuery: searchQuery,
       sortBy: sortBy,
     );
@@ -150,7 +205,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: _TopicDiscoverySection(
                 subjects: preferredSubjects,
                 selectedSubject: selectedSubject,
-                selectedPaper: selectedPaper,
                 searchQuery: searchQuery,
                 sortBy: sortBy,
                 topics: visibleTopics,
@@ -158,9 +212,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 onSubjectChanged: (subject) {
                   ref.read(_homeSelectedSubjectProvider.notifier).state =
                       subject;
-                },
-                onPaperChanged: (paper) {
-                  ref.read(_homeSelectedPaperProvider.notifier).state = paper;
                 },
                 onSearchChanged: (query) {
                   ref.read(_homeSearchQueryProvider.notifier).state = query;
@@ -177,9 +228,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         subjectId: topic.subject,
                         topicId: _toTopicId(topic.topic),
                         topicTitle: topic.topic,
-                        initialPaper: selectedPaper == _anyPaperFilter
-                            ? null
-                            : selectedPaper,
                       ),
                     ),
                   );
@@ -234,7 +282,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }) {
     var filtered = topics;
 
-    if (selectedSubject != _allSubjectsFilter) {
+    // Always filter by selected subject (no "All" option anymore)
+    if (selectedSubject.isNotEmpty) {
       filtered = filtered
           .where((topic) => topic.subject == selectedSubject)
           .toList();
@@ -287,13 +336,11 @@ class _TopicHomeItem {
 class _TopicDiscoverySection extends StatelessWidget {
   final List<String> subjects;
   final String selectedSubject;
-  final String selectedPaper;
   final String searchQuery;
   final String sortBy;
   final List<_TopicHomeItem> topics;
   final int totalTopicCount;
   final ValueChanged<String> onSubjectChanged;
-  final ValueChanged<String> onPaperChanged;
   final ValueChanged<String> onSearchChanged;
   final ValueChanged<String> onSortChanged;
   final ValueChanged<_TopicHomeItem> onTopicTap;
@@ -301,13 +348,11 @@ class _TopicDiscoverySection extends StatelessWidget {
   const _TopicDiscoverySection({
     required this.subjects,
     required this.selectedSubject,
-    required this.selectedPaper,
     required this.searchQuery,
     required this.sortBy,
     required this.topics,
     required this.totalTopicCount,
     required this.onSubjectChanged,
-    required this.onPaperChanged,
     required this.onSearchChanged,
     required this.onSortChanged,
     required this.onTopicTap,
@@ -346,11 +391,9 @@ class _TopicDiscoverySection extends StatelessWidget {
               context: context,
               subjects: subjects,
               selectedSubject: selectedSubject,
-              selectedPaper: selectedPaper,
               searchQuery: searchQuery,
               sortBy: sortBy,
               onSubjectChanged: onSubjectChanged,
-              onPaperChanged: onPaperChanged,
               onSearchChanged: onSearchChanged,
               onSortChanged: onSortChanged,
             ),
@@ -371,7 +414,6 @@ class _TopicDiscoverySection extends StatelessWidget {
                       Text(
                         _filterSummaryText(
                           selectedSubject: selectedSubject,
-                          selectedPaper: selectedPaper,
                           searchQuery: searchQuery,
                           sortBy: sortBy,
                         ),
@@ -506,23 +548,23 @@ class _TopicDiscoverySection extends StatelessWidget {
                   },
                 ),
         ),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+          child: AdBannerSlot(placement: AppAdPlacement.home),
+        ),
       ],
     );
   }
 
   String _filterSummaryText({
     required String selectedSubject,
-    required String selectedPaper,
     required String searchQuery,
     required String sortBy,
   }) {
-    final subjectLabel = selectedSubject == 'All'
-        ? 'All subjects'
-        : _toDisplayCase(selectedSubject);
+    final subjectLabel = _toDisplayCase(selectedSubject).isNotEmpty
+        ? _toDisplayCase(selectedSubject)
+        : 'Select subject';
     final parts = <String>[subjectLabel];
-    if (selectedPaper != _anyPaperFilter) {
-      parts.add(selectedPaper);
-    }
     parts.add(sortBy);
     final trimmedSearch = searchQuery.trim();
     if (trimmedSearch.isNotEmpty) {
@@ -536,11 +578,9 @@ class _TopicDiscoverySection extends StatelessWidget {
     required BuildContext context,
     required List<String> subjects,
     required String selectedSubject,
-    required String selectedPaper,
     required String searchQuery,
     required String sortBy,
     required ValueChanged<String> onSubjectChanged,
-    required ValueChanged<String> onPaperChanged,
     required ValueChanged<String> onSearchChanged,
     required ValueChanged<String> onSortChanged,
   }) {
@@ -552,11 +592,9 @@ class _TopicDiscoverySection extends StatelessWidget {
       builder: (bottomSheetContext) => _FiltersBottomSheet(
         subjects: subjects,
         selectedSubject: selectedSubject,
-        selectedPaper: selectedPaper,
         searchQuery: searchQuery,
         sortBy: sortBy,
         onSubjectChanged: onSubjectChanged,
-        onPaperChanged: onPaperChanged,
         onSearchChanged: onSearchChanged,
         onSortChanged: onSortChanged,
       ),
@@ -597,22 +635,18 @@ class _TopicMetaTag extends StatelessWidget {
 class _FiltersBottomSheet extends StatefulWidget {
   final List<String> subjects;
   final String selectedSubject;
-  final String selectedPaper;
   final String searchQuery;
   final String sortBy;
   final ValueChanged<String> onSubjectChanged;
-  final ValueChanged<String> onPaperChanged;
   final ValueChanged<String> onSearchChanged;
   final ValueChanged<String> onSortChanged;
 
   const _FiltersBottomSheet({
     required this.subjects,
     required this.selectedSubject,
-    required this.selectedPaper,
     required this.searchQuery,
     required this.sortBy,
     required this.onSubjectChanged,
-    required this.onPaperChanged,
     required this.onSearchChanged,
     required this.onSortChanged,
   });
@@ -623,21 +657,21 @@ class _FiltersBottomSheet extends StatefulWidget {
 
 class _FiltersBottomSheetState extends State<_FiltersBottomSheet> {
   late final TextEditingController _searchController;
-  late String _tempPaper;
+  late String _tempSubject;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController(text: widget.searchQuery);
-    _tempPaper = widget.selectedPaper;
+    _tempSubject = widget.selectedSubject;
   }
 
   @override
   void didUpdateWidget(covariant _FiltersBottomSheet oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedPaper != widget.selectedPaper &&
-        _tempPaper == oldWidget.selectedPaper) {
-      _tempPaper = widget.selectedPaper;
+    if (oldWidget.selectedSubject != widget.selectedSubject &&
+        _tempSubject == oldWidget.selectedSubject) {
+      _tempSubject = widget.selectedSubject;
     }
   }
 
@@ -738,40 +772,6 @@ class _FiltersBottomSheetState extends State<_FiltersBottomSheet> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Paper',
-              style: textTheme.labelLarge?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: const ['Any', 'Paper 1', 'Paper 2', 'Paper 3'].map((
-                value,
-              ) {
-                final isSelected = _tempPaper == value;
-                return ChoiceChip(
-                  label: Text(value),
-                  selected: isSelected,
-                  selectedColor: colorScheme.primaryContainer,
-                  backgroundColor: colorScheme.surfaceContainerLow,
-                  labelStyle: textTheme.labelMedium?.copyWith(
-                    color: isSelected
-                        ? colorScheme.onPrimaryContainer
-                        : colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  onSelected: (_) {
-                    setState(() => _tempPaper = value);
-                    widget.onPaperChanged(value);
-                  },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 12),
-            Text(
               'Subject',
               style: textTheme.labelLarge?.copyWith(
                 color: colorScheme.onSurfaceVariant,
@@ -783,18 +783,15 @@ class _FiltersBottomSheetState extends State<_FiltersBottomSheet> {
               child: ListView(
                 shrinkWrap: true,
                 children: [
-                  _buildSubjectSheetTile(
-                    context: context,
-                    label: 'All',
-                    selected: widget.selectedSubject == 'All',
-                    onTap: () => widget.onSubjectChanged('All'),
-                  ),
                   ...widget.subjects.map(
                     (subject) => _buildSubjectSheetTile(
                       context: context,
                       label: _toDisplayCase(subject),
-                      selected: widget.selectedSubject == subject,
-                      onTap: () => widget.onSubjectChanged(subject),
+                      selected: _tempSubject == subject,
+                      onTap: () {
+                        setState(() => _tempSubject = subject);
+                        widget.onSubjectChanged(subject);
+                      },
                     ),
                   ),
                 ],

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:past_question_paper_v1/core/shared/models/rest_api_question.dart';
+import 'package:past_question_paper_v1/core/shared/models/rest_question_query.dart';
+import 'package:past_question_paper_v1/core/shared/repositories/rest_questions_repository.dart';
 import 'package:past_question_paper_v1/core/shared/services/rest_questions_api_service.dart';
 
 class RestApiQuestionsSearchScreen extends StatefulWidget {
-  const RestApiQuestionsSearchScreen({super.key});
+  final RestQuestionsRepository? questionsRepository;
+
+  const RestApiQuestionsSearchScreen({super.key, this.questionsRepository});
 
   @override
   State<RestApiQuestionsSearchScreen> createState() =>
@@ -12,7 +16,7 @@ class RestApiQuestionsSearchScreen extends StatefulWidget {
 
 class _RestApiQuestionsSearchScreenState
     extends State<RestApiQuestionsSearchScreen> {
-  final RestQuestionsApiService _api = RestQuestionsApiService();
+  late final RestQuestionsRepository _questionsRepository;
 
   final _subjectController = TextEditingController(text: 'mathematics');
   final _topicController = TextEditingController(
@@ -21,6 +25,13 @@ class _RestApiQuestionsSearchScreenState
   int _grade = 12;
 
   Future<List<RestApiQuestion>>? _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _questionsRepository =
+        widget.questionsRepository ?? RestQuestionsRepository();
+  }
 
   @override
   void dispose() {
@@ -34,12 +45,22 @@ class _RestApiQuestionsSearchScreenState
     final topic = _topicController.text.trim();
 
     setState(() {
-      _future = _api.fetchQuestions(
-        subject: subject,
-        grade: _grade,
-        topic: topic,
+      _future = _questionsRepository.fetchQuestions(
+        RestQuestionQuery(subject: subject, grade: _grade, topic: topic),
       );
     });
+  }
+
+  String _buildUserFacingError(Object error) {
+    if (error is RestApiException) {
+      return error.toUserMessage();
+    }
+
+    if (error is ArgumentError) {
+      return error.message?.toString() ?? 'Invalid filter values provided.';
+    }
+
+    return 'Something went wrong while loading questions. Please try again.';
   }
 
   @override
@@ -125,8 +146,11 @@ class _RestApiQuestionsSearchScreenState
                         if (snapshot.hasError) {
                           return Padding(
                             padding: const EdgeInsets.all(16),
-                            child: SingleChildScrollView(
-                              child: Text(snapshot.error.toString()),
+                            child: Center(
+                              child: Text(
+                                _buildUserFacingError(snapshot.error!),
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                           );
                         }

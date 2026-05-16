@@ -58,14 +58,25 @@ class RestApiQuestion {
     final id = readString(['id', '_id', 'questionId', 'question_id']);
     final subjectId = readString(['subjectId', 'subject', 'subject_id']);
     final topic = readString(['topic', 'topicId', 'topic_id']);
+    final grade = readNullableInt(['grade']);
 
-    // Grade is required by spec, but we default to 0 if missing.
-    final grade = readNullableInt(['grade']) ?? 0;
+    final missingFields = <String>[
+      if (id.isEmpty) 'id',
+      if (subjectId.isEmpty) 'subjectId',
+      if (topic.isEmpty) 'topic',
+      if (grade == null) 'grade',
+    ];
+
+    if (missingFields.isNotEmpty) {
+      throw FormatException(
+        'Question response is missing required fields: ${missingFields.join(', ')}.',
+      );
+    }
 
     return RestApiQuestion(
       id: id,
       subjectId: subjectId,
-      grade: grade,
+      grade: grade!,
       topic: topic,
       year: readNullableInt(['year', 'examYear', 'exam_year']),
       season: readNullableString(['season', 'examSeason', 'exam_season']),

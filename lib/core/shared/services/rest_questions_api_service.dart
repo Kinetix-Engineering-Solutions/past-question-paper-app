@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'package:past_question_paper_v1/core/shared/models/rest_api_question.dart';
+import 'package:past_question_paper_v1/core/shared/models/rest_question_query.dart';
 
 class RestApiException implements Exception {
   final Uri url;
@@ -16,6 +17,26 @@ class RestApiException implements Exception {
     this.statusCode,
     this.responseBodyPreview,
   });
+
+  String toUserMessage() {
+    if (statusCode == null) {
+      return 'Could not connect to the question service. Check your connection and try again.';
+    }
+
+    if (statusCode == 404) {
+      return 'No questions were found for the selected filters.';
+    }
+
+    if (statusCode == 429) {
+      return 'The question service is busy. Please wait a moment and try again.';
+    }
+
+    if (statusCode! >= 500) {
+      return 'The question service is temporarily unavailable. Please try again later.';
+    }
+
+    return 'Questions could not be loaded. Please check your filters and try again.';
+  }
 
   @override
   String toString() {
@@ -53,21 +74,37 @@ class RestQuestionsApiService {
     String? season,
     String? questionNumber,
     String? questionPrefix,
+    int limit = 50,
+    int offset = 0,
     Duration timeout = const Duration(seconds: 8),
   }) async {
-    final queryParameters = <String, String>{
-      'subject': _toApiSubject(subject),
-      'grade': grade.toString(),
-      'topic': topic.trim(),
-      if (startYear != null) 'startYear': startYear.toString(),
-      if (endYear != null) 'endYear': endYear.toString(),
-      if (paper != null && paper.trim().isNotEmpty) 'paper': paper.trim(),
-      if (season != null && season.trim().isNotEmpty) 'season': season.trim(),
-      if (questionNumber != null && questionNumber.trim().isNotEmpty)
-        'questionNumber': questionNumber.trim(),
-      if (questionPrefix != null && questionPrefix.trim().isNotEmpty)
-        'questionPrefix': questionPrefix.trim(),
-    };
+    return fetchQuestionsForQuery(
+      RestQuestionQuery(
+        subject: subject,
+        grade: grade,
+        topic: topic,
+        startYear: startYear,
+        endYear: endYear,
+        paper: paper,
+        season: season,
+        questionNumber: questionNumber,
+        questionPrefix: questionPrefix,
+      ),
+      limit: limit,
+      offset: offset,
+      timeout: timeout,
+    );
+  }
+
+  Future<List<RestApiQuestion>> fetchQuestionsForQuery(
+    RestQuestionQuery query, {
+    int limit = 50,
+    int offset = 0,
+    Duration timeout = const Duration(seconds: 8),
+  }) async {
+    final queryParameters = query.toQueryParameters();
+    queryParameters['limit'] = limit.toString();
+    queryParameters['offset'] = offset.toString();
 
     final url = Uri.parse(
       '$_baseUrl/api/questions',
@@ -77,13 +114,22 @@ class RestQuestionsApiService {
       final response = await _client.get(url).timeout(timeout);
 
       if (response.statusCode == 200) {
-        final decoded = json.decode(response.body);
-        final list = _extractQuestionList(decoded);
-        return list
-            .whereType<Map>()
-            .map((item) => item.cast<String, dynamic>())
-            .map(RestApiQuestion.fromJson)
-            .toList();
+        try {
+          final decoded = json.decode(response.body);
+          final list = _extractQuestionList(decoded);
+          return list
+              .whereType<Map>()
+              .map((item) => item.cast<String, dynamic>())
+              .map(RestApiQuestion.fromJson)
+              .toList();
+        } catch (e) {
+          throw RestApiException(
+            url: url,
+            statusCode: response.statusCode,
+            message: 'API returned invalid question data.',
+            responseBodyPreview: e.toString(),
+          );
+        }
       }
 
       final preview = _previewBody(response.body);
@@ -101,14 +147,6 @@ class RestQuestionsApiService {
         responseBodyPreview: e.toString(),
       );
     }
-  }
-
-  String _toApiSubject(String value) {
-    final normalized = value.trim().toLowerCase();
-    // Backend expects full subject name (e.g. "mathematics"), not "math".
-    if (normalized == 'math') return 'mathematics';
-    if (normalized == 'maths') return 'mathematics';
-    return normalized;
   }
 
   List<dynamic> _extractQuestionList(dynamic decoded) {

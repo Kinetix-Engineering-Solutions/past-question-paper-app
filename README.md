@@ -97,6 +97,27 @@ flutterfire configure
 flutter run
 ```
 
+### Google Ads setup (Home + Flashcard only)
+
+Ads are wired only into the Home topic list and Flashcard screens, and are disabled by default.
+
+Run with ads enabled and your ad unit IDs:
+
+```bash
+flutter run \
+  --dart-define=ENABLE_GOOGLE_ADS=true \
+  --dart-define=ADMOB_ANDROID_HOME_BANNER_ID=ca-app-pub-xxxx/yyyy \
+  --dart-define=ADMOB_ANDROID_FLASHCARD_BANNER_ID=ca-app-pub-xxxx/yyyy \
+  --dart-define=ADMOB_IOS_HOME_BANNER_ID=ca-app-pub-xxxx/yyyy \
+  --dart-define=ADMOB_IOS_FLASHCARD_BANNER_ID=ca-app-pub-xxxx/yyyy
+```
+
+Optional test devices:
+
+```bash
+flutter run --dart-define=ADS_TEST_DEVICE_IDS=TEST_DEVICE_ID_1,TEST_DEVICE_ID_2
+```
+
 ## ☁️ Cloud Functions
 
 ```bash

@@ -3,11 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 
-/// PQP Typography: Poppins across the entire interface for a unified voice.
+/// PQP Typography: Inconsolata across the entire interface for a uniform, mono-spaced voice.
 class AppTypography {
   static TextTheme textTheme([TextTheme? seed, bool isDark = false]) {
     final seedTheme = seed ?? ThemeData.light().textTheme;
-    final poppins = GoogleFonts.poppinsTextTheme(seedTheme);
+    final baseTypography = GoogleFonts.inconsolataTextTheme(seedTheme);
     // Slightly reduce overall font sizes for a tighter, denser UI.
     const fontScale = 0.94;
 
@@ -19,61 +19,61 @@ class AppTypography {
         : AppColors.neutralSoft;
 
     final composed = TextTheme(
-      // Headings & titles (Poppins)
-      headlineLarge: poppins.headlineLarge?.copyWith(
+      // Headings & titles (Inconsolata)
+      headlineLarge: baseTypography.headlineLarge?.copyWith(
         color: ink,
         fontWeight: FontWeight.w700,
         letterSpacing: -1.0,
       ),
-      headlineMedium: poppins.headlineMedium?.copyWith(
+      headlineMedium: baseTypography.headlineMedium?.copyWith(
         color: ink,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.5,
       ),
-      headlineSmall: poppins.headlineSmall?.copyWith(
+      headlineSmall: baseTypography.headlineSmall?.copyWith(
         color: ink,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.3,
       ),
-      titleLarge: poppins.titleLarge?.copyWith(
+      titleLarge: baseTypography.titleLarge?.copyWith(
         color: ink,
         fontWeight: FontWeight.w600,
       ),
-      titleMedium: poppins.titleMedium?.copyWith(
+      titleMedium: baseTypography.titleMedium?.copyWith(
         color: ink,
         fontWeight: FontWeight.w500,
       ),
-      titleSmall: poppins.titleSmall?.copyWith(
+      titleSmall: baseTypography.titleSmall?.copyWith(
         color: ink,
         fontWeight: FontWeight.w500,
       ),
 
-      // Body & labels (Poppins for consistency)
-      bodyLarge: poppins.bodyLarge?.copyWith(
+      // Body & labels (Inconsolata for consistency)
+      bodyLarge: baseTypography.bodyLarge?.copyWith(
         color: ink,
         fontWeight: FontWeight.w400,
         height: 1.5,
       ),
-      bodyMedium: poppins.bodyMedium?.copyWith(
+      bodyMedium: baseTypography.bodyMedium?.copyWith(
         color: ink,
         fontWeight: FontWeight.w400,
         height: 1.5,
       ),
-      bodySmall: poppins.bodySmall?.copyWith(
+      bodySmall: baseTypography.bodySmall?.copyWith(
         color: neutralSoft,
         fontWeight: FontWeight.w400,
         height: 1.4,
       ),
-      labelLarge: poppins.labelLarge?.copyWith(
+      labelLarge: baseTypography.labelLarge?.copyWith(
         color: ink,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
       ),
-      labelMedium: poppins.labelMedium?.copyWith(
+      labelMedium: baseTypography.labelMedium?.copyWith(
         color: neutralMid,
         letterSpacing: 0.2,
       ),
-      labelSmall: poppins.labelSmall?.copyWith(
+      labelSmall: baseTypography.labelSmall?.copyWith(
         color: neutralSoft,
         letterSpacing: 0.3,
       ),
