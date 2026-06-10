@@ -507,9 +507,11 @@ class _TopicDiscoverySection extends StatelessWidget {
                                   children: [
                                     Text(
                                       item.topic,
-                                      style: textTheme.titleSmall?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        color: colorScheme.onSurface,
+                                      style: textTheme.headlineSmall?.copyWith(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+
+                                        color: Colors.black,
                                       ),
                                     ),
                                     const SizedBox(height: 6),

@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:past_question_paper_v1/firebase_options.dart';
 import 'package:past_question_paper_v1/core/theme/app_theme.dart';
 import 'package:past_question_paper_v1/core/shared/widgets/connectivity_banner.dart';
@@ -21,6 +22,13 @@ void main() async {
 
   // Initialize Firebase with platform-specific options
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Initialize Supabase
+  await Supabase.initialize(
+    url: 'https://uaxzwifrlzlzwaltpbpf.supabase.co',
+    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+     // Should be in .env
+  );
 
   // Activate App Check
   await FirebaseAppCheck.instance.activate(

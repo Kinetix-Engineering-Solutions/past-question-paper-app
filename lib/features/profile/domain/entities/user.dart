@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 
 /// A simplified, flat user model for the application.
 class AppUser {
@@ -48,6 +49,17 @@ class AppUser {
       name: firebaseUser.displayName,
       photoUrl: firebaseUser.photoURL,
       // Preferences will be null for a new user until they are set
+      grade: null,
+      selectedSubjects: [],
+    );
+  }
+
+  factory AppUser.fromSupabase(sb.User user) {
+    return AppUser(
+      id: user.id,
+      email: user.email ?? '',
+      name: user.userMetadata?['full_name'] ?? user.userMetadata?['name'] ?? 'User',
+      photoUrl: user.userMetadata?['avatar_url'] ?? user.userMetadata?['picture'],
       grade: null,
       selectedSubjects: [],
     );

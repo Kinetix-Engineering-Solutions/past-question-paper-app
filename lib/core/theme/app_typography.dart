@@ -3,13 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 
-/// PQP Typography: Inconsolata across the entire interface for a uniform, mono-spaced voice.
+/// PQP Typography: Manrope across the entire interface as the global typeface.
 class AppTypography {
   static TextTheme textTheme([TextTheme? seed, bool isDark = false]) {
     final seedTheme = seed ?? ThemeData.light().textTheme;
-    final baseTypography = GoogleFonts.inconsolataTextTheme(seedTheme);
+    final baseTypography = GoogleFonts.manropeTextTheme(seedTheme);
     // Slightly reduce overall font sizes for a tighter, denser UI.
-    const fontScale = 0.94;
+    const fontScale = 0.80;
 
     // Select colors based on theme brightness
     final ink = isDark ? AppColorsDark.ink : AppColors.ink;
@@ -19,10 +19,10 @@ class AppTypography {
         : AppColors.neutralSoft;
 
     final composed = TextTheme(
-      // Headings & titles (Inconsolata)
+      // Headings & titles (Manrope)
       headlineLarge: baseTypography.headlineLarge?.copyWith(
         color: ink,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         letterSpacing: -1.0,
       ),
       headlineMedium: baseTypography.headlineMedium?.copyWith(
@@ -48,7 +48,7 @@ class AppTypography {
         fontWeight: FontWeight.w500,
       ),
 
-      // Body & labels (Inconsolata for consistency)
+      // Body & labels (Manrope for consistency)
       bodyLarge: baseTypography.bodyLarge?.copyWith(
         color: ink,
         fontWeight: FontWeight.w400,

@@ -1,14 +1,13 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:past_question_paper_v1/features/profile/domain/entities/user.dart';
 
 abstract class IAuthService {
   Stream<AppUser?> get authStateChanges;
-  Future<UserCredential> signInWithEmailAndPassword(
+  Future<void> signInWithEmailAndPassword(
     String email,
     String password,
   );
 
-  Future<UserCredential> signUpWithEmailAndPassword(
+  Future<void> signUpWithEmailAndPassword(
     String email,
     String password,
   );
@@ -33,8 +32,10 @@ abstract class IAuthService {
   Future<void> sendVerificationEmail();
 
   /// Completes the sign-in process with the received email link
-  Future<UserCredential> signInWithEmailLink(String email, String emailLink);
+  Future<void> signInWithEmailLink(String email, String emailLink);
 
   /// Checks if the given link is a valid email sign-in link
   bool isSignInWithEmailLink(String emailLink);
+
+  Future<void> signInWithGoogle();
 }

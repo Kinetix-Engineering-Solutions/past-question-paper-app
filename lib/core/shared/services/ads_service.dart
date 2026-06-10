@@ -54,7 +54,7 @@ class AdsService {
         defaultTargetPlatform == TargetPlatform.iOS;
   }
 
-  bool get canShowAds => _resolveAdsEnabled() && isSupportedPlatform;
+  bool get canShowAds => false; // _resolveAdsEnabled() && isSupportedPlatform;
 
   Future<void> initialize() async {
     if (!canShowAds || _initialized) return;

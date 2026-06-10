@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:past_question_paper_v1/core/shared/models/flashcard_load_state.dart';
 import 'package:past_question_paper_v1/core/shared/models/rest_question_query.dart';
@@ -6,10 +7,13 @@ import 'package:past_question_paper_v1/core/shared/repositories/rest_questions_r
 import 'package:past_question_paper_v1/core/shared/services/ads_service.dart';
 import 'package:past_question_paper_v1/core/shared/services/rest_questions_api_service.dart';
 import 'package:past_question_paper_v1/core/shared/widgets/ad_banner_slot.dart';
+import 'package:past_question_paper_v1/core/theme/app_colors.dart';
+import 'package:past_question_paper_v1/features/auth/presentation/screens/login.dart';
+import 'package:past_question_paper_v1/features/auth/providers/auth_providers.dart';
 import 'package:past_question_paper_v1/features/flashcards/presentation/widgets/flashcard_meta_chip.dart';
 import 'package:past_question_paper_v1/features/flashcards/presentation/widgets/flashcard_question_image.dart';
 
-class FlashcardScreen extends StatefulWidget {
+class FlashcardScreen extends ConsumerStatefulWidget {
   final String subjectId;
   final String topicId;
   final String? topicTitle;
@@ -26,7 +30,7 @@ class FlashcardScreen extends StatefulWidget {
   });
 
   @override
-  State<FlashcardScreen> createState() => _FlashcardScreenState();
+  ConsumerState<FlashcardScreen> createState() => _FlashcardScreenState();
 }
 
 class _FlashcardFilters {
@@ -43,7 +47,7 @@ class _FlashcardFilters {
   });
 }
 
-class _FlashcardScreenState extends State<FlashcardScreen> {
+class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
   FlashcardLoadState _loadState = const FlashcardLoadState.initial();
   final PageController _pageController = PageController();
   late final RestQuestionsRepository _questionsRepository;
@@ -62,6 +66,39 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   String? _selectedSeason; // null = Any
   String? _selectedQuestionNumber; // null = Any
   String? _selectedQuestionPrefix; // null = Any
+
+  final TextEditingController _commentController = TextEditingController();
+  bool _isRecording = false;
+  final List<_CommunityComment> _communityComments = [
+    _CommunityComment(
+      id: 'c1',
+      questionId: 'sample-1',
+      authorName: 'Thandi M.',
+      textContent:
+          'Quick tip: isolate the variable and check units before substituting.',
+      upvotes: 14,
+      createdAt: DateTime(2025, 10, 5, 10, 12),
+    ),
+    _CommunityComment(
+      id: 'c2',
+      questionId: 'sample-1',
+      authorName: 'Neo P.',
+      audioUrl: 'https://example.com/audio/voice-note.m4a',
+      textContent: 'Short walkthrough of the memo logic.',
+      upvotes: 9,
+      createdAt: DateTime(2025, 10, 6, 9, 30),
+    ),
+    _CommunityComment(
+      id: 'c3',
+      questionId: 'sample-1',
+      authorName: 'Aisha L.',
+      externalVideoUrl: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
+      videoThumbnailUrl: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+      textContent: 'Video breakdown with step-by-step reasoning.',
+      upvotes: 21,
+      createdAt: DateTime(2025, 10, 6, 14, 5),
+    ),
+  ];
 
   static const List<String> _seasonOptions = <String>[
     'Any',
@@ -83,7 +120,163 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   @override
   void dispose() {
     _pageController.dispose();
+    _commentController.dispose();
     super.dispose();
+  }
+
+  bool _isLoggedIn(AsyncValue<dynamic> authState) {
+    return authState.maybeWhen(
+      data: (user) => user != null,
+      orElse: () => false,
+    );
+  }
+
+  Future<void> _showLoginPrompt() async {
+    final colorScheme = Theme.of(context).colorScheme;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Login required'),
+          content: const Text(
+            'Sign in to access AI explanations, voice notes, and community discussions.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Not now'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                foregroundColor: colorScheme.onPrimary,
+              ),
+              child: const Text('Login'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _requireLoginOrPrompt(VoidCallback action) async {
+    final authState = ref.read(authStateProvider);
+    final loggedIn = _isLoggedIn(authState);
+    if (!loggedIn) {
+      await _showLoginPrompt();
+      return;
+    }
+    action();
+  }
+
+  void _showInfoSnack(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  List<_CommunityComment> _sortedCommentsForQuestion(String questionId) {
+    final comments = _communityComments
+        .where((comment) => comment.questionId == questionId)
+        .toList();
+    comments.sort((a, b) => b.upvotes.compareTo(a.upvotes));
+    return comments;
+  }
+
+  void _applyVote(_CommunityComment comment, int delta) {
+    setState(() {
+      final index = _communityComments.indexWhere((c) => c.id == comment.id);
+      if (index == -1) return;
+      final updated = _communityComments[index].copyWith(
+        upvotes: (_communityComments[index].upvotes + delta).clamp(0, 9999),
+      );
+      _communityComments[index] = updated;
+    });
+  }
+
+  Future<void> _openLinkModal({required String questionId}) async {
+    final controller = TextEditingController();
+    final url = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 12,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Share a video link',
+                style: Theme.of(
+                  sheetContext,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                textInputAction: TextInputAction.done,
+                decoration: const InputDecoration(
+                  labelText: 'YouTube or TikTok URL',
+                  hintText: 'https://youtube.com/watch?v=...',
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(sheetContext).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: () => Navigator.of(
+                        sheetContext,
+                      ).pop(controller.text.trim()),
+                      child: const Text('Add Link'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    controller.dispose();
+
+    final normalized = url?.trim();
+    if (normalized == null || normalized.isEmpty) return;
+
+    setState(() {
+      _communityComments.add(
+        _CommunityComment(
+          id: 'c${DateTime.now().millisecondsSinceEpoch}',
+          questionId: questionId,
+          authorName: 'You',
+          externalVideoUrl: normalized,
+          videoThumbnailUrl: null,
+          textContent: 'Shared a video explanation.',
+          upvotes: 0,
+          createdAt: DateTime.now(),
+        ),
+      );
+    });
   }
 
   String? _normalizeNullableText(String? value) {
@@ -393,9 +586,7 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
       return;
     }
 
-    await _adsService.showInterstitial(
-      AppInterstitialPlacement.flashcard,
-    );
+    await _adsService.showInterstitial(AppInterstitialPlacement.flashcard);
   }
 
   Future<bool> _handleExit() async {
@@ -418,8 +609,13 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final authState = ref.watch(authStateProvider);
+    final isLoggedIn = _isLoggedIn(authState);
     final loadState = _loadState;
     final questions = loadState.questions;
+    final currentQuestion = questions.isNotEmpty
+        ? questions[loadState.currentIndex.clamp(0, questions.length - 1)]
+        : null;
 
     return WillPopScope(
       onWillPop: _handleExit,
@@ -436,6 +632,72 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
               tooltip: 'Filter',
               onPressed: loadState.isLoading ? null : _openFiltersSheet,
               icon: const Icon(Icons.tune),
+            ),
+            IconButton(
+              tooltip: 'AI explanation',
+              onPressed: currentQuestion == null
+                  ? null
+                  : () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => _AiExplanationScreen(
+                            questionImage: currentQuestion.questionImageUrl,
+                            answerImage: currentQuestion.answerImageUrl,
+                            onAskAi: () {
+                              _requireLoginOrPrompt(() {
+                                _showInfoSnack(
+                                  'AI explain will connect once the backend is ready.',
+                                );
+                              });
+                            },
+                            isLoggedIn: isLoggedIn,
+                          ),
+                        ),
+                      );
+                    },
+              icon: const Icon(Icons.auto_awesome),
+            ),
+            IconButton(
+              tooltip: 'Community audio',
+              onPressed: currentQuestion == null
+                  ? null
+                  : () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => _CommunityAudioScreen(
+                            isLoggedIn: isLoggedIn,
+                            isRecording: _isRecording,
+                            onStartRecording: () {
+                              _requireLoginOrPrompt(() {
+                                setState(() => _isRecording = true);
+                              });
+                            },
+                            onStopRecording: () {
+                              if (!_isRecording) return;
+                              setState(() => _isRecording = false);
+                              _showInfoSnack(
+                                'Recording saved locally (upload coming soon).',
+                              );
+                            },
+                          ),
+                        ),
+                      );
+                    },
+              icon: const Icon(Icons.mic),
+            ),
+            IconButton(
+              tooltip: 'Community discussion',
+              onPressed: currentQuestion == null
+                  ? null
+                  : () {
+                      _openCommunityDiscussionSheet(
+                        questionId: currentQuestion.id.isEmpty
+                            ? 'sample-1'
+                            : currentQuestion.id,
+                        isLoggedIn: isLoggedIn,
+                      );
+                    },
+              icon: const Icon(Icons.forum),
             ),
           ],
         ),
@@ -461,7 +723,9 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                 ),
               )
             : questions.isEmpty
-            ? const Center(child: Text('No questions mapped for this topic yet!'))
+            ? const Center(
+                child: Text('No questions mapped for this topic yet!'),
+              )
             : SafeArea(
                 child: Column(
                   children: [
@@ -536,133 +800,66 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                           final questionImage = q.questionImageUrl;
                           final answerImage = q.answerImageUrl;
 
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Column(
-                              children: [
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.surfaceContainerHighest,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    alignment: WrapAlignment.center,
-                                    children: [
-                                      FlashcardMetaChip(
-                                        label: 'Year',
-                                        value: year,
-                                        emphasize: true,
-                                      ),
-                                      FlashcardMetaChip(
-                                        label: 'Season',
-                                        value: season,
-                                      ),
-                                      FlashcardMetaChip(
-                                        label: 'Question',
-                                        value: questionNumber,
-                                      ),
-                                    ],
-                                  ),
+                          return LayoutBuilder(
+                            builder: (context, constraints) {
+                              return SingleChildScrollView(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
                                 ),
-                                const SizedBox(height: 10),
-                                Expanded(
-                                  child: Column(
-                                    children: [
-                                      Expanded(
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Container(
-                                            width: double.infinity,
-                                            color: colorScheme.surface,
-                                            child: FlashcardQuestionImage(
-                                              imageUrl: questionImage,
-                                            ),
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            colorScheme.surfaceContainerHighest,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        alignment: WrapAlignment.center,
+                                        children: [
+                                          FlashcardMetaChip(
+                                            label: 'Year',
+                                            value: year,
+                                            emphasize: true,
                                           ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      Expanded(
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(12),
-                                          child: Container(
-                                            width: double.infinity,
-                                            color: colorScheme.surface,
-                                            child: Stack(
-                                              fit: StackFit.expand,
-                                              children: [
-                                                FlashcardQuestionImage(
-                                                  imageUrl: answerImage,
-                                                  blurred:
-                                                      !loadState.isAnswerRevealed,
-                                                ),
-                                                if (!loadState.isAnswerRevealed &&
-                                                    (answerImage ?? '')
-                                                        .trim()
-                                                        .isNotEmpty)
-                                                  Positioned.fill(
-                                                    child: Container(
-                                                      alignment: Alignment.center,
-                                                      color: colorScheme.scrim
-                                                          .withValues(
-                                                            alpha: 0.18,
-                                                          ),
-                                                      child: Container(
-                                                        padding:
-                                                            const EdgeInsets.symmetric(
-                                                          horizontal: 12,
-                                                          vertical: 8,
-                                                        ),
-                                                        decoration: BoxDecoration(
-                                                          color: colorScheme
-                                                              .surface
-                                                              .withValues(
-                                                                alpha: 0.78,
-                                                              ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                            999,
-                                                          ),
-                                                          border: Border.all(
-                                                            color: colorScheme
-                                                                .outlineVariant,
-                                                          ),
-                                                        ),
-                                                        child: Text(
-                                                          'Answer blurred',
-                                                          style: textTheme
-                                                              .labelLarge
-                                                              ?.copyWith(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
-                                                                color: colorScheme
-                                                                    .onSurface,
-                                                              ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
+                                          FlashcardMetaChip(
+                                            label: 'Season',
+                                            value: season,
                                           ),
-                                        ),
+                                          FlashcardMetaChip(
+                                            label: 'Question',
+                                            value: questionNumber,
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _buildImagePanel(
+                                      colorScheme: colorScheme,
+                                      imageUrl: questionImage,
+                                      label: 'Question',
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _buildAnswerPanel(
+                                      colorScheme: colorScheme,
+                                      textTheme: textTheme,
+                                      imageUrl: answerImage,
+                                      isBlurred: !loadState.isAnswerRevealed,
+                                    ),
+                                    Text(
+                                      'Swipe for next card.',
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Swipe for next card.',
-                                  style: textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              );
+                            },
                           );
                         },
                       ),
@@ -699,6 +896,739 @@ class _FlashcardScreenState extends State<FlashcardScreen> {
                   ],
                 ),
               ),
-        ));
+      ),
+    );
+  }
+
+  Future<void> _openCommunityDiscussionSheet({
+    required String questionId,
+    required bool isLoggedIn,
+  }) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final sheetColorScheme = Theme.of(sheetContext).colorScheme;
+            final sheetTextTheme = Theme.of(sheetContext).textTheme;
+            final comments = _sortedCommentsForQuestion(questionId);
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 12,
+                bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+              ),
+              child: SingleChildScrollView(
+                child: _buildCommunityDiscussionSection(
+                  colorScheme: sheetColorScheme,
+                  textTheme: sheetTextTheme,
+                  isLoggedIn: isLoggedIn,
+                  questionId: questionId,
+                  comments: comments,
+                  onDataChanged: () => setModalState(() {}),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildImagePanel({
+    required ColorScheme colorScheme,
+    required String? imageUrl,
+    required String label,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        height: 230,
+        color: colorScheme.surface,
+        child: Stack(
+          children: [
+            FlashcardQuestionImage(imageUrl: imageUrl),
+            Positioned(
+              top: 12,
+              left: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnswerPanel({
+    required ColorScheme colorScheme,
+    required TextTheme textTheme,
+    required String? imageUrl,
+    required bool isBlurred,
+  }) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: double.infinity,
+        height: 230,
+        color: colorScheme.surface,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            FlashcardQuestionImage(imageUrl: imageUrl, blurred: isBlurred),
+            if (isBlurred && (imageUrl ?? '').trim().isNotEmpty)
+              Positioned.fill(
+                child: Container(
+                  alignment: Alignment.center,
+                  color: colorScheme.scrim.withValues(alpha: 0.18),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface.withValues(alpha: 0.78),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: colorScheme.outlineVariant),
+                    ),
+                    child: Text(
+                      'Answer blurred',
+                      style: textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCommunityDiscussionSection({
+    required ColorScheme colorScheme,
+    required TextTheme textTheme,
+    required bool isLoggedIn,
+    required String questionId,
+    required List<_CommunityComment> comments,
+    VoidCallback? onDataChanged,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Community Discussion',
+            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _commentController,
+                  decoration: const InputDecoration(
+                    hintText: 'Share a tip or ask a question',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: 'Record voice note',
+                icon: const Icon(Icons.mic_none),
+                onPressed: () {
+                  _requireLoginOrPrompt(() {
+                    _showInfoSnack('Voice note upload will be available soon.');
+                  });
+                },
+              ),
+              IconButton(
+                tooltip: 'Add video link',
+                icon: const Icon(Icons.link),
+                onPressed: () {
+                  _requireLoginOrPrompt(() async {
+                    await _openLinkModal(questionId: questionId);
+                  });
+                },
+              ),
+              IconButton(
+                tooltip: 'Post',
+                icon: const Icon(Icons.send),
+                onPressed: () {
+                  _requireLoginOrPrompt(() {
+                    final text = _commentController.text.trim();
+                    if (text.isEmpty) return;
+                    setState(() {
+                      _communityComments.add(
+                        _CommunityComment(
+                          id: 'c${DateTime.now().millisecondsSinceEpoch}',
+                          questionId: questionId,
+                          authorName: 'You',
+                          textContent: text,
+                          upvotes: 0,
+                          createdAt: DateTime.now(),
+                        ),
+                      );
+                      _commentController.clear();
+                    });
+                  });
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (comments.isEmpty)
+            Text(
+              'No comments yet. Be the first to share an insight.',
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            )
+          else
+            Column(
+              children: comments
+                  .map(
+                    (comment) => _CommunityCommentCard(
+                      comment: comment,
+                      colorScheme: colorScheme,
+                      textTheme: textTheme,
+                      onUpvote: () {
+                        _requireLoginOrPrompt(() {
+                          _applyVote(comment, 1);
+                          onDataChanged?.call();
+                        });
+                      },
+                      onDownvote: () {
+                        _requireLoginOrPrompt(() {
+                          _applyVote(comment, -1);
+                          onDataChanged?.call();
+                        });
+                      },
+                      onReport: () {
+                        _requireLoginOrPrompt(() {
+                          _showInfoSnack(
+                            'Thanks for reporting. Moderation review coming soon.',
+                          );
+                        });
+                      },
+                      onOpenVideo: () {
+                        _showInfoSnack('Video opening coming soon.');
+                      },
+                      onPlayAudio: () {
+                        _showInfoSnack('Audio playback coming soon.');
+                      },
+                    ),
+                  )
+                  .toList(),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CommunityComment {
+  final String id;
+  final String questionId;
+  final String authorName;
+  final String? textContent;
+  final String? audioUrl;
+  final String? externalVideoUrl;
+  final String? videoThumbnailUrl;
+  final int upvotes;
+  final DateTime createdAt;
+
+  const _CommunityComment({
+    required this.id,
+    required this.questionId,
+    required this.authorName,
+    this.textContent,
+    this.audioUrl,
+    this.externalVideoUrl,
+    this.videoThumbnailUrl,
+    required this.upvotes,
+    required this.createdAt,
+  });
+
+  _CommunityComment copyWith({int? upvotes}) {
+    return _CommunityComment(
+      id: id,
+      questionId: questionId,
+      authorName: authorName,
+      textContent: textContent,
+      audioUrl: audioUrl,
+      externalVideoUrl: externalVideoUrl,
+      videoThumbnailUrl: videoThumbnailUrl,
+      upvotes: upvotes ?? this.upvotes,
+      createdAt: createdAt,
+    );
+  }
+}
+
+class _CommunityCommentCard extends StatelessWidget {
+  final _CommunityComment comment;
+  final ColorScheme colorScheme;
+  final TextTheme textTheme;
+  final VoidCallback onUpvote;
+  final VoidCallback onDownvote;
+  final VoidCallback onReport;
+  final VoidCallback onOpenVideo;
+  final VoidCallback onPlayAudio;
+
+  const _CommunityCommentCard({
+    required this.comment,
+    required this.colorScheme,
+    required this.textTheme,
+    required this.onUpvote,
+    required this.onDownvote,
+    required this.onReport,
+    required this.onOpenVideo,
+    required this.onPlayAudio,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasAudio = (comment.audioUrl ?? '').trim().isNotEmpty;
+    final hasVideo = (comment.externalVideoUrl ?? '').trim().isNotEmpty;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: AppColors.accent.withOpacity(0.2),
+                child: Text(
+                  comment.authorName.isNotEmpty
+                      ? comment.authorName.characters.first
+                      : '?',
+                  style: textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                comment.authorName,
+                style: textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.flag_outlined, size: 18),
+                onPressed: onReport,
+              ),
+            ],
+          ),
+          if ((comment.textContent ?? '').trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              comment.textContent!,
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ],
+          if (hasAudio) ...[
+            const SizedBox(height: 10),
+            _AudioPreviewRow(onPlay: onPlayAudio, colorScheme: colorScheme),
+          ],
+          if (hasVideo) ...[
+            const SizedBox(height: 10),
+            _VideoPreviewCard(
+              thumbnailUrl: comment.videoThumbnailUrl,
+              onOpen: onOpenVideo,
+              colorScheme: colorScheme,
+              textTheme: textTheme,
+            ),
+          ],
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.thumb_up_alt_outlined, size: 18),
+                onPressed: onUpvote,
+              ),
+              Text(
+                comment.upvotes.toString(),
+                style: textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(Icons.thumb_down_alt_outlined, size: 18),
+                onPressed: onDownvote,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AiExplanationScreen extends StatelessWidget {
+  final String? questionImage;
+  final String? answerImage;
+  final VoidCallback onAskAi;
+  final bool isLoggedIn;
+
+  const _AiExplanationScreen({
+    required this.questionImage,
+    required this.answerImage,
+    required this.onAskAi,
+    required this.isLoggedIn,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Scaffold(
+      appBar: AppBar(title: const Text('AI Explanation')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text(
+            'Preview explanation',
+            style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Example explanation shown for preview. AI will highlight the memo logic once enabled.',
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '1) Identify the key formula. 2) Substitute known values carefully. 3) Compare with memo steps to confirm the final value.',
+            style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _SourcePreviewCard(
+                label: 'Question image',
+                imageUrl: questionImage,
+              ),
+              _SourcePreviewCard(label: 'Memo image', imageUrl: answerImage),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onAskAi,
+              icon: const Icon(Icons.auto_awesome),
+              label: Text(isLoggedIn ? 'Ask AI to Explain' : 'Login to Ask AI'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                foregroundColor: colorScheme.onPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CommunityAudioScreen extends StatelessWidget {
+  final bool isLoggedIn;
+  final bool isRecording;
+  final VoidCallback onStartRecording;
+  final VoidCallback onStopRecording;
+
+  const _CommunityAudioScreen({
+    required this.isLoggedIn,
+    required this.isRecording,
+    required this.onStartRecording,
+    required this.onStopRecording,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Community Audio')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Record a short explanation',
+              style: textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Hold to record a 60-second explanation for other students.',
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            GestureDetector(
+              onLongPressStart: (_) => onStartRecording(),
+              onLongPressEnd: (_) => onStopRecording(),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                decoration: BoxDecoration(
+                  color: isRecording
+                      ? colorScheme.primaryContainer
+                      : colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      isRecording ? Icons.stop_circle : Icons.mic,
+                      size: 32,
+                      color: isRecording
+                          ? colorScheme.onPrimaryContainer
+                          : colorScheme.onSurface,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isRecording
+                          ? 'Recording... release to stop'
+                          : 'Hold to record (max 60s)',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (!isLoggedIn) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Login is required to post audio to the community feed.',
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SourcePreviewCard extends StatelessWidget {
+  final String label;
+  final String? imageUrl;
+
+  const _SourcePreviewCard({required this.label, required this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final hasImage = (imageUrl ?? '').trim().isNotEmpty;
+    return Container(
+      width: 150,
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+            child: SizedBox(
+              height: 84,
+              width: double.infinity,
+              child: hasImage
+                  ? Image.network(
+                      imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _imageFallback(colorScheme),
+                    )
+                  : _imageFallback(colorScheme),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Text(
+              label,
+              style: textTheme.labelSmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _imageFallback(ColorScheme colorScheme) {
+    return Container(
+      color: colorScheme.surfaceContainerHighest,
+      child: Icon(
+        Icons.image_not_supported,
+        color: colorScheme.onSurfaceVariant,
+      ),
+    );
+  }
+}
+
+class _AudioPreviewRow extends StatelessWidget {
+  final VoidCallback onPlay;
+  final ColorScheme colorScheme;
+
+  const _AudioPreviewRow({required this.onPlay, required this.colorScheme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          IconButton(icon: const Icon(Icons.play_arrow), onPressed: onPlay),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Container(
+              height: 4,
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '0:45',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VideoPreviewCard extends StatelessWidget {
+  final String? thumbnailUrl;
+  final VoidCallback onOpen;
+  final ColorScheme colorScheme;
+  final TextTheme textTheme;
+
+  const _VideoPreviewCard({
+    required this.thumbnailUrl,
+    required this.onOpen,
+    required this.colorScheme,
+    required this.textTheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasThumbnail = (thumbnailUrl ?? '').trim().isNotEmpty;
+    return InkWell(
+      onTap: onOpen,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: colorScheme.outlineVariant),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                width: 88,
+                height: 54,
+                child: hasThumbnail
+                    ? Image.network(
+                        thumbnailUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _buildFallback(),
+                      )
+                    : _buildFallback(),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Watch student explanation',
+                style: textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ),
+            const Icon(Icons.open_in_new, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFallback() {
+    return Container(
+      color: colorScheme.surfaceContainerHighest,
+      child: Icon(Icons.ondemand_video, color: colorScheme.onSurfaceVariant),
+    );
   }
 }

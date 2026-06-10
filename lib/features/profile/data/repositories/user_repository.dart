@@ -39,18 +39,10 @@ class UserRepository {
 
   Future<AppUser> signIn(String email, String password) async {
     try {
-      final credential = await _authService.signInWithEmailAndPassword(
+      await _authService.signInWithEmailAndPassword(
         email,
         password,
       );
-
-      final firebaseUser = credential.user;
-      if (firebaseUser == null) {
-        throw AuthException(
-          'No user found after sign in',
-          code: 'user-not-found',
-        );
-      }
 
       final user = _authService.currentUser;
       if (user == null) {
@@ -70,32 +62,21 @@ class UserRepository {
 
   Future<AppUser> signUp(String email, String password) async {
     try {
-      final credential = await _authService.signUpWithEmailAndPassword(
+      await _authService.signUpWithEmailAndPassword(
         email,
         password,
       );
 
-      final firebaseUser = credential.user;
-      if (firebaseUser == null) {
+      final user = _authService.currentUser;
+      if (user == null) {
+        // For Firebase, this might happen if not verified.
+        // For Supabase, check if a session was created.
         throw AuthException(
-          'No user found after sign up',
-          code: 'user-not-found',
+          'Account created. Please check your email for verification.',
+          code: 'email-verification-sent',
         );
       }
 
-      if (!firebaseUser.emailVerified) {
-        throw AuthException(
-          '✉️ Account Created Successfully!\n\n'
-          'We\'ve sent a verification link to ${firebaseUser.email ?? 'your email'}.\n\n'
-          'Please check your inbox and click the link to verify your email. '
-          'Once verified, you can sign in to access the app.',
-          code: 'email-not-verified',
-        );
-      }
-
-      // If the email is already verified (rare), return the user immediately
-      final user =
-          _authService.currentUser ?? AppUser.fromFirebaseAuth(firebaseUser);
       return user;
     } on AuthException {
       rethrow;

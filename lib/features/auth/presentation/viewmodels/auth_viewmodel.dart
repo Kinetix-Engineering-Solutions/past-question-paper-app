@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/features/profile/domain/entities/user.dart';
 import 'package:past_question_paper_v1/features/auth/providers/auth_providers.dart';
 import 'package:past_question_paper_v1/core/app/navigation_providers.dart';
-import 'package:past_question_paper_v1/features/auth/data/services/auth_service_firebase.dart';
+import 'package:past_question_paper_v1/features/auth/data/services/iauthservice.dart';
 import 'package:past_question_paper_v1/core/app/navigation_service.dart';
 import 'package:past_question_paper_v1/Exceptions/auth_exception.dart';
 import 'package:past_question_paper_v1/widgets/custom_snackbar.dart';
@@ -26,8 +26,8 @@ class AuthViewModel extends StateNotifier<AsyncValue<AppUser?>> {
     });
   }
 
-  // Expose the auth service for email link sign-in
-  AuthServiceFirebase get authService => _ref.read(authServiceProvider);
+  // Expose the auth service for provider-agnostic auth actions
+  IAuthService get authService => _ref.read(authServiceProvider);
 
   /// Sign in with email and password in the UI
   Future<void> signInUserInUI({

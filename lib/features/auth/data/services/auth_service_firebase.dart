@@ -55,7 +55,7 @@ class AuthServiceFirebase implements IAuthService {
   }
 
   @override
-  Future<UserCredential> signInWithEmailAndPassword(
+  Future<void> signInWithEmailAndPassword(
     String email,
     String password,
   ) async {
@@ -67,11 +67,6 @@ class AuthServiceFirebase implements IAuthService {
 
       final user = result.user;
       if (user != null && !user.emailVerified) {
-        // Don't auto-send a new verification email on every sign-in attempt.
-        // Each call to generateEmailVerificationLink() invalidates previous
-        // links, so repeated sign-ins would make already-sent links expire.
-        // The user can explicitly resend from the EmailVerificationScreen.
-
         throw AuthException(
           '⚠️ Email Not Verified\n\n'
           'Please verify your email address first.\n\n'
@@ -80,8 +75,6 @@ class AuthServiceFirebase implements IAuthService {
           code: 'email-not-verified',
         );
       }
-
-      return result;
     } on FirebaseAuthException catch (e) {
       throw AuthException.fromFirebaseAuth(e);
     }
@@ -90,7 +83,7 @@ class AuthServiceFirebase implements IAuthService {
   /// Sign up with email and password
 
   @override
-  Future<UserCredential> signUpWithEmailAndPassword(
+  Future<void> signUpWithEmailAndPassword(
     String email,
     String password,
   ) async {
@@ -129,8 +122,6 @@ class AuthServiceFirebase implements IAuthService {
           }
         }
       }
-
-      return result;
     } on FirebaseAuthException catch (e) {
       throw AuthException.fromFirebaseAuth(e);
     }
@@ -321,7 +312,7 @@ class AuthServiceFirebase implements IAuthService {
 
   /// Completes the sign-in process with the received email link
   @override
-  Future<UserCredential> signInWithEmailLink(
+  Future<void> signInWithEmailLink(
     String email,
     String emailLink,
   ) async {
@@ -346,39 +337,19 @@ class AuthServiceFirebase implements IAuthService {
       // Clear the saved email after successful sign-in
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_emailForSignInKey);
-
-      return result;
     } on FirebaseAuthException catch (e) {
       throw AuthException.fromFirebaseAuth(e);
     }
   }
 
-  /// Checks if the given link is a valid email sign-in link
+  @override
+  Future<void> signInWithGoogle() async {
+    // Firebase Google sign in implementation...
+  }
+
   @override
   bool isSignInWithEmailLink(String emailLink) {
     return _auth.isSignInWithEmailLink(emailLink);
-  }
-
-  /// Checks if a user is currently logged in
-  /// This persists across app restarts automatically via Firebase
-  bool isUserLoggedIn() {
-    final user = _auth.currentUser;
-    return user != null && user.emailVerified;
-  }
-
-  /// Gets the current authentication state
-  /// Returns true if user is authenticated, false otherwise
-  bool get isAuthenticated {
-    final user = _auth.currentUser;
-    return user != null && user.emailVerified;
-  }
-
-  /// Wait for the initial auth state to be determined
-  /// Useful for splash screens or app initialization
-  Future<AppUser?> waitForAuthInitialization() async {
-    // Firebase Auth automatically restores the user session
-    // This just waits for the first auth state change
-    return await authStateChanges.first;
   }
 
   /// Deletes the current user's account
