@@ -29,52 +29,16 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-  cupertino_icons: ^1.0.8
   flutter:
     sdk: flutter
   flutter_riverpod: ^2.6.1
-  riverpod_test: ^0.1.9
-  sliver_tools: ^0.2.12
-  lottie: ^2.6.0
-  flutter_localizations:
-    sdk: flutter
-  
-  # Firebase packages
-  firebase_core: ^3.15.1
-  firebase_auth: ^5.3.1
-  cloud_firestore: ^5.5.0
-  cloud_functions: ^5.2.1
-  firebase_storage: ^12.3.6
-  firebase_app_check: ^0.3.1
-  
-  # Math rendering
-  flutter_math_fork: ^0.7.2
-  
-  # SVG rendering
-  flutter_svg: ^2.0.10
-  
-  # Image handling
-  image_picker: ^1.0.7
-  file_picker: ^8.1.2
-  
-  # PDF viewer
-  syncfusion_flutter_pdfviewer: ^28.2.7
-  
-  # Utility packages
   shared_preferences: ^2.3.2
   google_fonts: ^6.3.1
   flutter_dotenv: ^6.0.0
-  image_picker_web: ^4.0.0
-  url_launcher: ^6.3.2
-  shimmer: ^3.0.0
-  confetti: ^0.7.0
   connectivity_plus: ^6.1.1
-  package_info_plus: ^8.1.2
-  device_info_plus: ^11.5.0
   http: ^1.6.0
   cached_network_image: ^3.4.1
   google_mobile_ads: ^5.3.1
-  supabase_flutter: ^2.14.1
 
 dev_dependencies:
   flutter_lints: ^5.0.0

@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:past_question_paper_v1/core/shared/models/app_metadata.dart';
-import 'package:past_question_paper_v1/features/profile/domain/entities/user.dart';
 import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 import 'package:past_question_paper_v1/core/shared/utils/haptic_feedback.dart';
-import 'package:past_question_paper_v1/features/home/presentation/viewmodels/home_viewmodel.dart';
 import 'package:past_question_paper_v1/features/home/presentation/viewmodels/app_metadata_viewmodel.dart';
-import 'package:past_question_paper_v1/features/history/presentation/viewmodels/session_history_viewmodel.dart';
 import 'package:past_question_paper_v1/features/flashcards/presentation/screens/flashcard_screen.dart';
 import 'package:past_question_paper_v1/core/shared/widgets/ad_banner_slot.dart';
 import 'package:past_question_paper_v1/core/shared/services/ads_service.dart';
@@ -50,7 +47,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _showFirstLaunchDialog() {
-    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
     showDialog(
@@ -88,10 +84,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final ref = this.ref; // keep API compatible with previous build signature
-    final homeState = ref.watch(homeViewModelProvider);
     final metadataState = ref.watch(appMetadataViewModelProvider);
-    final asyncHistory = ref.watch(sessionHistoryViewModelProvider);
-    final user = homeState.user;
     final selectedSubject = ref.watch(_homeSelectedSubjectProvider);
     final searchQuery = ref.watch(_homeSearchQueryProvider);
     final sortBy = ref.watch(_homeSortByProvider);
@@ -128,10 +121,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
-    final preferredSubjects = _resolvePreferredSubjects(
-      user,
-      metadataState.metadata!,
-    );
+    final preferredSubjects = _resolvePreferredSubjects(metadataState.metadata!);
     
     // Auto-select first subject if not yet selected
     if (selectedSubject.isEmpty && preferredSubjects.isNotEmpty) {
@@ -190,17 +180,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            asyncHistory.when(
-              loading: () => const LinearProgressIndicator(minHeight: 2),
-              error: (error, stackTrace) => _HistoryStatusBanner(
-                message: 'Could not load recent progress.',
-                actionLabel: 'Retry',
-                onAction: () => ref
-                    .read(sessionHistoryViewModelProvider.notifier)
-                    .refresh(),
-              ),
-              data: (_) => const SizedBox.shrink(),
-            ),
             Expanded(
               child: _TopicDiscoverySection(
                 subjects: preferredSubjects,
@@ -240,7 +219,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  List<String> _resolvePreferredSubjects(AppUser? user, AppMetadata metadata) {
+  List<String> _resolvePreferredSubjects(AppMetadata metadata) {
     // For now, always use the subjects defined in remote metadata so
     // the UI shows all available subjects (e.g., Mathematics, Physical Sciences).
     final all = metadata.subjects.map((s) => s.id).toList()..sort();
@@ -838,133 +817,4 @@ String _toTopicId(String topicTitle) {
       .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
       .replaceAll(RegExp(r'_+'), '_')
       .replaceAll(RegExp(r'^_|_$'), '');
-}
-
-class _HistoryStatusBanner extends StatelessWidget {
-  final String message;
-  final String actionLabel;
-  final VoidCallback onAction;
-
-  const _HistoryStatusBanner({
-    required this.message,
-    required this.actionLabel,
-    required this.onAction,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: colorScheme.errorContainer,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.error_outline,
-            color: colorScheme.onErrorContainer,
-            size: 18,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: textTheme.bodySmall?.copyWith(
-                color: colorScheme.onErrorContainer,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: onAction,
-            child: Text(
-              actionLabel,
-              style: textTheme.labelLarge?.copyWith(
-                color: colorScheme.onErrorContainer,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-String resolvePreferredFirstName(AppUser? user) {
-  final full = _resolveFullName(user);
-  final sanitized = full.trim();
-  if (sanitized.isEmpty) {
-    return 'Student';
-  }
-
-  if (sanitized == 'Student') {
-    return sanitized;
-  }
-
-  if (sanitized.contains(' ')) {
-    final first = sanitized.split(RegExp(r'\s+')).first;
-    return first.isNotEmpty ? first : 'Student';
-  }
-
-  if (sanitized.contains('@')) {
-    final first = sanitized.split('@').first;
-    return first.isNotEmpty ? first : 'Student';
-  }
-
-  return sanitized;
-}
-
-String resolveInitials(AppUser? user) {
-  final full = _resolveFullName(user);
-  final sanitized = full.trim();
-  if (sanitized.isEmpty) {
-    return 'S';
-  }
-
-  if (sanitized.contains('@')) {
-    return sanitized.substring(0, 1).toUpperCase();
-  }
-
-  final parts = sanitized
-      .split(RegExp(r'\s+'))
-      .where((part) => part.isNotEmpty)
-      .toList();
-  if (parts.isEmpty) {
-    return sanitized.substring(0, 1).toUpperCase();
-  }
-
-  if (parts.length == 1) {
-    return _initialFromWord(parts.first);
-  }
-
-  final firstInitial = _initialFromWord(parts[0]);
-  final secondInitial = _initialFromWord(parts[1]);
-  final combined = '$firstInitial$secondInitial'.trim();
-  return combined.isNotEmpty ? combined : firstInitial;
-}
-
-String _resolveFullName(AppUser? user) {
-  final name = user?.name?.trim();
-  if (name != null && name.isNotEmpty) {
-    return name;
-  }
-
-  final email = user?.email?.trim();
-  if (email != null && email.isNotEmpty) {
-    return email;
-  }
-
-  return 'Student';
-}
-
-String _initialFromWord(String word) {
-  if (word.isEmpty) {
-    return '';
-  }
-  return word.substring(0, 1).toUpperCase();
 }

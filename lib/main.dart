@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:past_question_paper_v1/firebase_options.dart';
 import 'package:past_question_paper_v1/core/theme/app_theme.dart';
 import 'package:past_question_paper_v1/core/shared/widgets/connectivity_banner.dart';
 import 'package:past_question_paper_v1/core/shared/services/ads_service.dart';
@@ -13,33 +9,12 @@ import 'package:past_question_paper_v1/features/home/presentation/screens/home_s
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables (e.g. Supabase config URL).
+  // Load public runtime configuration used by metadata and ads.
   try {
     await dotenv.load(fileName: '.env');
   } catch (_) {
     // Intentionally ignore missing/invalid .env in release builds.
   }
-
-  // Initialize Firebase with platform-specific options
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Initialize Supabase
-  await Supabase.initialize(
-    url: 'https://uaxzwifrlzlzwaltpbpf.supabase.co',
-    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
-     // Should be in .env
-  );
-
-  // Activate App Check
-  await FirebaseAppCheck.instance.activate(
-    // Use the debug provider for testing in debug builds.
-    // You will need to configure the reCAPTCHA v3 provider for production.
-    webProvider: ReCaptchaV3Provider('debug'),
-    // Set androidProvider to `AndroidProvider.debug`
-    androidProvider: AndroidProvider.debug,
-    // Set appleProvider to `AppleProvider.debug`
-    appleProvider: AppleProvider.debug,
-  );
 
   await AdsService.instance.initialize();
 
