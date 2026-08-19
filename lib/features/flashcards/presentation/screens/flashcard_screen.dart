@@ -68,7 +68,6 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
   String? _selectedQuestionPrefix; // null = Any
 
   final TextEditingController _commentController = TextEditingController();
-  bool _isRecording = false;
   final List<_CommunityComment> _communityComments = [
     _CommunityComment(
       id: 'c1',
@@ -634,58 +633,6 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
               icon: const Icon(Icons.tune),
             ),
             IconButton(
-              tooltip: 'AI explanation',
-              onPressed: currentQuestion == null
-                  ? null
-                  : () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => _AiExplanationScreen(
-                            questionImage: currentQuestion.questionImageUrl,
-                            answerImage: currentQuestion.answerImageUrl,
-                            onAskAi: () {
-                              _requireLoginOrPrompt(() {
-                                _showInfoSnack(
-                                  'AI explain will connect once the backend is ready.',
-                                );
-                              });
-                            },
-                            isLoggedIn: isLoggedIn,
-                          ),
-                        ),
-                      );
-                    },
-              icon: const Icon(Icons.auto_awesome),
-            ),
-            IconButton(
-              tooltip: 'Community audio',
-              onPressed: currentQuestion == null
-                  ? null
-                  : () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => _CommunityAudioScreen(
-                            isLoggedIn: isLoggedIn,
-                            isRecording: _isRecording,
-                            onStartRecording: () {
-                              _requireLoginOrPrompt(() {
-                                setState(() => _isRecording = true);
-                              });
-                            },
-                            onStopRecording: () {
-                              if (!_isRecording) return;
-                              setState(() => _isRecording = false);
-                              _showInfoSnack(
-                                'Recording saved locally (upload coming soon).',
-                              );
-                            },
-                          ),
-                        ),
-                      );
-                    },
-              icon: const Icon(Icons.mic),
-            ),
-            IconButton(
               tooltip: 'Community discussion',
               onPressed: currentQuestion == null
                   ? null
@@ -844,11 +791,67 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
                                       label: 'Question',
                                     ),
                                     const SizedBox(height: 10),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              AppColors.accent,
+                                              AppColors.ink,
+                                            ],
+                                            begin: Alignment.centerLeft,
+                                            end: Alignment.centerRight,
+                                          ),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: ElevatedButton.icon(
+                                          onPressed: () {
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (_) => _AiExplanationScreen(
+                                                  questionImage: questionImage,
+                                                  answerImage: answerImage,
+                                                  onAskAi: () {
+                                                    _requireLoginOrPrompt(() {
+                                                      _showInfoSnack(
+                                                        'AI explain will connect once the backend is ready.',
+                                                      );
+                                                    });
+                                                  },
+                                                  isLoggedIn: isLoggedIn,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                          icon: const Icon(Icons.auto_awesome),
+                                          label: const Text('AI Explanation'),
+                                          style: ElevatedButton.styleFrom(
+                                            minimumSize: const Size.fromHeight(48),
+                                            backgroundColor: Colors.transparent,
+                                            shadowColor: Colors.transparent,
+                                            foregroundColor: colorScheme.onPrimary,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
                                     _buildAnswerPanel(
                                       colorScheme: colorScheme,
                                       textTheme: textTheme,
                                       imageUrl: answerImage,
                                       isBlurred: !loadState.isAnswerRevealed,
+                                      onToggleBlur: () {
+                                        setState(() {
+                                          _loadState = _loadState.copyWith(
+                                            isAnswerRevealed:
+                                                !_loadState.isAnswerRevealed,
+                                          );
+                                        });
+                                      },
                                     ),
                                     Text(
                                       'Swipe for next card.',
@@ -867,31 +870,6 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
                     const Padding(
                       padding: EdgeInsets.fromLTRB(12, 0, 12, 0),
                       child: AdBannerSlot(placement: AppAdPlacement.flashcard),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _loadState = _loadState.copyWith(
-                              isAnswerRevealed: !_loadState.isAnswerRevealed,
-                            );
-                          });
-                        },
-                        icon: Icon(
-                          loadState.isAnswerRevealed
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                        ),
-                        label: Text(
-                          loadState.isAnswerRevealed
-                              ? 'Blur Answer'
-                              : 'Show Answer',
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 54),
-                        ),
-                      ),
                     ),
                   ],
                 ),
@@ -952,28 +930,6 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
         child: Stack(
           children: [
             FlashcardQuestionImage(imageUrl: imageUrl),
-            Positioned(
-              top: 12,
-              left: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: colorScheme.surface.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: colorScheme.outlineVariant),
-                ),
-                child: Text(
-                  label,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -985,43 +941,52 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
     required TextTheme textTheme,
     required String? imageUrl,
     required bool isBlurred,
+    required VoidCallback onToggleBlur,
   }) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        width: double.infinity,
-        height: 230,
-        color: colorScheme.surface,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            FlashcardQuestionImage(imageUrl: imageUrl, blurred: isBlurred),
-            if (isBlurred && (imageUrl ?? '').trim().isNotEmpty)
-              Positioned.fill(
-                child: Container(
-                  alignment: Alignment.center,
-                  color: colorScheme.scrim.withValues(alpha: 0.18),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface.withValues(alpha: 0.78),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: colorScheme.outlineVariant),
-                    ),
-                    child: Text(
-                      'Answer blurred',
-                      style: textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: colorScheme.onSurface,
+    final hasImage = (imageUrl ?? '').trim().isNotEmpty;
+    return GestureDetector(
+      onTap: hasImage ? onToggleBlur : null,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: double.infinity,
+          height: 230,
+          color: colorScheme.surface,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              FlashcardQuestionImage(imageUrl: imageUrl, blurred: isBlurred),
+              if (hasImage)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: Container(
+                      alignment: Alignment.center,
+                      color: isBlurred
+                          ? colorScheme.scrim.withValues(alpha: 0.18)
+                          : Colors.transparent,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface.withValues(alpha: 0.78),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: colorScheme.outlineVariant),
+                        ),
+                        child: Text(
+                          isBlurred ? 'Tap to unblur' : 'Tap to blur',
+                          style: textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1376,94 +1341,6 @@ class _AiExplanationScreen extends StatelessWidget {
   }
 }
 
-class _CommunityAudioScreen extends StatelessWidget {
-  final bool isLoggedIn;
-  final bool isRecording;
-  final VoidCallback onStartRecording;
-  final VoidCallback onStopRecording;
-
-  const _CommunityAudioScreen({
-    required this.isLoggedIn,
-    required this.isRecording,
-    required this.onStartRecording,
-    required this.onStopRecording,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Community Audio')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Record a short explanation',
-              style: textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Hold to record a 60-second explanation for other students.',
-              style: textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onLongPressStart: (_) => onStartRecording(),
-              onLongPressEnd: (_) => onStopRecording(),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                decoration: BoxDecoration(
-                  color: isRecording
-                      ? colorScheme.primaryContainer
-                      : colorScheme.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: colorScheme.outlineVariant),
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      isRecording ? Icons.stop_circle : Icons.mic,
-                      size: 32,
-                      color: isRecording
-                          ? colorScheme.onPrimaryContainer
-                          : colorScheme.onSurface,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      isRecording
-                          ? 'Recording... release to stop'
-                          : 'Hold to record (max 60s)',
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (!isLoggedIn) ...[
-              const SizedBox(height: 12),
-              Text(
-                'Login is required to post audio to the community feed.',
-                style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _SourcePreviewCard extends StatelessWidget {
   final String label;

@@ -7,7 +7,7 @@ import 'package:past_question_paper_v1/core/theme/app_colors.dart';
 class AppTypography {
   static TextTheme textTheme([TextTheme? seed, bool isDark = false]) {
     final seedTheme = seed ?? ThemeData.light().textTheme;
-    final baseTypography = GoogleFonts.manropeTextTheme(seedTheme);
+    final baseTypography = GoogleFonts.poppinsTextTheme(seedTheme);
     // Slightly reduce overall font sizes for a tighter, denser UI.
     const fontScale = 0.80;
 
