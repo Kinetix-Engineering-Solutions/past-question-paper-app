@@ -178,16 +178,31 @@ class _QuestionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              'Question ${question.questionNumber}',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Question ${question.questionNumber}',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              Text(
+                '${currentIndex + 1} of $totalCount',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
           ),
-          Text('${currentIndex + 1} of $totalCount'),
+          const SizedBox(height: 4),
+          Text(
+            '${question.examYear} • '
+            '${question.examSeason} • '
+            'Paper ${question.paperNumber}',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
         ],
       ),
     );

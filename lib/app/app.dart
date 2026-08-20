@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:past_question_paper_v1/core/theme/app_theme.dart';
 
 import '../features/discovery/presentation/discovery_screen.dart';
 
@@ -10,10 +11,7 @@ class PastPapersApp extends StatelessWidget {
     return MaterialApp(
       title: 'Past Question Paper',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3157D5)),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light,
       home: const DiscoveryScreen(),
     );
   }
