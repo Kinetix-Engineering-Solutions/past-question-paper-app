@@ -1,0 +1,19 @@
+import 'package:flutter/material.dart';
+import 'package:past_question_paper_v1/core/theme/app_theme.dart';
+
+class PastPapersApp extends StatelessWidget {
+  const PastPapersApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Past Question Paper',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      home: Scaffold(
+        appBar: AppBar(title: const Text('Past Question Paper')),
+        body: const Center(child: Text('Content foundation ready')),
+      ),
+    );
+  }
+}
