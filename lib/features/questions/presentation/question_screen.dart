@@ -85,6 +85,9 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
                 currentIndex: _currentIndex,
                 totalCount: page.totalCount,
               ),
+              LinearProgressIndicator(
+                value: (_currentIndex + 1) / page.totalCount,
+              ),
               Expanded(
                 child: PageView.builder(
                   itemCount: page.items.length,
@@ -203,54 +206,67 @@ class _QuestionCard extends StatelessWidget {
         ? question.memoImageUrl
         : question.questionImageUrl;
 
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Card(
         clipBehavior: Clip.antiAlias,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.all(12),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  showMemo ? 'Memo' : 'Question',
-                  style: Theme.of(context).textTheme.labelLarge,
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(
+                    showMemo ? Icons.task_alt : Icons.description_outlined,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    showMemo ? 'Memo' : 'Question',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ],
               ),
             ),
             const Divider(height: 1),
-            Expanded(
-              child: InteractiveViewer(
-                minScale: 1,
-                maxScale: 4,
-                child: Center(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return InteractiveViewer(
+                  minScale: 1,
+                  maxScale: 4,
                   child: Image.network(
                     imageUri.toString(),
-                    fit: BoxFit.contain,
+                    width: constraints.maxWidth,
+                    fit: BoxFit.fitWidth,
                     loadingBuilder: (context, child, progress) {
                       if (progress == null) {
                         return child;
                       }
 
-                      return const Center(child: CircularProgressIndicator());
+                      return const SizedBox(
+                        height: 200,
+                        child: Center(child: CircularProgressIndicator()),
+                      );
                     },
                     errorBuilder: (context, error, stackTrace) {
-                      return const Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.broken_image_outlined, size: 48),
-                            SizedBox(height: 12),
-                            Text('Unable to load this image.'),
-                          ],
+                      return const SizedBox(
+                        height: 200,
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.broken_image_outlined, size: 48),
+                              SizedBox(height: 12),
+                              Text('Unable to load this image.'),
+                            ],
+                          ),
                         ),
                       );
                     },
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ],
         ),

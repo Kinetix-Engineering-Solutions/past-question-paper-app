@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:past_question_paper_v1/features/questions/data/models/question_filter_options.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/api_providers.dart';
 import '../../../core/pagination/paged_response.dart';
@@ -10,6 +11,13 @@ import 'question_feed.dart';
 final questionRepositoryProvider = Provider<QuestionRepository>((ref) {
   return QuestionRepository(apiClient: ref.watch(apiClientProvider));
 });
+
+final questionFilterOptionsProvider =
+    FutureProvider.family<QuestionFilterOptions, String>((ref, topicId) {
+      return ref
+          .watch(questionRepositoryProvider)
+          .getFilterOptions(topicId: topicId);
+    });
 
 final questionsControllerProvider =
     AsyncNotifierProvider.family<

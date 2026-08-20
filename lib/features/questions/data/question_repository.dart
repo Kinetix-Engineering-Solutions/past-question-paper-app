@@ -1,3 +1,5 @@
+import 'package:past_question_paper_v1/features/questions/data/models/question_filter_options.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/pagination/paged_response.dart';
@@ -77,6 +79,39 @@ final class QuestionRepository {
       throw const ApiException(
         type: ApiFailureType.invalidResponse,
         message: 'The server returned invalid question data.',
+      );
+    }
+  }
+
+  Future<QuestionFilterOptions> getFilterOptions({
+    required String topicId,
+  }) async {
+    final normalisedTopicId = topicId.trim();
+
+    if (normalisedTopicId.isEmpty) {
+      throw ArgumentError.value(topicId, 'topicId', 'A topic ID is required.');
+    }
+
+    final response = await _apiClient.get(
+      '/api/questions/filter-options',
+      queryParameters: {'topicId': normalisedTopicId},
+    );
+
+    if (response is! Map) {
+      throw const ApiException(
+        type: ApiFailureType.invalidResponse,
+        message: 'The server returned invalid filter options.',
+      );
+    }
+
+    try {
+      return QuestionFilterOptions.fromJson(
+        Map<String, Object?>.from(response),
+      );
+    } on FormatException {
+      throw const ApiException(
+        type: ApiFailureType.invalidResponse,
+        message: 'The server returned invalid filter options.',
       );
     }
   }

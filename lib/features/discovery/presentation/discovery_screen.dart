@@ -97,22 +97,35 @@ class _SubjectSection extends StatelessWidget {
           Text(subject.name, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           for (final topic in topics)
-            Card(
-              child: ListTile(
-                title: Text(topic.name),
-                subtitle: Text(
-                  '${topic.questionCount} '
-                  '${topic.questionCount == 1 ? 'question' : 'questions'}',
-                ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => QuestionScreen(topic: topic),
+            Builder(
+              builder: (context) {
+                final isAvailable = topic.questionCount > 0;
+
+                return Card(
+                  child: ListTile(
+                    enabled: isAvailable,
+                    title: Text(topic.name),
+                    subtitle: Text(
+                      isAvailable
+                          ? '${topic.questionCount} '
+                                '${topic.questionCount == 1 ? 'question' : 'questions'}'
+                          : 'Coming soon',
                     ),
-                  );
-                },
-              ),
+                    trailing: isAvailable
+                        ? const Icon(Icons.chevron_right)
+                        : null,
+                    onTap: isAvailable
+                        ? () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => QuestionScreen(topic: topic),
+                              ),
+                            );
+                          }
+                        : null,
+                  ),
+                );
+              },
             ),
         ],
       ),
