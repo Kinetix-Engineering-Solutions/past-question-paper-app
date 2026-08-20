@@ -46,7 +46,7 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
               _QuestionHeader(
                 question: currentQuestion,
                 currentIndex: _currentIndex,
-                totalCount: page.items.length,
+                totalCount: page.totalCount,
               ),
               Expanded(
                 child: PageView.builder(
@@ -56,6 +56,16 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
                       _currentIndex = index;
                       _showMemo = false;
                     });
+
+                    if (index >= page.items.length - 2) {
+                      ref
+                          .read(
+                            questionsControllerProvider(
+                              widget.topic.id,
+                            ).notifier,
+                          )
+                          .loadNextPage();
+                    }
                   },
                   itemBuilder: (context, index) {
                     final question = page.items[index];
@@ -67,6 +77,34 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
                   },
                 ),
               ),
+              if (page.isLoadingMore)
+                const LinearProgressIndicator()
+              else if (page.loadMoreError != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          page.loadMoreError!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => ref
+                            .read(
+                              questionsControllerProvider(
+                                widget.topic.id,
+                              ).notifier,
+                            )
+                            .loadNextPage(),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
               SafeArea(
                 minimum: const EdgeInsets.all(16),
                 child: SizedBox(
