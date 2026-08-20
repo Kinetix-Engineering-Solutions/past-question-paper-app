@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:past_question_paper_v1/features/questions/presentation/question_filter_dialog.dart';
 import '../../../core/network/api_exception.dart';
 import '../../discovery/data/models/topic.dart';
 import '../data/models/question.dart';
+import '../domain/question_query.dart';
 import '../providers/question_providers.dart';
 
 class QuestionScreen extends ConsumerStatefulWidget {
@@ -17,22 +19,57 @@ class QuestionScreen extends ConsumerStatefulWidget {
 class _QuestionScreenState extends ConsumerState<QuestionScreen> {
   int _currentIndex = 0;
   bool _showMemo = false;
+  late QuestionQuery _query;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _query = QuestionQuery(topicId: widget.topic.id);
+  }
+
+  Future<void> _openFilters() async {
+    final result = await showQuestionFilterDialog(
+      context: context,
+      currentQuery: _query,
+    );
+
+    if (result == null || result == _query || !mounted) {
+      return;
+    }
+
+    setState(() {
+      _query = result;
+      _currentIndex = 0;
+      _showMemo = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final questions = ref.watch(questionsControllerProvider(widget.topic.id));
+    final questions = ref.watch(questionsControllerProvider(_query));
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.topic.name)),
+      appBar: AppBar(
+        title: Text(widget.topic.name),
+        actions: [
+          IconButton(
+            tooltip: 'Filter questions',
+            onPressed: _openFilters,
+            icon: Icon(
+              _query.hasFilters ? Icons.filter_alt : Icons.filter_alt_outlined,
+            ),
+          ),
+        ],
+      ),
       body: questions.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _QuestionError(
           message: error is ApiException
               ? error.message
               : 'Unable to load questions.',
-          onRetry: () => ref
-              .read(questionsControllerProvider(widget.topic.id).notifier)
-              .refresh(),
+          onRetry: () =>
+              ref.read(questionsControllerProvider(_query).notifier).refresh(),
         ),
         data: (page) {
           if (page.items.isEmpty) {
@@ -59,11 +96,7 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
 
                     if (index >= page.items.length - 2) {
                       ref
-                          .read(
-                            questionsControllerProvider(
-                              widget.topic.id,
-                            ).notifier,
-                          )
+                          .read(questionsControllerProvider(_query).notifier)
                           .loadNextPage();
                     }
                   },
@@ -94,11 +127,7 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
                       ),
                       TextButton(
                         onPressed: () => ref
-                            .read(
-                              questionsControllerProvider(
-                                widget.topic.id,
-                              ).notifier,
-                            )
+                            .read(questionsControllerProvider(_query).notifier)
                             .loadNextPage(),
                         child: const Text('Retry'),
                       ),
