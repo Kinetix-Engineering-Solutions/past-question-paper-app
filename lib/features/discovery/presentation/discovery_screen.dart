@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:past_question_paper_v1/features/questions/presentation/question_screen.dart';
 import '../../../core/network/api_exception.dart';
 import '../data/models/discovery_data.dart';
 import '../data/models/subject.dart';
@@ -104,6 +105,13 @@ class _SubjectSection extends StatelessWidget {
                   '${topic.questionCount == 1 ? 'question' : 'questions'}',
                 ),
                 trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => QuestionScreen(topic: topic),
+                    ),
+                  );
+                },
               ),
             ),
         ],
