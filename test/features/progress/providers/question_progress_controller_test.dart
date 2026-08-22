@@ -86,6 +86,14 @@ final class FakeProgressRepository implements ProgressRepository {
   int saveCount = 0;
 
   @override
+  Future<List<String>> getQuestionIdsByStatus({
+    required String userId,
+    required QuestionProgressStatus status,
+  }) async {
+    return const [];
+  }
+
+  @override
   Future<QuestionProgress?> getQuestionProgress(String questionId) async {
     loadedQuestionId = questionId;
     return existingProgress;

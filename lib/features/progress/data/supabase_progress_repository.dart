@@ -55,6 +55,31 @@ final class SupabaseProgressRepository implements ProgressRepository {
     return QuestionProgress.fromJson(Map<String, dynamic>.from(firstRow));
   }
 
+  @override
+  Future<List<String>> getQuestionIdsByStatus({
+    required String userId,
+    required QuestionProgressStatus status,
+  }) async {
+    final currentUserId = _requireUserId();
+
+    if (currentUserId != userId) {
+      throw StateError(
+        'Question progress can only be loaded for the current user.',
+      );
+    }
+
+    final data = await _client
+        .from('question_progress')
+        .select('question_id')
+        .eq('user_id', userId)
+        .eq('status', status.apiValue)
+        .order('last_reviewed_at', ascending: false);
+
+    return data
+        .map((row) => row['question_id'] as String)
+        .toList(growable: false);
+  }
+
   String _requireUserId() {
     final userId = _client.auth.currentUser?.id;
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../bookmarks/presentation/saved_questions_screen.dart';
+import '../../progress/presentation/needs_review_screen.dart';
 import '../domain/app_user.dart';
 import '../providers/auth_providers.dart';
 
@@ -49,6 +50,24 @@ class AccountScreen extends ConsumerWidget {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (_) => SavedQuestionsScreen(user: user),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.replay_outlined),
+              title: const Text('Needs review'),
+              subtitle: const Text(
+                'Practise questions you have not understood yet.',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => NeedsReviewScreen(user: user),
                   ),
                 );
               },

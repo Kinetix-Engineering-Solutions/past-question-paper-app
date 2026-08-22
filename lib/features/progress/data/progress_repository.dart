@@ -7,4 +7,9 @@ abstract interface class ProgressRepository {
     required String questionId,
     required QuestionProgressStatus status,
   });
+
+  Future<List<String>> getQuestionIdsByStatus({
+    required String userId,
+    required QuestionProgressStatus status,
+  });
 }
