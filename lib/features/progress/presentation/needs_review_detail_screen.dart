@@ -7,6 +7,7 @@ import '../../questions/presentation/widgets/question_content_card.dart';
 import '../domain/question_progress.dart';
 import '../providers/needs_review_questions_provider.dart';
 import '../providers/progress_providers.dart';
+import '../providers/topic_progress_provider.dart';
 import 'widgets/question_reflection_card.dart';
 
 class NeedsReviewDetailScreen extends ConsumerStatefulWidget {
@@ -132,6 +133,7 @@ class _NeedsReviewDetailScreenState
     }
 
     ref.invalidate(needsReviewQuestionsProvider(widget.user.id));
+    ref.invalidate(topicProgressProvider(widget.user.id));
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

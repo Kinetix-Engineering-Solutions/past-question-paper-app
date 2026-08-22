@@ -10,6 +10,7 @@ import '../../progress/domain/question_progress.dart';
 import '../../progress/presentation/widgets/question_reflection_card.dart';
 import '../../progress/providers/needs_review_questions_provider.dart';
 import '../../progress/providers/progress_providers.dart';
+import '../../progress/providers/topic_progress_provider.dart';
 import '../data/models/question.dart';
 import '../domain/question_query.dart';
 import '../providers/question_providers.dart';
@@ -82,6 +83,7 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
     }
 
     ref.invalidate(needsReviewQuestionsProvider(user.id));
+    ref.invalidate(topicProgressProvider(user.id));
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../core/theme/app_theme.dart';
 import '../../bookmarks/presentation/saved_questions_screen.dart';
 import '../../progress/presentation/needs_review_screen.dart';
+import '../../progress/presentation/progress_screen.dart';
 import '../domain/app_user.dart';
 import '../providers/auth_providers.dart';
 
@@ -40,6 +40,22 @@ class AccountScreen extends ConsumerWidget {
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 32),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.insights_outlined),
+              title: const Text('Study progress'),
+              subtitle: const Text('See your progress across topics.'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => ProgressScreen(user: user),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
           Card(
             child: ListTile(
               leading: const Icon(Icons.bookmark),

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:past_question_paper_v1/features/progress/data/progress_repository.dart';
 import 'package:past_question_paper_v1/features/progress/domain/question_progress.dart';
+import 'package:past_question_paper_v1/features/progress/domain/topic_progress_summary.dart';
 import 'package:past_question_paper_v1/features/progress/providers/progress_providers.dart';
 
 void main() {
@@ -89,6 +90,13 @@ final class FakeProgressRepository implements ProgressRepository {
   Future<List<String>> getQuestionIdsByStatus({
     required String userId,
     required QuestionProgressStatus status,
+  }) async {
+    return const [];
+  }
+
+  @override
+  Future<List<TopicProgressSummary>> getTopicProgressSummary({
+    required String userId,
   }) async {
     return const [];
   }

@@ -2,6 +2,8 @@ import 'package:past_question_paper_v1/features/progress/data/progress_repositor
 import 'package:past_question_paper_v1/features/progress/domain/question_progress.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../domain/topic_progress_summary.dart';
+
 final class SupabaseProgressRepository implements ProgressRepository {
   SupabaseProgressRepository(this._client);
 
@@ -77,6 +79,39 @@ final class SupabaseProgressRepository implements ProgressRepository {
 
     return data
         .map((row) => row['question_id'] as String)
+        .toList(growable: false);
+  }
+
+  @override
+  Future<List<TopicProgressSummary>> getTopicProgressSummary({
+    required String userId,
+  }) async {
+    final currentUserId = _requireUserId();
+
+    if (currentUserId != userId) {
+      throw StateError(
+        'Topic progress can only be loaded for the current user.',
+      );
+    }
+
+    final data = await _client.rpc('get_topic_progress_summary');
+
+    if (data is! List) {
+      throw const FormatException(
+        'Topic progress RPC returned an invalid result.',
+      );
+    }
+
+    return data
+        .map((row) {
+          if (row is! Map) {
+            throw const FormatException(
+              'Topic progress RPC returned an invalid row.',
+            );
+          }
+
+          return TopicProgressSummary.fromJson(Map<String, dynamic>.from(row));
+        })
         .toList(growable: false);
   }
 
