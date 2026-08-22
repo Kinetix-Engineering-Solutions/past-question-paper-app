@@ -14,5 +14,5 @@ abstract interface class BookmarkRepository {
     required String questionId,
   });
 
-  Future<Set<String>> getBookmarkedQuestionIds({required String userId});
+  Future<List<String>> getBookmarkedQuestionIds({required String userId});
 }

@@ -97,7 +97,9 @@ final class _FakeBookmarkRepository implements BookmarkRepository {
   }
 
   @override
-  Future<Set<String>> getBookmarkedQuestionIds({required String userId}) async {
-    return Set.unmodifiable(bookmarkedIds);
+  Future<List<String>> getBookmarkedQuestionIds({
+    required String userId,
+  }) async {
+    return bookmarkedIds.toList(growable: false);
   }
 }

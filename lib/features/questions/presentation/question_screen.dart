@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/features/questions/presentation/question_filter_dialog.dart';
 import '../../../core/network/api_exception.dart';
-import '../../auth/domain/app_user.dart';
-import '../../auth/presentation/auth_screen.dart';
 import '../../auth/providers/auth_providers.dart';
-import '../../bookmarks/domain/bookmark_target.dart';
-import '../../bookmarks/providers/bookmark_providers.dart';
 import '../../discovery/data/models/topic.dart';
 import '../data/models/question.dart';
 import '../domain/question_query.dart';
 import '../providers/question_providers.dart';
+import 'widgets/question_bookmark_button.dart';
+import 'widgets/question_content_card.dart';
 
 class QuestionScreen extends ConsumerStatefulWidget {
   const QuestionScreen({required this.topic, super.key});
@@ -91,7 +89,7 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
                 question: currentQuestion,
                 currentIndex: _currentIndex,
                 totalCount: page.totalCount,
-                bookmarkAction: _BookmarkButton(
+                bookmarkAction: QuestionBookmarkButton(
                   user: currentUser,
                   question: currentQuestion,
                 ),
@@ -117,7 +115,7 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
                   itemBuilder: (context, index) {
                     final question = page.items[index];
 
-                    return _QuestionCard(
+                    return QuestionContentCard(
                       question: question,
                       showMemo: index == _currentIndex && _showMemo,
                     );
@@ -218,177 +216,6 @@ class _QuestionHeader extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _BookmarkButton extends ConsumerWidget {
-  const _BookmarkButton({required this.user, required this.question});
-
-  final AppUser? user;
-  final Question question;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentUser = user;
-
-    if (currentUser == null) {
-      return IconButton(
-        tooltip: 'Sign in to bookmark',
-        onPressed: () {
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute<void>(builder: (_) => const AuthScreen()));
-        },
-        icon: const Icon(Icons.bookmark_border),
-      );
-    }
-
-    final target = BookmarkTarget(
-      userId: currentUser.id,
-      questionId: question.id,
-    );
-
-    final bookmark = ref.watch(bookmarkControllerProvider(target));
-
-    return bookmark.when(
-      loading: () => const IconButton(
-        tooltip: 'Loading bookmark',
-        onPressed: null,
-        icon: SizedBox.square(
-          dimension: 18,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ),
-      error: (error, stackTrace) => IconButton(
-        tooltip: 'Retry bookmark',
-        onPressed: () {
-          ref.invalidate(bookmarkControllerProvider(target));
-        },
-        icon: const Icon(Icons.bookmark_border),
-      ),
-      data: (state) {
-        return IconButton(
-          tooltip: state.isBookmarked ? 'Remove bookmark' : 'Bookmark question',
-          onPressed: state.isSaving
-              ? null
-              : () => _toggle(context, ref, target),
-          icon: state.isSaving
-              ? const SizedBox.square(
-                  dimension: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Icon(
-                  state.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                ),
-        );
-      },
-    );
-  }
-
-  Future<void> _toggle(
-    BuildContext context,
-    WidgetRef ref,
-    BookmarkTarget target,
-  ) async {
-    await ref.read(bookmarkControllerProvider(target).notifier).toggle();
-
-    if (!context.mounted) {
-      return;
-    }
-
-    final updatedState = ref
-        .read(bookmarkControllerProvider(target))
-        .asData
-        ?.value;
-
-    final errorMessage = updatedState?.errorMessage;
-
-    if (errorMessage != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(errorMessage)));
-    }
-  }
-}
-
-class _QuestionCard extends StatelessWidget {
-  const _QuestionCard({required this.question, required this.showMemo});
-
-  final Question question;
-  final bool showMemo;
-
-  @override
-  Widget build(BuildContext context) {
-    final imageUri = showMemo
-        ? question.memoImageUrl
-        : question.questionImageUrl;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  Icon(
-                    showMemo ? Icons.task_alt : Icons.description_outlined,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    showMemo ? 'Memo' : 'Question',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                return InteractiveViewer(
-                  minScale: 1,
-                  maxScale: 4,
-                  child: Image.network(
-                    imageUri.toString(),
-                    width: constraints.maxWidth,
-                    fit: BoxFit.fitWidth,
-                    loadingBuilder: (context, child, progress) {
-                      if (progress == null) {
-                        return child;
-                      }
-
-                      return const SizedBox(
-                        height: 200,
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return const SizedBox(
-                        height: 200,
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.broken_image_outlined, size: 48),
-                              SizedBox(height: 12),
-                              Text('Unable to load this image.'),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
       ),
     );
   }

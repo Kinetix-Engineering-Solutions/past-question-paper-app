@@ -53,7 +53,9 @@ final class SupabaseBookmarkRepository implements BookmarkRepository {
   }
 
   @override
-  Future<Set<String>> getBookmarkedQuestionIds({required String userId}) async {
+  Future<List<String>> getBookmarkedQuestionIds({
+    required String userId,
+  }) async {
     if (userId.trim().isEmpty) {
       throw ArgumentError.value(userId, 'userId', 'A user ID is required.');
     }
@@ -62,9 +64,12 @@ final class SupabaseBookmarkRepository implements BookmarkRepository {
         .from('question_bookmarks')
         .select('question_id')
         .eq('user_id', userId)
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .limit(50);
 
-    return rows.map((row) => row['question_id'] as String).toSet();
+    return rows
+        .map((row) => row['question_id'] as String)
+        .toList(growable: false);
   }
 
   void _validate(String userId, String questionId) {

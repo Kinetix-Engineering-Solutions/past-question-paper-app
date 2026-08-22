@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../bookmarks/presentation/saved_questions_screen.dart';
 import '../domain/app_user.dart';
 import '../providers/auth_providers.dart';
 
@@ -38,6 +39,22 @@ class AccountScreen extends ConsumerWidget {
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 32),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.bookmark),
+              title: const Text('Saved questions'),
+              subtitle: const Text('Review questions you bookmarked.'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => SavedQuestionsScreen(user: user),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 24),
           OutlinedButton.icon(
             onPressed: action.isLoading ? null : () => _signOut(context, ref),
             icon: const Icon(Icons.logout),

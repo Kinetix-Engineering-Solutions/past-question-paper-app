@@ -11,6 +11,51 @@ final class QuestionRepository {
 
   final ApiClient _apiClient;
 
+  Future<List<Question>> getQuestionsByIds({
+    required List<String> questionIds,
+  }) async {
+    if (questionIds.isEmpty) {
+      return const [];
+    }
+
+    if (questionIds.length > 50) {
+      throw ArgumentError.value(
+        questionIds.length,
+        'questionIds',
+        'A maximum of 50 question IDs is supported.',
+      );
+    }
+
+    final response = await _apiClient.get(
+      '/api/questions/by-ids',
+      queryParameters: {'ids': questionIds.join(',')},
+    );
+
+    if (response is! List) {
+      throw const ApiException(
+        type: ApiFailureType.invalidResponse,
+        message: 'The server returned invalid saved-question data.',
+      );
+    }
+
+    try {
+      return response
+          .map((item) {
+            if (item is! Map) {
+              throw const FormatException('Invalid saved question.');
+            }
+
+            return Question.fromJson(Map<String, Object?>.from(item));
+          })
+          .toList(growable: false);
+    } on FormatException {
+      throw const ApiException(
+        type: ApiFailureType.invalidResponse,
+        message: 'The server returned invalid saved-question data.',
+      );
+    }
+  }
+
   Future<PagedResponse<Question>> getQuestions({
     required String topicId,
     int? examYear,

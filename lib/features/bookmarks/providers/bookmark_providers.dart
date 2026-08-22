@@ -38,7 +38,11 @@ class BookmarkController
       return;
     }
 
-    state = AsyncData(current.saving());
+    final desiredValue = !current.isBookmarked;
+
+    state = AsyncData(
+      BookmarkState(isBookmarked: desiredValue, isSaving: true),
+    );
 
     try {
       if (current.isBookmarked) {
@@ -57,7 +61,7 @@ class BookmarkController
             );
       }
 
-      state = AsyncData(current.success(isBookmarked: !current.isBookmarked));
+      state = AsyncData(BookmarkState(isBookmarked: desiredValue));
     } catch (_) {
       state = AsyncData(
         current.failure('Unable to update bookmark. Try again.'),
