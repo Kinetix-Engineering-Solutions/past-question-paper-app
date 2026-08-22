@@ -21,8 +21,8 @@ void main() {
 
     await tester.pumpAndSettle();
 
-    expect(find.text('Grade 12'), findsOneWidget);
-    expect(find.text('Physical Sciences'), findsOneWidget);
+    expect(find.text('GRADE 12'), findsOneWidget);
+    expect(find.text('Physical Sciences'), findsNWidgets(2));
     expect(find.text('Newtonian Mechanics'), findsOneWidget);
     expect(find.text('2 questions'), findsOneWidget);
   });

@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/features/questions/presentation/question_screen.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../auth/domain/app_user.dart';
+import '../../auth/presentation/account_screen.dart';
+import '../../auth/presentation/auth_screen.dart';
+import '../../auth/providers/auth_providers.dart';
 import '../data/models/discovery_data.dart';
 import '../data/models/topic.dart';
 import '../providers/discovery_providers.dart';
@@ -13,9 +17,24 @@ class DiscoveryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final discovery = ref.watch(discoveryControllerProvider);
+    final authState = ref.watch(authStateProvider);
+    final currentUser = authState.asData?.value;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Past Papers')),
+      appBar: AppBar(
+        title: const Text('Past Papers'),
+        actions: [
+          IconButton(
+            tooltip: currentUser == null ? 'Sign in' : 'Account',
+            onPressed: authState.isLoading
+                ? null
+                : () => _openAccount(context, currentUser),
+            icon: Icon(
+              currentUser == null ? Icons.person_outline : Icons.account_circle,
+            ),
+          ),
+        ],
+      ),
       body: discovery.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => _DiscoveryError(
@@ -33,6 +52,15 @@ class DiscoveryScreen extends ConsumerWidget {
 
           return _DiscoveryContent(data: data);
         },
+      ),
+    );
+  }
+
+  Future<void> _openAccount(BuildContext context, AppUser? user) {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            user == null ? const AuthScreen() : AccountScreen(user: user),
       ),
     );
   }

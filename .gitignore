@@ -58,6 +58,8 @@ app.*.map.json
 .env.production
 .env.staging
 *.env
+config/dev.json
+config/production.json
 
 # API keys and secrets
 secrets.yaml
