@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../bookmarks/presentation/saved_questions_screen.dart';
+import '../../profile/presentation/profile_screen.dart';
+import '../../profile/providers/profile_providers.dart';
 import '../../progress/presentation/needs_review_screen.dart';
 import '../../progress/presentation/progress_screen.dart';
 import '../domain/app_user.dart';
@@ -15,6 +17,8 @@ class AccountScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final action = ref.watch(authActionControllerProvider);
+    final profile = ref.watch(profileControllerProvider(user.id));
+    final learnerProfile = profile.asData?.value;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Account')),
@@ -28,9 +32,22 @@ class AccountScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            user.email ?? 'Signed-in learner',
+            learnerProfile?.displayName ?? user.email ?? 'Signed-in learner',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 4),
+          if (learnerProfile?.grade != null)
+            Text(
+              'Grade ${learnerProfile!.grade}',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          const SizedBox(height: 4),
+          Text(
+            user.email ?? '',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 8),
           Text(
@@ -40,6 +57,22 @@ class AccountScreen extends ConsumerWidget {
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 32),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.manage_accounts_outlined),
+              title: const Text('Edit profile'),
+              subtitle: const Text('Update your display name and grade.'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => ProfileScreen(user: user),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
           Card(
             child: ListTile(
               leading: const Icon(Icons.insights_outlined),
