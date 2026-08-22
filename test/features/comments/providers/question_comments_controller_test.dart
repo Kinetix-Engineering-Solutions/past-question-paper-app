@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:past_question_paper_v1/features/comments/data/question_comments_repository.dart';
+import 'package:past_question_paper_v1/features/comments/domain/blocked_learner.dart';
 import 'package:past_question_paper_v1/features/comments/domain/question_comment.dart';
+import 'package:past_question_paper_v1/features/comments/domain/question_comment_report_reason.dart';
 import 'package:past_question_paper_v1/features/comments/providers/question_comments_providers.dart';
 
 void main() {
@@ -169,5 +171,27 @@ final class FakeQuestionCommentsRepository
   Future<bool> deleteComment({required String commentId}) async {
     deletedCommentId = commentId;
     return deleteResult;
+  }
+
+  @override
+  Future<void> reportComment({
+    required String commentId,
+    required QuestionCommentReportReason reason,
+    String? details,
+  }) async {}
+
+  @override
+  Future<String> blockCommentAuthor({required String commentId}) async {
+    return 'blocked-user-id';
+  }
+
+  @override
+  Future<bool> unblockUser({required String userId}) async {
+    return true;
+  }
+
+  @override
+  Future<List<BlockedLearner>> getBlockedUsers() async {
+    return const [];
   }
 }

@@ -4,6 +4,7 @@ import 'package:past_question_paper_v1/features/auth/domain/app_user.dart';
 import 'package:past_question_paper_v1/features/auth/presentation/auth_screen.dart';
 import 'package:past_question_paper_v1/features/auth/providers/auth_providers.dart';
 import 'package:past_question_paper_v1/features/comments/domain/question_comment.dart';
+import 'package:past_question_paper_v1/features/comments/domain/question_comment_report_reason.dart';
 import 'package:past_question_paper_v1/features/comments/providers/question_comments_providers.dart';
 import 'package:past_question_paper_v1/features/comments/providers/question_comments_state.dart';
 import 'package:past_question_paper_v1/features/profile/domain/learner_profile.dart';
@@ -108,8 +109,18 @@ class _QuestionCommentsScreenState
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _CommentCard(
                         comment: comment,
-                        isBusy: state.isBusy,
-                        onDelete: () => _deleteComment(comment.id),
+                        isDeleting: state.isDeleting(comment.id),
+                        isReporting: state.isReporting(comment.id),
+                        isBlocking: state.isBlocking(comment.id),
+                        onDelete: comment.isOwnComment
+                            ? () => _deleteComment(comment.id)
+                            : null,
+                        onReport: user != null && !comment.isOwnComment
+                            ? () => _reportComment(comment.id)
+                            : null,
+                        onBlock: user != null && !comment.isOwnComment
+                            ? () => _blockCommentAuthor(comment)
+                            : null,
                         onOpenLink: comment.externalUrl == null
                             ? null
                             : () => _openExternalLink(comment.externalUrl!),
@@ -335,6 +346,80 @@ class _QuestionCommentsScreenState
         .deleteComment(commentId);
   }
 
+  Future<void> _reportComment(String commentId) async {
+    final request = await showDialog<_CommentReportRequest>(
+      context: context,
+      builder: (_) => const _CommentReportDialog(),
+    );
+
+    if (request == null || !mounted) {
+      return;
+    }
+
+    final success = await ref
+        .read(questionCommentsControllerProvider(widget.question.id).notifier)
+        .reportComment(
+          commentId: commentId,
+          reason: request.reason,
+          details: request.details,
+        );
+
+    if (!mounted || !success) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Report submitted for review.')),
+    );
+  }
+
+  Future<void> _blockCommentAuthor(QuestionComment comment) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Block learner?'),
+          content: Text(
+            'Comments from ${comment.authorDisplayName} will no '
+            'longer appear for you.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const Text('Block'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    final success = await ref
+        .read(questionCommentsControllerProvider(widget.question.id).notifier)
+        .blockCommentAuthor(comment.id);
+
+    if (!mounted || !success) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Learner blocked. Their comments are now hidden.'),
+      ),
+    );
+  }
+
   Future<void> _openExternalLink(String rawUrl) async {
     final uri = Uri.tryParse(rawUrl);
 
@@ -352,18 +437,122 @@ class _QuestionCommentsScreenState
   }
 }
 
+final class _CommentReportRequest {
+  const _CommentReportRequest({required this.reason, required this.details});
+
+  final QuestionCommentReportReason reason;
+  final String details;
+}
+
+class _CommentReportDialog extends StatefulWidget {
+  const _CommentReportDialog();
+
+  @override
+  State<_CommentReportDialog> createState() => _CommentReportDialogState();
+}
+
+class _CommentReportDialogState extends State<_CommentReportDialog> {
+  final _detailsController = TextEditingController();
+  var _selectedReason = QuestionCommentReportReason.spam;
+
+  @override
+  void dispose() {
+    _detailsController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Report comment'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('Tell us why this comment should be reviewed.'),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<QuestionCommentReportReason>(
+              // ignore: deprecated_member_use
+              value: _selectedReason,
+              decoration: const InputDecoration(labelText: 'Reason'),
+              items: QuestionCommentReportReason.values
+                  .map(
+                    (reason) => DropdownMenuItem(
+                      value: reason,
+                      child: Text(reason.label),
+                    ),
+                  )
+                  .toList(growable: false),
+              onChanged: (reason) {
+                if (reason == null) {
+                  return;
+                }
+
+                setState(() {
+                  _selectedReason = reason;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _detailsController,
+              maxLength: 500,
+              minLines: 2,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                labelText: 'Additional details (optional)',
+                alignLabelWithHint: true,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.of(context).pop(
+              _CommentReportRequest(
+                reason: _selectedReason,
+                details: _detailsController.text,
+              ),
+            );
+          },
+          child: const Text('Submit report'),
+        ),
+      ],
+    );
+  }
+}
+
 class _CommentCard extends StatelessWidget {
   const _CommentCard({
     required this.comment,
-    required this.isBusy,
+    required this.isDeleting,
+    required this.isReporting,
+    required this.isBlocking,
     required this.onDelete,
+    required this.onReport,
+    required this.onBlock,
     required this.onOpenLink,
   });
 
   final QuestionComment comment;
-  final bool isBusy;
-  final VoidCallback onDelete;
+  final bool isDeleting;
+  final bool isReporting;
+  final bool isBlocking;
+  final VoidCallback? onDelete;
+  final VoidCallback? onReport;
+  final VoidCallback? onBlock;
   final VoidCallback? onOpenLink;
+
+  bool get isWorking => isDeleting || isReporting || isBlocking;
 
   @override
   Widget build(BuildContext context) {
@@ -400,16 +589,54 @@ class _CommentCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (comment.isOwnComment)
+                if (isWorking)
+                  const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                else if (comment.isOwnComment && onDelete != null)
                   PopupMenuButton<String>(
-                    enabled: !isBusy,
+                    tooltip: 'Comment actions',
                     onSelected: (value) {
                       if (value == 'delete') {
-                        onDelete();
+                        onDelete?.call();
                       }
                     },
                     itemBuilder: (_) => const [
                       PopupMenuItem(value: 'delete', child: Text('Delete')),
+                    ],
+                  )
+                else if (onReport != null && onBlock != null)
+                  PopupMenuButton<String>(
+                    tooltip: 'Comment actions',
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'report':
+                          onReport?.call();
+                        case 'block':
+                          onBlock?.call();
+                      }
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(
+                        value: 'report',
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.flag_outlined),
+                          title: Text('Report'),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'block',
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.block),
+                          title: Text('Block learner'),
+                        ),
+                      ),
                     ],
                   ),
               ],
