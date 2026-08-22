@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/features/questions/presentation/question_filter_dialog.dart';
 import '../../../core/network/api_exception.dart';
+import '../../auth/domain/app_user.dart';
+import '../../auth/presentation/auth_screen.dart';
 import '../../auth/providers/auth_providers.dart';
 import '../../discovery/data/models/topic.dart';
+import '../../progress/domain/question_progress.dart';
+import '../../progress/presentation/widgets/question_reflection_card.dart';
+import '../../progress/providers/progress_providers.dart';
 import '../data/models/question.dart';
 import '../domain/question_query.dart';
 import '../providers/question_providers.dart';
@@ -48,6 +53,44 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
     });
   }
 
+  Future<void> _recordProgress({
+    required AppUser? user,
+    required String questionId,
+    required QuestionProgressStatus status,
+  }) async {
+    if (user == null) {
+      await Navigator.of(
+        context,
+      ).push(MaterialPageRoute<void>(builder: (_) => const AuthScreen()));
+
+      return;
+    }
+
+    final provider = questionProgressControllerProvider(questionId);
+
+    await ref.read(provider.notifier).setStatus(status);
+
+    if (!mounted) {
+      return;
+    }
+
+    final result = ref.read(provider);
+
+    if (result.hasError) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          status == QuestionProgressStatus.understood
+              ? 'Marked as understood.'
+              : 'Added to questions that need review.',
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final questions = ref.watch(questionsControllerProvider(_query));
@@ -82,6 +125,12 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
           }
 
           final currentQuestion = page.items[_currentIndex];
+
+          final progressProvider = questionProgressControllerProvider(
+            currentQuestion.id,
+          );
+
+          final progressState = ref.watch(progressProvider);
 
           return Column(
             children: [
@@ -144,6 +193,52 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
                         child: const Text('Retry'),
                       ),
                     ],
+                  ),
+                ),
+              if (_showMemo)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: progressState.when(
+                    loading: () => QuestionReflectionCard(
+                      status: null,
+                      isSaving: true,
+                      onUnderstood: () {},
+                      onNeedsReview: () {},
+                    ),
+                    error: (error, stackTrace) {
+                      return QuestionReflectionCard(
+                        status: null,
+                        isSaving: false,
+                        errorMessage: 'Unable to load or save your progress.',
+                        onRetry: () {
+                          ref.invalidate(progressProvider);
+                        },
+                        onUnderstood: () => _recordProgress(
+                          user: currentUser,
+                          questionId: currentQuestion.id,
+                          status: QuestionProgressStatus.understood,
+                        ),
+                        onNeedsReview: () => _recordProgress(
+                          user: currentUser,
+                          questionId: currentQuestion.id,
+                          status: QuestionProgressStatus.needsReview,
+                        ),
+                      );
+                    },
+                    data: (progress) => QuestionReflectionCard(
+                      status: progress?.status,
+                      isSaving: false,
+                      onUnderstood: () => _recordProgress(
+                        user: currentUser,
+                        questionId: currentQuestion.id,
+                        status: QuestionProgressStatus.understood,
+                      ),
+                      onNeedsReview: () => _recordProgress(
+                        user: currentUser,
+                        questionId: currentQuestion.id,
+                        status: QuestionProgressStatus.needsReview,
+                      ),
+                    ),
                   ),
                 ),
               SafeArea(
