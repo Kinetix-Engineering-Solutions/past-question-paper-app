@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/features/questions/presentation/question_filter_dialog.dart';
 import '../../../core/network/api_exception.dart';
+import '../../auth/domain/app_user.dart';
+import '../../auth/presentation/auth_screen.dart';
+import '../../auth/providers/auth_providers.dart';
+import '../../bookmarks/domain/bookmark_target.dart';
+import '../../bookmarks/providers/bookmark_providers.dart';
 import '../../discovery/data/models/topic.dart';
 import '../data/models/question.dart';
 import '../domain/question_query.dart';
@@ -48,6 +53,8 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
   @override
   Widget build(BuildContext context) {
     final questions = ref.watch(questionsControllerProvider(_query));
+    final authState = ref.watch(authStateProvider);
+    final currentUser = authState.asData?.value;
 
     return Scaffold(
       appBar: AppBar(
@@ -84,6 +91,10 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
                 question: currentQuestion,
                 currentIndex: _currentIndex,
                 totalCount: page.totalCount,
+                bookmarkAction: _BookmarkButton(
+                  user: currentUser,
+                  question: currentQuestion,
+                ),
               ),
               LinearProgressIndicator(
                 value: (_currentIndex + 1) / page.totalCount,
@@ -169,16 +180,18 @@ class _QuestionHeader extends StatelessWidget {
     required this.question,
     required this.currentIndex,
     required this.totalCount,
+    required this.bookmarkAction,
   });
 
   final Question question;
   final int currentIndex;
   final int totalCount;
+  final Widget bookmarkAction;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -190,13 +203,14 @@ class _QuestionHeader extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
+              bookmarkAction,
+              const SizedBox(width: 4),
               Text(
                 '${currentIndex + 1} of $totalCount',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
           ),
-          const SizedBox(height: 4),
           Text(
             '${question.examYear} • '
             '${question.examSeason} • '
@@ -206,6 +220,96 @@ class _QuestionHeader extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _BookmarkButton extends ConsumerWidget {
+  const _BookmarkButton({required this.user, required this.question});
+
+  final AppUser? user;
+  final Question question;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUser = user;
+
+    if (currentUser == null) {
+      return IconButton(
+        tooltip: 'Sign in to bookmark',
+        onPressed: () {
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute<void>(builder: (_) => const AuthScreen()));
+        },
+        icon: const Icon(Icons.bookmark_border),
+      );
+    }
+
+    final target = BookmarkTarget(
+      userId: currentUser.id,
+      questionId: question.id,
+    );
+
+    final bookmark = ref.watch(bookmarkControllerProvider(target));
+
+    return bookmark.when(
+      loading: () => const IconButton(
+        tooltip: 'Loading bookmark',
+        onPressed: null,
+        icon: SizedBox.square(
+          dimension: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      ),
+      error: (error, stackTrace) => IconButton(
+        tooltip: 'Retry bookmark',
+        onPressed: () {
+          ref.invalidate(bookmarkControllerProvider(target));
+        },
+        icon: const Icon(Icons.bookmark_border),
+      ),
+      data: (state) {
+        return IconButton(
+          tooltip: state.isBookmarked ? 'Remove bookmark' : 'Bookmark question',
+          onPressed: state.isSaving
+              ? null
+              : () => _toggle(context, ref, target),
+          icon: state.isSaving
+              ? const SizedBox.square(
+                  dimension: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(
+                  state.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                ),
+        );
+      },
+    );
+  }
+
+  Future<void> _toggle(
+    BuildContext context,
+    WidgetRef ref,
+    BookmarkTarget target,
+  ) async {
+    await ref.read(bookmarkControllerProvider(target).notifier).toggle();
+
+    if (!context.mounted) {
+      return;
+    }
+
+    final updatedState = ref
+        .read(bookmarkControllerProvider(target))
+        .asData
+        ?.value;
+
+    final errorMessage = updatedState?.errorMessage;
+
+    if (errorMessage != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(errorMessage)));
+    }
   }
 }
 
