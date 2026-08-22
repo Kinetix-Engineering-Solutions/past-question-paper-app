@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/domain/app_user.dart';
+import '../../comments/presentation/widgets/question_discussion_button.dart';
 import '../../questions/data/models/question.dart';
 import '../../questions/presentation/widgets/question_bookmark_button.dart';
 import '../../questions/presentation/widgets/question_content_card.dart';
@@ -39,6 +40,7 @@ class _NeedsReviewDetailScreenState
       appBar: AppBar(
         title: Text('Question ${question.questionNumber}'),
         actions: [
+          QuestionDiscussionButton(question: question),
           QuestionBookmarkButton(user: widget.user, question: question),
         ],
       ),

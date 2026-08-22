@@ -5,6 +5,7 @@ import '../../../core/network/api_exception.dart';
 import '../../auth/domain/app_user.dart';
 import '../../auth/presentation/auth_screen.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../comments/presentation/widgets/question_discussion_button.dart';
 import '../../discovery/data/models/topic.dart';
 import '../../progress/domain/question_progress.dart';
 import '../../progress/presentation/widgets/question_reflection_card.dart';
@@ -143,6 +144,9 @@ class _QuestionScreenState extends ConsumerState<QuestionScreen> {
                 question: currentQuestion,
                 currentIndex: _currentIndex,
                 totalCount: page.totalCount,
+                discussionAction: QuestionDiscussionButton(
+                  question: currentQuestion,
+                ),
                 bookmarkAction: QuestionBookmarkButton(
                   user: currentUser,
                   question: currentQuestion,
@@ -278,12 +282,14 @@ class _QuestionHeader extends StatelessWidget {
     required this.question,
     required this.currentIndex,
     required this.totalCount,
+    required this.discussionAction,
     required this.bookmarkAction,
   });
 
   final Question question;
   final int currentIndex;
   final int totalCount;
+  final Widget discussionAction;
   final Widget bookmarkAction;
 
   @override
@@ -301,6 +307,7 @@ class _QuestionHeader extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
+              discussionAction,
               bookmarkAction,
               const SizedBox(width: 4),
               Text(
