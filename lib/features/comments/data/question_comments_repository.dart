@@ -1,4 +1,5 @@
 import '../domain/blocked_learner.dart';
+import '../domain/community_guidelines_status.dart';
 import '../domain/question_comment.dart';
 import '../domain/question_comment_report_reason.dart';
 
@@ -27,4 +28,8 @@ abstract interface class QuestionCommentsRepository {
   Future<bool> unblockUser({required String userId});
 
   Future<List<BlockedLearner>> getBlockedUsers();
+
+  Future<CommunityGuidelinesStatus> getCommunityGuidelinesStatus();
+
+  Future<DateTime> acceptCommunityGuidelines();
 }

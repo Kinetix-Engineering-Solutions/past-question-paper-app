@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../bookmarks/presentation/saved_questions_screen.dart';
 import '../../comments/presentation/blocked_learners_screen.dart';
+import '../../comments/presentation/community_guidelines_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../../progress/presentation/needs_review_screen.dart';
@@ -118,6 +119,24 @@ class AccountScreen extends ConsumerWidget {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (_) => const BlockedLearnersScreen(),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.policy_outlined),
+              title: const Text('Community Guidelines'),
+              subtitle: const Text(
+                'Review the rules for question discussions.',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => CommunityGuidelinesScreen(userId: user.id),
                   ),
                 );
               },

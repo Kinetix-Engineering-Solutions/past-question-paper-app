@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:past_question_paper_v1/features/comments/data/question_comments_repository.dart';
 import 'package:past_question_paper_v1/features/comments/domain/blocked_learner.dart';
+import 'package:past_question_paper_v1/features/comments/domain/community_guidelines_status.dart';
 import 'package:past_question_paper_v1/features/comments/domain/question_comment.dart';
 import 'package:past_question_paper_v1/features/comments/domain/question_comment_report_reason.dart';
 import 'package:past_question_paper_v1/features/comments/providers/question_comments_providers.dart';
@@ -193,5 +194,19 @@ final class FakeQuestionCommentsRepository
   @override
   Future<List<BlockedLearner>> getBlockedUsers() async {
     return const [];
+  }
+
+  @override
+  Future<CommunityGuidelinesStatus> getCommunityGuidelinesStatus() async {
+    return const CommunityGuidelinesStatus(
+      version: 'test-version',
+      isAccepted: false,
+      acceptedAt: null,
+    );
+  }
+
+  @override
+  Future<DateTime> acceptCommunityGuidelines() async {
+    return DateTime.utc(2026, 8, 23);
   }
 }

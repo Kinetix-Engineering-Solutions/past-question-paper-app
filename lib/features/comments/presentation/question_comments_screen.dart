@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:past_question_paper_v1/features/auth/domain/app_user.dart';
 import 'package:past_question_paper_v1/features/auth/presentation/auth_screen.dart';
 import 'package:past_question_paper_v1/features/auth/providers/auth_providers.dart';
+import 'package:past_question_paper_v1/features/comments/domain/community_guidelines_status.dart';
 import 'package:past_question_paper_v1/features/comments/domain/question_comment.dart';
 import 'package:past_question_paper_v1/features/comments/domain/question_comment_report_reason.dart';
+import 'package:past_question_paper_v1/features/comments/presentation/community_guidelines_screen.dart';
+import 'package:past_question_paper_v1/features/comments/providers/community_guidelines_providers.dart';
 import 'package:past_question_paper_v1/features/comments/providers/question_comments_providers.dart';
 import 'package:past_question_paper_v1/features/comments/providers/question_comments_state.dart';
 import 'package:past_question_paper_v1/features/profile/domain/learner_profile.dart';
@@ -45,6 +48,10 @@ class _QuestionCommentsScreenState
     final authState = ref.watch(authStateProvider);
     final user = authState.asData?.value;
 
+    final AsyncValue<CommunityGuidelinesStatus>? guidelinesState = user == null
+        ? null
+        : ref.watch(communityGuidelinesControllerProvider(user.id));
+
     final AsyncValue<LearnerProfile>? profileState = user == null
         ? null
         : ref.watch(profileControllerProvider(user.id));
@@ -74,6 +81,7 @@ class _QuestionCommentsScreenState
                 _buildComposer(
                   user: user,
                   profileState: profileState,
+                  guidelinesState: guidelinesState,
                   state: state,
                 ),
                 if (state.errorMessage != null) ...[
@@ -138,6 +146,7 @@ class _QuestionCommentsScreenState
   Widget _buildComposer({
     required AppUser? user,
     required AsyncValue<LearnerProfile>? profileState,
+    required AsyncValue<CommunityGuidelinesStatus>? guidelinesState,
     required QuestionCommentsState state,
   }) {
     if (user == null) {
@@ -191,6 +200,51 @@ class _QuestionCommentsScreenState
             Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => ProfileScreen(user: user),
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    if (guidelinesState == null || guidelinesState.isLoading) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
+    if (guidelinesState.hasError) {
+      return Card(
+        child: ListTile(
+          leading: const Icon(Icons.error_outline),
+          title: const Text('Unable to check Community Guidelines'),
+          subtitle: const Text('Tap to try again.'),
+          trailing: const Icon(Icons.refresh),
+          onTap: () {
+            ref
+                .read(communityGuidelinesControllerProvider(user.id).notifier)
+                .refresh();
+          },
+        ),
+      );
+    }
+
+    final guidelinesStatus = guidelinesState.asData?.value;
+
+    if (guidelinesStatus == null || !guidelinesStatus.isAccepted) {
+      return Card(
+        child: ListTile(
+          leading: const Icon(Icons.policy_outlined),
+          title: const Text('Accept the Community Guidelines'),
+          subtitle: const Text('Review the discussion rules before posting.'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => CommunityGuidelinesScreen(userId: user.id),
               ),
             );
           },

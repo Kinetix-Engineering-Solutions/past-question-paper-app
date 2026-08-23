@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../domain/blocked_learner.dart';
+import '../domain/community_guidelines_status.dart';
 import '../domain/question_comment.dart';
 import '../domain/question_comment_report_reason.dart';
 import 'question_comments_repository.dart';
@@ -151,6 +152,45 @@ final class SupabaseQuestionCommentsRepository
           return BlockedLearner.fromJson(Map<String, dynamic>.from(row));
         })
         .toList(growable: false);
+  }
+
+  @override
+  Future<CommunityGuidelinesStatus> getCommunityGuidelinesStatus() async {
+    _requireUserId();
+
+    final data = await _client.rpc('get_my_community_guidelines_status');
+
+    if (data is! List || data.length != 1) {
+      throw const FormatException(
+        'Community Guidelines RPC returned an invalid result.',
+      );
+    }
+
+    final row = data.first;
+
+    if (row is! Map) {
+      throw const FormatException(
+        'Community Guidelines RPC returned an invalid row.',
+      );
+    }
+
+    return CommunityGuidelinesStatus.fromJson(Map<String, dynamic>.from(row));
+  }
+
+  @override
+  Future<DateTime> acceptCommunityGuidelines() async {
+    _requireUserId();
+
+    final data = await _client.rpc('accept_community_guidelines');
+
+    if (data is! String) {
+      throw const FormatException(
+        'Accept Community Guidelines RPC returned '
+        'an invalid result.',
+      );
+    }
+
+    return DateTime.parse(data);
   }
 
   List<QuestionComment> _parseCommentList(dynamic data) {
