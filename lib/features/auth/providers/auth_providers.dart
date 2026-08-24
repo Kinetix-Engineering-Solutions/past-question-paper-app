@@ -59,6 +59,26 @@ class AuthActionController extends AsyncNotifier<void> {
     }
   }
 
+  Future<bool> deleteAccount({required String confirmation}) async {
+    if (state.isLoading) {
+      return false;
+    }
+
+    state = const AsyncLoading();
+
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .deleteAccount(confirmation: confirmation);
+
+      state = const AsyncData(null);
+      return true;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return false;
+    }
+  }
+
   Future<void> signOut() {
     return _run(() => ref.read(authRepositoryProvider).signOut());
   }

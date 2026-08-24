@@ -164,7 +164,38 @@ class AccountScreen extends ConsumerWidget {
           OutlinedButton.icon(
             onPressed: action.isLoading ? null : () => _signOut(context, ref),
             icon: const Icon(Icons.logout),
-            label: Text(action.isLoading ? 'Signing out...' : 'Sign out'),
+            label: Text(action.isLoading ? 'Please wait...' : 'Sign out'),
+          ),
+          const SizedBox(height: 40),
+          Divider(
+            color: Theme.of(context).colorScheme.error.withValues(alpha: 0.35),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Danger zone',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: Theme.of(context).colorScheme.error,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Deleting your account permanently removes your profile, '
+            'bookmarks, progress, comments and other account data. '
+            'This action cannot be undone.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+              side: BorderSide(color: Theme.of(context).colorScheme.error),
+            ),
+            onPressed: action.isLoading
+                ? null
+                : () => _confirmAccountDeletion(context, ref),
+            icon: const Icon(Icons.delete_forever_outlined),
+            label: Text(action.isLoading ? 'Please wait...' : 'Delete account'),
           ),
         ],
       ),
@@ -183,5 +214,115 @@ class AccountScreen extends ConsumerWidget {
     if (!state.hasError) {
       Navigator.of(context).pop();
     }
+  }
+
+  Future<void> _confirmAccountDeletion(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _DeleteAccountDialog(),
+    );
+
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
+
+    final deleted = await ref
+        .read(authActionControllerProvider.notifier)
+        .deleteAccount(confirmation: 'DELETE');
+
+    if (!context.mounted) {
+      return;
+    }
+
+    if (!deleted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to delete your account. Please try again.'),
+        ),
+      );
+
+      return;
+    }
+
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+}
+
+class _DeleteAccountDialog extends StatefulWidget {
+  const _DeleteAccountDialog();
+
+  @override
+  State<_DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
+  final _confirmationController = TextEditingController();
+
+  @override
+  void dispose() {
+    _confirmationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final canDelete = _confirmationController.text.trim() == 'DELETE';
+
+    return AlertDialog(
+      icon: Icon(
+        Icons.warning_amber_rounded,
+        color: Theme.of(context).colorScheme.error,
+        size: 40,
+      ),
+      title: const Text('Delete your account?'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'This permanently removes your learner profile, '
+            'saved questions, study progress, comments and '
+            'other account data.',
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Type DELETE to confirm:',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _confirmationController,
+            autofocus: true,
+            autocorrect: false,
+            enableSuggestions: false,
+            textCapitalization: TextCapitalization.characters,
+            decoration: const InputDecoration(
+              labelText: 'Confirmation',
+              hintText: 'DELETE',
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.error,
+            foregroundColor: Theme.of(context).colorScheme.onError,
+          ),
+          onPressed: canDelete ? () => Navigator.of(context).pop(true) : null,
+          child: const Text('Delete permanently'),
+        ),
+      ],
+    );
   }
 }

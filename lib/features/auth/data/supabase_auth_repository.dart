@@ -53,6 +53,30 @@ final class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> deleteAccount({required String confirmation}) async {
+    if (_client.auth.currentUser == null) {
+      throw StateError('Authentication is required.');
+    }
+
+    final response = await _client.functions.invoke(
+      'delete-account',
+      body: {'confirmation': confirmation},
+    );
+
+    final data = response.data;
+
+    if (response.status < 200 ||
+        response.status >= 300 ||
+        data is! Map ||
+        data['deleted'] != true) {
+      throw StateError('The account could not be deleted.');
+    }
+
+    // The server account is now deleted. Clear the local Flutter session.
+    await _client.auth.signOut(scope: SignOutScope.local);
+  }
+
+  @override
   Future<void> signOut() {
     return _client.auth.signOut();
   }

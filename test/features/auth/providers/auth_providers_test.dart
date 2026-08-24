@@ -72,6 +72,9 @@ final class _FakeAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> deleteAccount({required String confirmation}) async {}
+
+  @override
   Future<void> signOut() async {}
 
   @override

@@ -12,6 +12,7 @@ abstract interface class AuthRepository {
     required String email,
     required String password,
   });
+  Future<void> deleteAccount({required String confirmation});
 
   Future<void> signOut();
 
