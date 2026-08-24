@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:past_question_paper_v1/core/theme/app_theme.dart';
 
-import '../features/discovery/presentation/discovery_screen.dart';
+import '../features/auth/presentation/account_declaration_gate.dart';
 
 class PastPapersApp extends StatelessWidget {
   const PastPapersApp({super.key});
@@ -12,7 +12,7 @@ class PastPapersApp extends StatelessWidget {
       title: 'Past Question Paper',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: const DiscoveryScreen(),
+      home: const AccountDeclarationGate(),
     );
   }
 }

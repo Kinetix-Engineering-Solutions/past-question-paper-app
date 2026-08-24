@@ -2,6 +2,8 @@ import 'package:past_question_paper_v1/features/auth/data/auth_repository.dart';
 import 'package:past_question_paper_v1/features/auth/domain/sign_up_result.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../domain/account_declaration.dart';
+import '../domain/account_type.dart';
 import '../domain/app_user.dart';
 
 final class SupabaseAuthRepository implements AuthRepository {
@@ -34,10 +36,20 @@ final class SupabaseAuthRepository implements AuthRepository {
   Future<SignUpResult> signUp({
     required String email,
     required String password,
+    required AccountType accountType,
+    required bool declarationAccepted,
   }) async {
+    if (!declarationAccepted) {
+      throw ArgumentError('The account declaration must be accepted.');
+    }
+
     final response = await _client.auth.signUp(
       email: email.trim(),
       password: password,
+      data: {
+        'account_type': accountType.apiValue,
+        'account_declaration_accepted': declarationAccepted,
+      },
     );
 
     final user = _mapUser(response.user);
@@ -50,6 +62,49 @@ final class SupabaseAuthRepository implements AuthRepository {
       user: user,
       requiresEmailConfirmation: response.session == null,
     );
+  }
+
+  @override
+  Future<AccountDeclaration?> getAccountDeclaration() async {
+    if (_client.auth.currentUser == null) {
+      return null;
+    }
+
+    final data = await _client.rpc('get_my_account_declaration');
+
+    if (data == null) {
+      return null;
+    }
+
+    if (data is! Map) {
+      throw const FormatException(
+        'Account declaration RPC returned an invalid response.',
+      );
+    }
+
+    return AccountDeclaration.fromJson(Map<String, dynamic>.from(data));
+  }
+
+  @override
+  Future<AccountDeclaration> recordAccountDeclaration({
+    required AccountType accountType,
+    required bool declarationAccepted,
+  }) async {
+    final data = await _client.rpc(
+      'record_account_declaration',
+      params: {
+        'p_account_type': accountType.apiValue,
+        'p_declaration_accepted': declarationAccepted,
+      },
+    );
+
+    if (data is! Map) {
+      throw const FormatException(
+        'Account declaration RPC returned an invalid response.',
+      );
+    }
+
+    return AccountDeclaration.fromJson(Map<String, dynamic>.from(data));
   }
 
   @override
