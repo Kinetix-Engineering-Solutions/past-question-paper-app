@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:past_question_paper_v1/features/auth/data/auth_repository.dart';
+import 'package:past_question_paper_v1/features/auth/domain/account_declaration.dart';
+import 'package:past_question_paper_v1/features/auth/domain/account_type.dart';
 import 'package:past_question_paper_v1/features/auth/domain/app_user.dart';
 import 'package:past_question_paper_v1/features/auth/domain/sign_up_result.dart';
 import 'package:past_question_paper_v1/features/auth/providers/auth_providers.dart';
@@ -67,6 +69,19 @@ final class _FakeAuthRepository implements AuthRepository {
   Future<SignUpResult> signUp({
     required String email,
     required String password,
+    required AccountType accountType,
+    required bool declarationAccepted,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<AccountDeclaration?> getAccountDeclaration() async => null;
+
+  @override
+  Future<AccountDeclaration> recordAccountDeclaration({
+    required AccountType accountType,
+    required bool declarationAccepted,
   }) {
     throw UnimplementedError();
   }

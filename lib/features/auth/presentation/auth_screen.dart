@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_theme.dart';
+import '../domain/account_type.dart';
 import '../providers/auth_providers.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
@@ -20,6 +21,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   bool _createAccount = false;
   bool _obscurePassword = true;
+  AccountType? _accountType;
+  bool _declarationAccepted = false;
+  String? _declarationError;
 
   @override
   void dispose() {
@@ -76,9 +80,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.email],
-                    decoration: const InputDecoration(
-                      labelText: 'Email address',
-                      prefixIcon: Icon(Icons.email_outlined),
+                    decoration: InputDecoration(
+                      labelText:
+                          _createAccount &&
+                              _accountType == AccountType.guardianManagedLearner
+                          ? 'Parent or guardian email address'
+                          : 'Email address',
+                      prefixIcon: const Icon(Icons.email_outlined),
                     ),
                     validator: (value) {
                       final email = value?.trim() ?? '';
@@ -146,6 +154,77 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       },
                       onFieldSubmitted: (_) => _submit(),
                     ),
+                    const SizedBox(height: 24),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Who is creating this account?',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _AccountTypeOption(
+                      title: 'I am 18 or older',
+                      description:
+                          'I am creating and managing my own learner account.',
+                      selected: _accountType == AccountType.adultLearner,
+                      onTap: () {
+                        setState(() {
+                          _accountType = AccountType.adultLearner;
+                          _declarationAccepted = false;
+                          _declarationError = null;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _AccountTypeOption(
+                      title: 'Parent or guardian',
+                      description:
+                          'I am creating and managing this account for a learner under 18.',
+                      selected:
+                          _accountType == AccountType.guardianManagedLearner,
+                      onTap: () {
+                        setState(() {
+                          _accountType = AccountType.guardianManagedLearner;
+                          _declarationAccepted = false;
+                          _declarationError = null;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      value: _declarationAccepted,
+                      onChanged: _accountType == null
+                          ? null
+                          : (value) {
+                              setState(() {
+                                _declarationAccepted = value ?? false;
+                                _declarationError = null;
+                              });
+                            },
+                      title: Text(switch (_accountType) {
+                        AccountType.adultLearner =>
+                          'I confirm that I am 18 or older and that this email belongs to me.',
+                        AccountType.guardianManagedLearner =>
+                          'I confirm that I am the learner’s parent or legal guardian, '
+                              'that this is my email address, and that I consent to '
+                              'creating and managing this learner account.',
+                        null => 'Select an account type before accepting.',
+                      }),
+                    ),
+                    if (_declarationError != null)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          _declarationError!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                   ],
                 ],
               ),
@@ -181,6 +260,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   : () {
                       setState(() {
                         _createAccount = !_createAccount;
+                        _accountType = null;
+                        _declarationAccepted = false;
+                        _declarationError = null;
                       });
                     },
               child: Text(
@@ -203,7 +285,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
+    final formIsValid = _formKey.currentState!.validate();
+
+    if (_createAccount && (_accountType == null || !_declarationAccepted)) {
+      setState(() {
+        _declarationError = _accountType == null
+            ? 'Select who is creating this account.'
+            : 'Accept the account declaration to continue.';
+      });
+
+      return;
+    }
+
+    if (!formIsValid) {
       return;
     }
 
@@ -213,6 +307,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       final result = await controller.signUp(
         email: _emailController.text,
         password: _passwordController.text,
+        accountType: _accountType!,
+        declarationAccepted: _declarationAccepted,
       );
 
       if (!mounted || result == null) {
@@ -267,5 +363,74 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     }
 
     return 'Something went wrong. Please try again.';
+  }
+}
+
+class _AccountTypeOption extends StatelessWidget {
+  const _AccountTypeOption({
+    required this.title,
+    required this.description,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String title;
+  final String description;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final foregroundColor = selected ? colors.onPrimary : colors.onSurface;
+
+    return Card(
+      margin: EdgeInsets.zero,
+      color: selected ? colors.primary : colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: selected ? colors.primary : colors.outline,
+          width: selected ? 2 : 1,
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                selected ? Icons.check_circle : Icons.radio_button_unchecked,
+                color: selected ? colors.onPrimary : colors.primary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleSmall?.copyWith(color: foregroundColor),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(color: foregroundColor),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

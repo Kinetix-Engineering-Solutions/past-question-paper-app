@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../data/auth_repository.dart';
 import '../data/supabase_auth_repository.dart';
+import '../domain/account_declaration.dart';
+import '../domain/account_type.dart';
 import '../domain/app_user.dart';
 import '../domain/sign_up_result.dart';
 
@@ -20,6 +22,17 @@ final authStateProvider = StreamProvider<AppUser?>((ref) async* {
   yield repository.currentUser;
   yield* repository.authStateChanges();
 });
+
+final accountDeclarationProvider =
+    FutureProvider.autoDispose<AccountDeclaration?>((ref) async {
+      final user = ref.watch(authStateProvider).asData?.value;
+
+      if (user == null) {
+        return null;
+      }
+
+      return ref.watch(authRepositoryProvider).getAccountDeclaration();
+    });
 
 final authActionControllerProvider =
     AsyncNotifierProvider<AuthActionController, void>(AuthActionController.new);
@@ -39,6 +52,8 @@ class AuthActionController extends AsyncNotifier<void> {
   Future<SignUpResult?> signUp({
     required String email,
     required String password,
+    required AccountType accountType,
+    required bool declarationAccepted,
   }) async {
     if (state.isLoading) {
       return null;
@@ -49,7 +64,12 @@ class AuthActionController extends AsyncNotifier<void> {
     try {
       final result = await ref
           .read(authRepositoryProvider)
-          .signUp(email: email, password: password);
+          .signUp(
+            email: email,
+            password: password,
+            accountType: accountType,
+            declarationAccepted: declarationAccepted,
+          );
 
       state = const AsyncData(null);
       return result;
@@ -70,6 +90,34 @@ class AuthActionController extends AsyncNotifier<void> {
       await ref
           .read(authRepositoryProvider)
           .deleteAccount(confirmation: confirmation);
+
+      state = const AsyncData(null);
+      return true;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return false;
+    }
+  }
+
+  Future<bool> recordAccountDeclaration({
+    required AccountType accountType,
+    required bool declarationAccepted,
+  }) async {
+    if (state.isLoading) {
+      return false;
+    }
+
+    state = const AsyncLoading();
+
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .recordAccountDeclaration(
+            accountType: accountType,
+            declarationAccepted: declarationAccepted,
+          );
+
+      ref.invalidate(accountDeclarationProvider);
 
       state = const AsyncData(null);
       return true;
