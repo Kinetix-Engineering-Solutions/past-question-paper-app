@@ -1,33 +1,101 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:past_question_paper_v1/features/auth/data/services/auth_service_firebase.dart';
-import 'package:past_question_paper_v1/core/shared/services/firestore_database_firebase.dart';
-import 'package:past_question_paper_v1/features/profile/data/repositories/user_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-// Auth Service Provider
-final authServiceProvider = Provider<AuthServiceFirebase>((ref) {
-  final service = AuthServiceFirebase();
-  return service;
+import '../data/auth_repository.dart';
+import '../data/supabase_auth_repository.dart';
+import '../domain/app_user.dart';
+import '../domain/sign_up_result.dart';
+
+final supabaseClientProvider = Provider<SupabaseClient>((ref) {
+  return Supabase.instance.client;
 });
 
-// Firestore Database Service Provider
-final firestoreDatabaseProvider = Provider<FirestoreDatabaseService>((ref) {
-  return FirestoreDatabaseService();
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  return SupabaseAuthRepository(client: ref.watch(supabaseClientProvider));
 });
 
-// User Repository Provider
-final userRepositoryProvider = Provider<UserRepository>((ref) {
-  return UserRepository(
-    authService: ref.read(authServiceProvider),
-    database: ref.read(firestoreDatabaseProvider),
-  );
+final authStateProvider = StreamProvider<AppUser?>((ref) async* {
+  final repository = ref.watch(authRepositoryProvider);
+
+  yield repository.currentUser;
+  yield* repository.authStateChanges();
 });
 
-// Auth State Provider - Streams the current auth state with Firestore profile data
-final authStateProvider = StreamProvider((ref) {
-  return ref.watch(userRepositoryProvider).userAuthStateWithProfile;
-});
+final authActionControllerProvider =
+    AsyncNotifierProvider<AuthActionController, void>(AuthActionController.new);
 
-// Current User Provider
-final currentUserProvider = Provider((ref) {
-  return ref.watch(userRepositoryProvider).currentUser;
-});
+class AuthActionController extends AsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
+
+  Future<void> signIn({required String email, required String password}) {
+    return _run(
+      () => ref
+          .read(authRepositoryProvider)
+          .signIn(email: email, password: password),
+    );
+  }
+
+  Future<SignUpResult?> signUp({
+    required String email,
+    required String password,
+  }) async {
+    if (state.isLoading) {
+      return null;
+    }
+
+    state = const AsyncLoading();
+
+    try {
+      final result = await ref
+          .read(authRepositoryProvider)
+          .signUp(email: email, password: password);
+
+      state = const AsyncData(null);
+      return result;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return null;
+    }
+  }
+
+  Future<bool> deleteAccount({required String confirmation}) async {
+    if (state.isLoading) {
+      return false;
+    }
+
+    state = const AsyncLoading();
+
+    try {
+      await ref
+          .read(authRepositoryProvider)
+          .deleteAccount(confirmation: confirmation);
+
+      state = const AsyncData(null);
+      return true;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return false;
+    }
+  }
+
+  Future<void> signOut() {
+    return _run(() => ref.read(authRepositoryProvider).signOut());
+  }
+
+  Future<void> sendPasswordReset({required String email}) {
+    return _run(
+      () => ref.read(authRepositoryProvider).sendPasswordReset(email: email),
+    );
+  }
+
+  Future<void> _run(Future<void> Function() operation) async {
+    if (state.isLoading) {
+      return;
+    }
+
+    state = const AsyncLoading();
+
+    state = await AsyncValue.guard(operation);
+  }
+}

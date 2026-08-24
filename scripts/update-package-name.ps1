@@ -120,13 +120,6 @@ Write-Host "      1. Rename folder structure in: android\app\src\main\kotlin\"
 Write-Host "      2. Update package declaration in MainActivity.kt"
 Write-Host "      3. Example: package $NEW_PACKAGE_ID"
 
-# Step 7: Firebase configuration
-Write-Host ""
-Write-Host "📝 Step 7/7: Firebase configuration..." -ForegroundColor Yellow
-Write-Host "   ⚠️  MANUAL STEPS REQUIRED:" -ForegroundColor Yellow
-Write-Host "      1. Update/replace google-services.json"
-Write-Host "      2. Run: flutterfire configure --project=your-project-id"
-
 Write-Host ""
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor Cyan
 Write-Host "✅ AUTOMATED UPDATES COMPLETE!" -ForegroundColor Green
@@ -140,11 +133,7 @@ Write-Host ""
 Write-Host "2. 📝 Update MainActivity.kt package declaration:" -ForegroundColor Cyan
 Write-Host "   package $NEW_PACKAGE_ID"
 Write-Host ""
-Write-Host "3. 🔥 Update Firebase configuration:" -ForegroundColor Cyan
-Write-Host "   - Replace android\app\google-services.json"
-Write-Host "   - Run: flutterfire configure"
-Write-Host ""
-Write-Host "4. 🧹 Clean and rebuild:" -ForegroundColor Cyan
+Write-Host "3. 🧹 Clean and rebuild:" -ForegroundColor Cyan
 Write-Host "   flutter clean"
 Write-Host "   flutter pub get"
 Write-Host "   flutter analyze"

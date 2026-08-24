@@ -1,5 +1,28 @@
 {
-  "dependencies": {
-    "firebase-admin": "^13.5.0"
+  "name": "past-question-paper-v0.01",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kinetix-Engineering-Solutions/past-question-paper-v0.01.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Kinetix-Engineering-Solutions/past-question-paper-v0.01/issues"
+  },
+  "homepage": "https://github.com/Kinetix-Engineering-Solutions/past-question-paper-v0.01#readme",
+  "devDependencies": {
+    "supabase": "^2.115.0"
   }
 }
