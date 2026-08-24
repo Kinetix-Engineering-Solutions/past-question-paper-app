@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/widgets/privacy_policy_button.dart';
 import '../domain/account_type.dart';
 import '../providers/auth_providers.dart';
 
@@ -77,15 +78,19 @@ class _AccountDeclarationScreenState
                     },
               title: Text(switch (_accountType) {
                 AccountType.adultLearner =>
-                  'I confirm that I am 18 or older and that '
-                      'this email belongs to me.',
+                  'I confirm that I am 18 or older, that this email belongs '
+                      'to me, and that I have read the Privacy Policy.',
                 AccountType.guardianManagedLearner =>
-                  'I confirm that I am the learner’s parent or '
-                      'legal guardian, that this is my email '
-                      'address, and that I consent to creating '
-                      'and managing this learner account.',
+                  'I confirm that I am the learner’s parent or legal guardian, '
+                      'that this is my email address, and that I have read the '
+                      'Privacy Policy and consent to the described processing for '
+                      'the learner account.',
                 null => 'Select an account type before accepting.',
               }),
+            ),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: PrivacyPolicyButton(),
             ),
             if (_validationMessage != null || actionError != null) ...[
               const SizedBox(height: 8),
