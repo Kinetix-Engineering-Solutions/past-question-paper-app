@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../bookmarks/presentation/saved_questions_screen.dart';
 import '../../comments/presentation/blocked_learners_screen.dart';
 import '../../comments/presentation/community_guidelines_screen.dart';
+import '../../legal/presentation/legal_documents_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import '../../profile/providers/profile_providers.dart';
 import '../../progress/presentation/needs_review_screen.dart';
@@ -137,6 +138,24 @@ class AccountScreen extends ConsumerWidget {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (_) => CommunityGuidelinesScreen(userId: user.id),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.gavel_outlined),
+              title: const Text('Legal and privacy'),
+              subtitle: const Text(
+                'Privacy Policy, Terms of Use and account deletion.',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const LegalDocumentsScreen(),
                   ),
                 );
               },

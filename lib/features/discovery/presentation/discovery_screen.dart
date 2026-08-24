@@ -7,6 +7,7 @@ import '../../auth/domain/app_user.dart';
 import '../../auth/presentation/account_screen.dart';
 import '../../auth/presentation/auth_screen.dart';
 import '../../auth/providers/auth_providers.dart';
+import '../../legal/presentation/legal_documents_screen.dart';
 import '../data/models/discovery_data.dart';
 import '../data/models/topic.dart';
 import '../providers/discovery_providers.dart';
@@ -24,6 +25,17 @@ class DiscoveryScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Past Papers'),
         actions: [
+          IconButton(
+            tooltip: 'Legal and privacy',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const LegalDocumentsScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.info_outline),
+          ),
           IconButton(
             tooltip: currentUser == null ? 'Sign in' : 'Account',
             onPressed: authState.isLoading
