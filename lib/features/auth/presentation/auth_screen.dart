@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/privacy_policy_button.dart';
+import '../../../shared/widgets/terms_of_use_button.dart';
 import '../domain/account_type.dart';
 import '../providers/auth_providers.dart';
 
@@ -208,18 +209,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       title: Text(switch (_accountType) {
                         AccountType.adultLearner =>
                           'I confirm that I am 18 or older, that this email belongs '
-                              'to me, and that I have read the Privacy Policy.',
+                              'to me, and that I have read the Privacy Policy and '
+                              'Terms of Use.',
                         AccountType.guardianManagedLearner =>
                           'I confirm that I am the learner’s parent or legal guardian, '
                               'that this is my email address, and that I have read the '
-                              'Privacy Policy and consent to the described processing for '
+                              'Privacy Policy and Terms of Use and consent to the described '
+                              'processing for '
                               'the learner account.',
                         null => 'Select an account type before accepting.',
                       }),
                     ),
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: PrivacyPolicyButton(),
+                    const Wrap(
+                      children: [PrivacyPolicyButton(), TermsOfUseButton()],
                     ),
                     if (_declarationError != null)
                       Align(
