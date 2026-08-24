@@ -38,38 +38,121 @@ abstract final class AppTheme {
       onSurface: AppColors.ink,
     );
 
-    final baseTextTheme = ThemeData.light().textTheme.apply(
-      bodyColor: AppColors.ink,
-      displayColor: AppColors.ink,
+    const textTheme = TextTheme(
+      displayLarge: TextStyle(
+        fontSize: 35,
+        height: 1.1,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.5,
+        color: AppColors.ink,
+      ),
+      displayMedium: TextStyle(
+        fontSize: 31,
+        height: 1.12,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.5,
+        color: AppColors.ink,
+      ),
+      displaySmall: TextStyle(
+        fontSize: 28,
+        height: 1.15,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.5,
+        color: AppColors.ink,
+      ),
+      headlineLarge: TextStyle(
+        fontSize: 25,
+        height: 1.2,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.5,
+        color: AppColors.ink,
+      ),
+      headlineMedium: TextStyle(
+        fontSize: 21,
+        height: 1.25,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.5,
+        color: AppColors.ink,
+      ),
+      headlineSmall: TextStyle(
+        fontSize: 19,
+        height: 1.25,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.5,
+        color: AppColors.ink,
+      ),
+      titleLarge: TextStyle(
+        fontSize: 17,
+        height: 1.3,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.5,
+        color: AppColors.ink,
+      ),
+      titleMedium: TextStyle(
+        fontSize: 14,
+        height: 1.35,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.5,
+        color: AppColors.ink,
+      ),
+      titleSmall: TextStyle(
+        fontSize: 12,
+        height: 1.4,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.5,
+        color: AppColors.ink,
+      ),
+      bodyLarge: TextStyle(
+        fontSize: 13,
+        height: 1.5,
+        fontWeight: FontWeight.w300,
+        letterSpacing: 0.5,
+        color: AppColors.mutedInk,
+      ),
+      bodyMedium: TextStyle(
+        fontSize: 12,
+        height: 1.45,
+        fontWeight: FontWeight.w300,
+        letterSpacing: 0.5,
+        color: AppColors.mutedInk,
+      ),
+      bodySmall: TextStyle(
+        fontSize: 10,
+        height: 1.4,
+        fontWeight: FontWeight.w300,
+        letterSpacing: 0.5,
+        color: AppColors.mutedInk,
+      ),
+      labelLarge: TextStyle(
+        fontSize: 12,
+        height: 1.4,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.5,
+        color: AppColors.ink,
+      ),
+      labelMedium: TextStyle(
+        fontSize: 10,
+        height: 1.35,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.5,
+        color: AppColors.ink,
+      ),
+      labelSmall: TextStyle(
+        fontSize: 9,
+        height: 1.35,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.5,
+        color: AppColors.mutedInk,
+      ),
     );
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.paper,
+      fontFamily: 'Inter',
 
-      textTheme: baseTextTheme.copyWith(
-        headlineMedium: baseTextTheme.headlineMedium?.copyWith(
-          fontWeight: FontWeight.w700,
-          letterSpacing: -0.5,
-        ),
-        headlineSmall: baseTextTheme.headlineSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-        ),
-        titleLarge: baseTextTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.w700,
-        ),
-        titleMedium: baseTextTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
-        titleSmall: baseTextTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
-        bodyLarge: baseTextTheme.bodyLarge?.copyWith(color: AppColors.mutedInk),
-        bodyMedium: baseTextTheme.bodyMedium?.copyWith(
-          color: AppColors.mutedInk,
-        ),
-      ),
+      textTheme: textTheme,
 
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.paper,
@@ -78,9 +161,12 @@ abstract final class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
+          fontFamily: 'Inter',
           color: AppColors.ink,
-          fontSize: 20,
+          fontSize: 16,
+          height: 1.3,
           fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
         ),
       ),
 
@@ -111,8 +197,14 @@ abstract final class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.neutralCard,
-        labelStyle: const TextStyle(color: AppColors.mutedInk),
-        hintStyle: const TextStyle(color: AppColors.mutedInk),
+        labelStyle: const TextStyle(
+          color: AppColors.mutedInk,
+          letterSpacing: 0.5,
+        ),
+        hintStyle: const TextStyle(
+          color: AppColors.mutedInk,
+          letterSpacing: 0.5,
+        ),
         prefixIconColor: AppColors.mutedInk,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -147,7 +239,12 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
 
@@ -160,14 +257,24 @@ abstract final class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
 
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
 
@@ -191,7 +298,10 @@ abstract final class AppTheme {
 
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.ink,
-        contentTextStyle: const TextStyle(color: Colors.white),
+        contentTextStyle: const TextStyle(
+          color: Colors.white,
+          letterSpacing: 0.5,
+        ),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
