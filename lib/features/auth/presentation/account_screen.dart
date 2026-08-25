@@ -22,6 +22,7 @@ class AccountScreen extends ConsumerWidget {
     final action = ref.watch(authActionControllerProvider);
     final profile = ref.watch(profileControllerProvider(user.id));
     final learnerProfile = profile.asData?.value;
+    final displayName = learnerProfile?.displayName?.trim();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Account')),
@@ -30,15 +31,25 @@ class AccountScreen extends ConsumerWidget {
         children: [
           const CircleAvatar(
             radius: 38,
-            backgroundColor: AppColors.brandCyan,
+            backgroundColor: AppColors.primary,
             child: Icon(Icons.person, size: 40, color: Colors.white),
           ),
           const SizedBox(height: 16),
-          Text(
-            learnerProfile?.displayName ?? user.email ?? 'Signed-in learner',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          if (profile.isLoading)
+            const Center(
+              child: SizedBox(
+                width: 120,
+                child: LinearProgressIndicator(minHeight: 3),
+              ),
+            )
+          else
+            Text(
+              displayName == null || displayName.isEmpty
+                  ? 'Learner'
+                  : displayName,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
           const SizedBox(height: 4),
           if (learnerProfile?.grade != null)
             Text(

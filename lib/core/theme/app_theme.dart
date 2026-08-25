@@ -14,8 +14,8 @@ abstract final class AppColors {
   static const brandPink = Color(0xFFED0A8C);
   static const brandPeriwinkle = Color(0xFF7391CF);
 
-  // Darkened brand cyan for accessible buttons
-  static const primary = Color(0xFF087FAE);
+  // Darkened brand periwinkle for accessible buttons and active states
+  static const primary = Color(0xFF526CA6);
 
   // Semantic colours
   static const success = Color(0xFF228B5A);
