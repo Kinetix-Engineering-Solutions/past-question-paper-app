@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_riverpod: ^2.6.1
+  flutter_svg: ^2.0.17
   http: ^1.6.0
   supabase_flutter: ^2.17.2
   url_launcher: ^6.3.2

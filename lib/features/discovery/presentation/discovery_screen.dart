@@ -11,9 +11,11 @@ import '../../auth/providers/auth_providers.dart';
 import '../../legal/presentation/legal_documents_screen.dart';
 import '../../progress/domain/topic_progress.dart';
 import '../../progress/providers/topic_progress_provider.dart';
+import '../../profile/providers/profile_providers.dart';
 import '../data/models/discovery_data.dart';
 import '../data/models/topic.dart';
 import '../providers/discovery_providers.dart';
+import 'widgets/past_paper_hero.dart';
 
 class DiscoveryScreen extends ConsumerWidget {
   const DiscoveryScreen({super.key});
@@ -23,53 +25,53 @@ class DiscoveryScreen extends ConsumerWidget {
     final discovery = ref.watch(discoveryControllerProvider);
     final authState = ref.watch(authStateProvider);
     final currentUser = authState.asData?.value;
+    final learnerName = currentUser == null
+        ? null
+        : ref
+              .watch(profileControllerProvider(currentUser.id))
+              .valueOrNull
+              ?.displayName;
 
     return Scaffold(
-      appBar: AppBar(
-        actions: [
-          IconButton(
-            tooltip: 'Legal and privacy',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const LegalDocumentsScreen(),
-                ),
+      body: SafeArea(
+        child: discovery.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => _DiscoveryError(
+            message: _errorMessage(error),
+            onRetry: () =>
+                ref.read(discoveryControllerProvider.notifier).refresh(),
+          ),
+          data: (data) {
+            if (data.isEmpty) {
+              return _EmptyDiscovery(
+                onRefresh: () =>
+                    ref.read(discoveryControllerProvider.notifier).refresh(),
               );
-            },
-            icon: const Icon(Icons.info_outline),
-          ),
-          IconButton(
-            tooltip: currentUser == null ? 'Sign in' : 'Account',
-            onPressed: authState.isLoading
-                ? null
-                : () => _openAccount(context, currentUser),
-            icon: Icon(
-              currentUser == null ? Icons.person_outline : Icons.account_circle,
-            ),
-          ),
-        ],
-      ),
-      body: discovery.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => _DiscoveryError(
-          message: _errorMessage(error),
-          onRetry: () =>
-              ref.read(discoveryControllerProvider.notifier).refresh(),
-        ),
-        data: (data) {
-          if (data.isEmpty) {
-            return _EmptyDiscovery(
-              onRefresh: () =>
-                  ref.read(discoveryControllerProvider.notifier).refresh(),
+            }
+
+            final progress = currentUser == null
+                ? const AsyncValue<List<TopicProgress>>.data(<TopicProgress>[])
+                : ref.watch(topicProgressProvider(currentUser.id));
+
+            return _DiscoveryContent(
+              data: data,
+              progress: progress,
+              learnerName: learnerName,
+              tracksProgress: currentUser != null,
+              isSignedIn: currentUser != null,
+              onInfoPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const LegalDocumentsScreen(),
+                  ),
+                );
+              },
+              onAccountPressed: authState.isLoading
+                  ? null
+                  : () => _openAccount(context, currentUser),
             );
-          }
-
-          final progress = currentUser == null
-              ? const AsyncValue<List<TopicProgress>>.data(<TopicProgress>[])
-              : ref.watch(topicProgressProvider(currentUser.id));
-
-          return _DiscoveryContent(data: data, progress: progress);
-        },
+          },
+        ),
       ),
     );
   }
@@ -93,10 +95,23 @@ class DiscoveryScreen extends ConsumerWidget {
 }
 
 class _DiscoveryContent extends ConsumerStatefulWidget {
-  const _DiscoveryContent({required this.data, required this.progress});
+  const _DiscoveryContent({
+    required this.data,
+    required this.progress,
+    required this.learnerName,
+    required this.tracksProgress,
+    required this.isSignedIn,
+    required this.onInfoPressed,
+    required this.onAccountPressed,
+  });
 
   final DiscoveryData data;
   final AsyncValue<List<TopicProgress>> progress;
+  final String? learnerName;
+  final bool tracksProgress;
+  final bool isSignedIn;
+  final VoidCallback onInfoPressed;
+  final VoidCallback? onAccountPressed;
 
   @override
   ConsumerState<_DiscoveryContent> createState() => _DiscoveryContentState();
@@ -151,6 +166,18 @@ class _DiscoveryContentState extends ConsumerState<_DiscoveryContent> {
       for (final item in widget.progress.valueOrNull ?? const <TopicProgress>[])
         item.topic.id: item,
     };
+    final progressItems = widget.progress.valueOrNull;
+    final reviewedQuestions = progressItems?.fold<int>(
+      0,
+      (total, item) => total + item.summary.reviewedCount,
+    );
+    final totalQuestions = widget.data.topics.fold<int>(
+      0,
+      (total, topic) => total + topic.questionCount,
+    );
+    final overallProgress = reviewedQuestions == null || totalQuestions == 0
+        ? null
+        : (reviewedQuestions / totalQuestions).clamp(0.0, 1.0).toDouble();
     final continueItem =
         (widget.progress.valueOrNull ?? const <TopicProgress>[])
             .where(
@@ -175,8 +202,15 @@ class _DiscoveryContentState extends ConsumerState<_DiscoveryContent> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          const _PageIntroduction(),
-          const SizedBox(height: 20),
+          PastPaperHero(
+            learnerName: widget.learnerName,
+            progress: widget.tracksProgress ? overallProgress : null,
+            reviewedQuestions: widget.tracksProgress ? reviewedQuestions : null,
+            totalQuestions: widget.tracksProgress ? totalQuestions : null,
+            onInfoPressed: widget.onInfoPressed,
+            onAccountPressed: widget.onAccountPressed,
+            isSignedIn: widget.isSignedIn,
+          ),
           if (widget.data.subjects.isNotEmpty)
             _SubjectSelector(
               subjects: widget.data.subjects
@@ -196,7 +230,7 @@ class _DiscoveryContentState extends ConsumerState<_DiscoveryContent> {
             const SizedBox(height: 24),
             Text(
               'Continue practising',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 10),
             _ContinueCard(progress: continueItem),
@@ -216,45 +250,6 @@ class _DiscoveryContentState extends ConsumerState<_DiscoveryContent> {
             ],
         ],
       ),
-    );
-  }
-}
-
-class _PageIntroduction extends StatelessWidget {
-  const _PageIntroduction();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: AppColors.brandPeriwinkle.withValues(alpha: 0.14),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: const Text(
-            'GRADE 12',
-            style: TextStyle(
-              color: AppColors.primary,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          'What do you want to practise?',
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Practise past-paper questions by topic.',
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-      ],
     );
   }
 }
@@ -319,7 +314,7 @@ class _ContinueCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final topic = progress.topic;
     return Card(
-      color: AppColors.primary,
+      color: AppColors.neutralCard,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => Navigator.of(context).push(
@@ -334,13 +329,14 @@ class _ContinueCard extends StatelessWidget {
                 topic.name,
                 style: Theme.of(
                   context,
-                ).textTheme.titleLarge?.copyWith(color: Colors.white),
+                ).textTheme.titleLarge?.copyWith(color: AppColors.ink),
               ),
               const SizedBox(height: 6),
               Text(
                 '${progress.summary.reviewedCount} of ${topic.questionCount} questions reviewed',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.84),
+                  color: AppColors.mutedInk,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 12),
@@ -348,8 +344,8 @@ class _ContinueCard extends StatelessWidget {
                 value: progress.reviewCoverage,
                 minHeight: 7,
                 borderRadius: BorderRadius.circular(8),
-                color: Colors.white,
-                backgroundColor: Colors.white.withValues(alpha: 0.24),
+                color: AppColors.primary,
+                backgroundColor: AppColors.border,
               ),
               const SizedBox(height: 12),
               const Row(
@@ -358,12 +354,12 @@ class _ContinueCard extends StatelessWidget {
                   Text(
                     'Continue',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.primary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   SizedBox(width: 4),
-                  Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                  Icon(Icons.arrow_forward, color: AppColors.primary, size: 20),
                 ],
               ),
             ],
@@ -384,7 +380,7 @@ class _TopicsHeader extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text('Topics', style: Theme.of(context).textTheme.titleLarge),
+          child: Text('Topics', style: Theme.of(context).textTheme.titleMedium),
         ),
         Text(
           '$topicCount ${topicCount == 1 ? 'topic' : 'topics'}',
