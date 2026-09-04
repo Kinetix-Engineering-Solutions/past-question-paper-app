@@ -146,6 +146,8 @@ class _HeroActionButton extends StatelessWidget {
       child: IconButton(
         tooltip: tooltip,
         onPressed: onPressed,
+        constraints: const BoxConstraints.tightFor(width: 34, height: 34),
+        padding: EdgeInsets.zero,
         visualDensity: VisualDensity.compact,
         iconSize: 21,
         color: AppColors.ink,

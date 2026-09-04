@@ -46,6 +46,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/
+    - assets/icons/mathematics_icons/
+    - assets/icons/physical_sciences_icons/physical_sciences_icons/
   fonts:
     - family: Inter
       fonts:

@@ -16,6 +16,7 @@ import '../data/models/discovery_data.dart';
 import '../data/models/topic.dart';
 import '../providers/discovery_providers.dart';
 import 'widgets/past_paper_hero.dart';
+import 'widgets/topic_grid_card.dart';
 
 class DiscoveryScreen extends ConsumerWidget {
   const DiscoveryScreen({super.key});
@@ -241,13 +242,36 @@ class _DiscoveryContentState extends ConsumerState<_DiscoveryContent> {
           if (sortedTopics.isEmpty)
             const _NoTopicsForSubject()
           else
-            for (var index = 0; index < sortedTopics.length; index++) ...[
-              _TopicCard(
-                topic: sortedTopics[index],
-                progress: progressByTopic[sortedTopics[index].id],
-              ),
-              if (index != sortedTopics.length - 1) const SizedBox(height: 10),
-            ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final columnCount = constraints.maxWidth < 300 ? 1 : 2;
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: sortedTopics.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columnCount,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    mainAxisExtent: 196,
+                  ),
+                  itemBuilder: (context, index) {
+                    final topic = sortedTopics[index];
+                    return TopicGridCard(
+                      topic: topic,
+                      progress: progressByTopic[topic.id],
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => QuestionScreen(topic: topic),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
         ],
       ),
     );
@@ -388,125 +412,6 @@ class _TopicsHeader extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-class _TopicCard extends StatelessWidget {
-  const _TopicCard({required this.topic, this.progress});
-
-  final Topic topic;
-  final TopicProgress? progress;
-
-  @override
-  Widget build(BuildContext context) {
-    final isAvailable = topic.questionCount > 0;
-    final accent = _accentForSubject(topic.subjectSlug);
-    final displayAccent = isAvailable ? accent : AppColors.mutedInk;
-    final icon = _iconForSubject(topic.subjectSlug);
-    final questionLabel = topic.questionCount == 1
-        ? '1 question'
-        : '${topic.questionCount} questions';
-
-    return Semantics(
-      button: isAvailable,
-      enabled: isAvailable,
-      label: isAvailable
-          ? '${topic.name}, $questionLabel'
-          : '${topic.name}, coming soon',
-      child: Card(
-        color: AppColors.neutralCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.border),
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: isAvailable
-              ? () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => QuestionScreen(topic: topic),
-                    ),
-                  );
-                }
-              : null,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: displayAccent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  child: Icon(icon, size: 23, color: displayAccent),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        topic.name,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: isAvailable
-                                  ? AppColors.ink
-                                  : AppColors.mutedInk,
-                            ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        isAvailable
-                            ? progress == null
-                                  ? questionLabel
-                                  : '$questionLabel · ${progress!.summary.reviewedCount} reviewed'
-                            : 'Coming soon',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: isAvailable
-                              ? AppColors.primary
-                              : AppColors.mutedInk,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (isAvailable && progress != null) ...[
-                        const SizedBox(height: 8),
-                        LinearProgressIndicator(
-                          value: progress!.reviewCoverage,
-                          minHeight: 5,
-                          borderRadius: BorderRadius.circular(6),
-                          color: accent,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                if (isAvailable)
-                  Icon(Icons.chevron_right, color: displayAccent),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Color _accentForSubject(String subjectSlug) {
-    return switch (subjectSlug) {
-      'mathematics' => AppColors.brandPeriwinkle,
-      'physical-sciences' => AppColors.primary,
-      _ => AppColors.primary,
-    };
-  }
-
-  IconData _iconForSubject(String subjectSlug) {
-    return switch (subjectSlug) {
-      'mathematics' => Icons.calculate_outlined,
-      'physical-sciences' => Icons.science_outlined,
-      _ => Icons.menu_book_outlined,
-    };
   }
 }
 
