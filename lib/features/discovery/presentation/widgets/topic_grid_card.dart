@@ -25,8 +25,7 @@ String? topicIconAsset(String slug) {
       '$_mathematicsIconPath/counting-principle-and-probability.svg',
     'euclidean-geometry' => '$_mathematicsIconPath/euclidean-geometry.svg',
     'analytical-geometry' => '$_mathematicsIconPath/analytical-geometry.svg',
-    'functions-and-graphs' =>
-      '$_mathematicsIconPath/functions-and-graphs.svg',
+    'functions-and-graphs' => '$_mathematicsIconPath/functions-and-graphs.svg',
     'newtons-laws' => '$_physicalSciencesIconPath/newtons-laws.svg',
     'momentum-and-impulse' =>
       '$_physicalSciencesIconPath/momentum-and-impulse.svg',
@@ -36,21 +35,17 @@ String? topicIconAsset(String slug) {
       '$_physicalSciencesIconPath/work-energy-and-power.svg',
     'doppler-effect' => '$_physicalSciencesIconPath/doppler-effect.svg',
     'electrostatics' => '$_physicalSciencesIconPath/electrostatics.svg',
-    'electric-circuits' =>
-      '$_physicalSciencesIconPath/electric-circuits.svg',
+    'electric-circuits' => '$_physicalSciencesIconPath/electric-circuits.svg',
     'electrodynamics' => '$_physicalSciencesIconPath/electrodynamics.svg',
-    'optical-phenomena' =>
-      '$_physicalSciencesIconPath/optical-phenomena.svg',
-    'organic-molecules' =>
-      '$_physicalSciencesIconPath/organic-molecules.svg',
+    'optical-phenomena' => '$_physicalSciencesIconPath/optical-phenomena.svg',
+    'organic-molecules' => '$_physicalSciencesIconPath/organic-molecules.svg',
     'intermolecular-forces' =>
       '$_physicalSciencesIconPath/intermolecular-forces.svg',
     'rate-and-extent-of-reaction' =>
       '$_physicalSciencesIconPath/rate-and-extent-of-reaction.svg',
     'chemical-equilibrium' =>
       '$_physicalSciencesIconPath/chemical-equilibrium.svg',
-    'acids-and-bases' =>
-      '$_physicalSciencesIconPath/acids-and-bases.svg',
+    'acids-and-bases' => '$_physicalSciencesIconPath/acids-and-bases.svg',
     'electrochemical-reactions' =>
       '$_physicalSciencesIconPath/electrochemical-reactions.svg',
     _ => null,
@@ -84,41 +79,44 @@ class TopicGridCard extends StatelessWidget {
           ? '${topic.name}, $questionLabel'
           : '${topic.name}, coming soon',
       child: Card(
-        color: AppColors.neutralCard,
+        color: AppPalette.of(context).neutralCard,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
+          side: AppPalette.of(context).isDark
+              ? BorderSide(color: AppPalette.of(context).border)
+              : BorderSide.none,
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: isAvailable ? onTap : null,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+            padding: EdgeInsets.fromLTRB(14, 14, 14, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   width: 46,
                   height: 46,
-                  padding: const EdgeInsets.all(10),
+                  padding: EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.iconTile,
+                    color: AppPalette.of(context).iconTile,
                     borderRadius: BorderRadius.circular(13),
                   ),
                   child: iconAsset == null
-                      ? const Icon(
+                      ? Icon(
                           Icons.menu_book_outlined,
-                          color: AppColors.topicIcon,
+                          color: AppPalette.of(context).topicIcon,
                           size: 25,
                         )
                       : SvgPicture.asset(
                           iconAsset,
-                          colorFilter: const ColorFilter.mode(
-                            AppColors.topicIcon,
+                          colorFilter: ColorFilter.mode(
+                            AppPalette.of(context).topicIcon,
                             BlendMode.srcIn,
                           ),
                         ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Expanded(
                   child: Align(
                     alignment: Alignment.topLeft,
@@ -127,34 +125,36 @@ class TopicGridCard extends StatelessWidget {
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: isAvailable ? AppColors.ink : AppColors.mutedInk,
+                        color: isAvailable
+                            ? AppPalette.of(context).ink
+                            : AppPalette.of(context).mutedInk,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6),
                 Text(
                   isAvailable ? questionLabel : 'Coming soon',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.mutedInk,
+                    color: AppPalette.of(context).mutedInk,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 if (isAvailable && progress != null) ...[
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4),
                   Text(
                     '${progress!.summary.reviewedCount} reviewed',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.mutedInk,
+                      color: AppPalette.of(context).mutedInk,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 7),
+                  SizedBox(height: 7),
                   LinearProgressIndicator(
                     value: progress!.reviewCoverage,
                     minHeight: 4,
                     borderRadius: BorderRadius.circular(6),
-                    color: AppColors.success,
+                    color: AppPalette.of(context).success,
                   ),
                 ],
               ],

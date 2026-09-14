@@ -16,7 +16,7 @@ import '../../profile/providers/profile_providers.dart';
 import '../data/models/discovery_data.dart';
 import '../data/models/topic.dart';
 import '../providers/discovery_providers.dart';
-import 'widgets/past_paper_hero.dart';
+import 'widgets/learner_header.dart';
 import 'widgets/topic_grid_card.dart';
 
 class DiscoveryScreen extends ConsumerWidget {
@@ -37,8 +37,7 @@ class DiscoveryScreen extends ConsumerWidget {
     return Scaffold(
       body: SafeArea(
         child: discovery.when(
-          loading: () =>
-              const LoadingSkeleton(layout: SkeletonLayout.discovery),
+          loading: () => LoadingSkeleton(layout: SkeletonLayout.discovery),
           error: (error, _) => _DiscoveryError(
             message: _errorMessage(error),
             onRetry: () =>
@@ -53,7 +52,7 @@ class DiscoveryScreen extends ConsumerWidget {
             }
 
             final progress = currentUser == null
-                ? const AsyncValue<List<TopicProgress>>.data(<TopicProgress>[])
+                ? AsyncValue<List<TopicProgress>>.data(<TopicProgress>[])
                 : ref.watch(topicProgressProvider(currentUser.id));
 
             return _DiscoveryContent(
@@ -66,7 +65,7 @@ class DiscoveryScreen extends ConsumerWidget {
               onInfoPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) => const LegalDocumentsScreen(),
+                    builder: (_) => LegalDocumentsScreen(),
                   ),
                 );
               },
@@ -83,8 +82,7 @@ class DiscoveryScreen extends ConsumerWidget {
   Future<void> _openAccount(BuildContext context, AppUser? user) {
     return Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) =>
-            user == null ? const AuthScreen() : AccountScreen(user: user),
+        builder: (_) => user == null ? AuthScreen() : AccountScreen(user: user),
       ),
     );
   }
@@ -157,7 +155,7 @@ class _DiscoveryContentState extends ConsumerState<_DiscoveryContent> {
   Widget build(BuildContext context) {
     final selectedSubjectId = _selectedSubjectId;
     final visibleTopics = selectedSubjectId == null
-        ? const <Topic>[]
+        ? <Topic>[]
         : widget.data.topicsForSubject(selectedSubjectId);
     final sortedTopics = visibleTopics.toList(growable: false)
       ..sort((a, b) {
@@ -169,7 +167,7 @@ class _DiscoveryContentState extends ConsumerState<_DiscoveryContent> {
             : a.displayOrder.compareTo(b.displayOrder);
       });
     final progressByTopic = {
-      for (final item in widget.progress.valueOrNull ?? const <TopicProgress>[])
+      for (final item in widget.progress.valueOrNull ?? <TopicProgress>[])
         item.topic.id: item,
     };
     final progressItems = widget.progress.valueOrNull;
@@ -186,31 +184,34 @@ class _DiscoveryContentState extends ConsumerState<_DiscoveryContent> {
         : totalQuestions == 0
         ? 0.0
         : (reviewedQuestions / totalQuestions).clamp(0.0, 1.0).toDouble();
-    final continueItem =
-        (widget.progress.valueOrNull ?? const <TopicProgress>[])
-            .where(
-              (item) =>
-                  item.topic.subjectId == selectedSubjectId &&
-                  item.topic.questionCount > 0,
-            )
-            .fold<TopicProgress?>(
-              null,
-              (latest, item) =>
-                  latest == null ||
-                      item.summary.lastReviewedAt.isAfter(
-                        latest.summary.lastReviewedAt,
-                      )
-                  ? item
-                  : latest,
-            );
+    final continueItem = (widget.progress.valueOrNull ?? <TopicProgress>[])
+        .where(
+          (item) =>
+              item.summary.reviewedCount > 0 && item.topic.questionCount > 0,
+        )
+        .fold<TopicProgress?>(
+          null,
+          (latest, item) =>
+              latest == null ||
+                  item.summary.lastReviewedAt.isAfter(
+                    latest.summary.lastReviewedAt,
+                  )
+              ? item
+              : latest,
+        );
+
+    final availableTopics = sortedTopics.where(
+      (topic) => topic.questionCount > 0,
+    );
+    final startTopic = availableTopics.isEmpty ? null : availableTopics.first;
 
     return RefreshIndicator(
       onRefresh: () => ref.read(discoveryControllerProvider.notifier).refresh(),
       child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        physics: AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          PastPaperHero(
+          LearnerHeader(
             isProgressLoading:
                 widget.isAuthLoading || widget.progress.isLoading,
             learnerName: widget.learnerName,
@@ -221,6 +222,23 @@ class _DiscoveryContentState extends ConsumerState<_DiscoveryContent> {
             onAccountPressed: widget.onAccountPressed,
             isSignedIn: widget.isSignedIn,
           ),
+          const SizedBox(height: 12),
+          if (widget.isAuthLoading ||
+              (widget.progress.isLoading && !widget.progress.hasValue)) ...[
+            const ShimmerLoading(child: SkeletonBlock(height: 152)),
+            const SizedBox(height: 24),
+          ] else if (continueItem != null || startTopic != null) ...[
+            _ContinueCard(
+              topic: continueItem?.topic ?? startTopic!,
+              progress: continueItem,
+            ),
+            const SizedBox(height: 24),
+          ],
+          Text(
+            'Explore subjects',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 8),
           if (widget.data.subjects.isNotEmpty)
             _SubjectSelector(
               subjects: widget.data.subjects
@@ -236,27 +254,18 @@ class _DiscoveryContentState extends ConsumerState<_DiscoveryContent> {
                 });
               },
             ),
-          if (continueItem != null) ...[
-            const SizedBox(height: 24),
-            Text(
-              'Continue practising',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 10),
-            _ContinueCard(progress: continueItem),
-          ],
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           _TopicsHeader(topicCount: sortedTopics.length),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           if (sortedTopics.isEmpty)
-            const _NoTopicsForSubject()
+            _NoTopicsForSubject()
           else
             LayoutBuilder(
               builder: (context, constraints) {
                 final columnCount = constraints.maxWidth < 300 ? 1 : 2;
                 return GridView.builder(
                   shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
+                  physics: NeverScrollableScrollPhysics(),
                   itemCount: sortedTopics.length,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: columnCount,
@@ -310,7 +319,7 @@ class _SubjectSelector extends StatelessWidget {
     final selectedId = selectedSubjectId;
 
     if (selectedId == null) {
-      return const SizedBox.shrink();
+      return SizedBox.shrink();
     }
 
     return SingleChildScrollView(
@@ -330,11 +339,11 @@ class _SubjectSelector extends StatelessWidget {
                     alignment: Alignment.bottomCenter,
                     children: [
                       Container(
-                        constraints: const BoxConstraints(
+                        constraints: BoxConstraints(
                           minWidth: 48,
                           minHeight: 48,
                         ),
-                        padding: const EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 14,
                         ),
@@ -343,8 +352,8 @@ class _SubjectSelector extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
                                 color: subjects[index].id == selectedId
-                                    ? AppColors.ink
-                                    : AppColors.mutedInk,
+                                    ? AppPalette.of(context).ink
+                                    : AppPalette.of(context).mutedInk,
                                 fontWeight: subjects[index].id == selectedId
                                     ? FontWeight.w700
                                     : FontWeight.w500,
@@ -358,7 +367,7 @@ class _SubjectSelector extends StatelessWidget {
                             width: 28,
                             height: 3,
                             decoration: BoxDecoration(
-                              color: AppColors.ink,
+                              color: AppPalette.of(context).ink,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -368,7 +377,7 @@ class _SubjectSelector extends StatelessWidget {
                 ),
               ),
             ),
-            if (index != subjects.length - 1) const SizedBox(width: 8),
+            if (index != subjects.length - 1) SizedBox(width: 8),
           ],
         ],
       ),
@@ -377,57 +386,68 @@ class _SubjectSelector extends StatelessWidget {
 }
 
 class _ContinueCard extends StatelessWidget {
-  const _ContinueCard({required this.progress});
+  const _ContinueCard({required this.topic, this.progress});
 
-  final TopicProgress progress;
+  final Topic topic;
+  final TopicProgress? progress;
 
   @override
   Widget build(BuildContext context) {
-    final topic = progress.topic;
+    final theme = Theme.of(context);
+    void openTopic() => Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => QuestionScreen(topic: topic)),
+    );
     return Card(
-      color: AppColors.neutralCard,
+      color: AppPalette.of(context).isDark
+          ? const Color(0xFF242424)
+          : AppPalette.of(context).neutralCard,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => QuestionScreen(topic: topic)),
-        ),
+        onTap: openTopic,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                topic.name,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(color: AppColors.ink),
+                progress == null ? 'Start practising' : 'Continue learning',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: AppPalette.of(context).mutedInk,
+                ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 10),
               Text(
-                '${progress.summary.reviewedCount} of ${topic.questionCount} questions reviewed',
+                topic.name,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: AppPalette.of(context).ink,
+                ),
+              ),
+              SizedBox(height: 6),
+              Text(
+                '${topic.subjectName} · Grade ${topic.grade}',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.mutedInk,
+                  color: AppPalette.of(context).mutedInk,
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 12),
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    'Continue',
-                    style: TextStyle(
-                      color: AppColors.mutedInk,
-                      fontWeight: FontWeight.w700,
-                    ),
+              if (progress != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  '${progress!.summary.reviewedCount} of ${topic.questionCount} questions reviewed',
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ],
+              SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: FilledButton.icon(
+                  onPressed: openTopic,
+                  label: Text(
+                    progress == null ? 'Start practising' : 'Continue',
                   ),
-                  SizedBox(width: 4),
-                  Icon(
-                    Icons.arrow_forward,
-                    color: AppColors.mutedInk,
-                    size: 20,
-                  ),
-                ],
+                  icon: const Icon(Icons.arrow_forward, size: 18),
+                  iconAlignment: IconAlignment.end,
+                ),
               ),
             ],
           ),
@@ -464,15 +484,15 @@ class _NoTopicsForSubject extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 48),
+      padding: EdgeInsets.symmetric(vertical: 48),
       child: Column(
         children: [
-          const Icon(
+          Icon(
             Icons.menu_book_outlined,
             size: 40,
-            color: AppColors.mutedInk,
+            color: AppPalette.of(context).mutedInk,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Text(
             'No topics are available for this subject yet.',
             textAlign: TextAlign.center,
@@ -494,15 +514,15 @@ class _DiscoveryError extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.cloud_off, size: 48),
-            const SizedBox(height: 16),
+            Icon(Icons.cloud_off, size: 48),
+            SizedBox(height: 16),
             Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Try again')),
+            SizedBox(height: 16),
+            FilledButton(onPressed: onRetry, child: Text('Try again')),
           ],
         ),
       ),
@@ -519,18 +539,18 @@ class _EmptyDiscovery extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.menu_book_outlined, size: 48),
-            const SizedBox(height: 16),
-            const Text(
+            Icon(Icons.menu_book_outlined, size: 48),
+            SizedBox(height: 16),
+            Text(
               'No Grade 12 topics are available yet.',
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
-            OutlinedButton(onPressed: onRefresh, child: const Text('Refresh')),
+            SizedBox(height: 16),
+            OutlinedButton(onPressed: onRefresh, child: Text('Refresh')),
           ],
         ),
       ),

@@ -1,3 +1,4 @@
+import '../../../shared/widgets/appearance_setting.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
@@ -25,18 +26,24 @@ class AccountScreen extends ConsumerWidget {
     final displayName = learnerProfile?.displayName?.trim();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Account')),
+      appBar: AppBar(title: Text('Account')),
       body: ListView(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(24),
         children: [
-          const CircleAvatar(
-            radius: 38,
-            backgroundColor: AppColors.primary,
-            child: Icon(Icons.person, size: 40, color: Colors.white),
-          ),
+          const Card(child: AppearanceSetting()),
           const SizedBox(height: 16),
+          CircleAvatar(
+            radius: 38,
+            backgroundColor: AppPalette.of(context).primary,
+            child: Icon(
+              Icons.person,
+              size: 40,
+              color: Theme.of(context).colorScheme.onPrimary,
+            ),
+          ),
+          SizedBox(height: 16),
           if (profile.isLoading)
-            const Center(
+            Center(
               child: SizedBox(
                 width: 120,
                 child: LinearProgressIndicator(minHeight: 3),
@@ -50,33 +57,33 @@ class AccountScreen extends ConsumerWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleLarge,
             ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           if (learnerProfile?.grade != null)
             Text(
               'Grade ${learnerProfile!.grade}',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             user.email ?? '',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             'Your bookmarks and study progress '
             'will appear here.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: 32),
           Card(
             child: ListTile(
-              leading: const Icon(Icons.manage_accounts_outlined),
-              title: const Text('Edit profile'),
-              subtitle: const Text('Update your display name and grade.'),
-              trailing: const Icon(Icons.chevron_right),
+              leading: Icon(Icons.manage_accounts_outlined),
+              title: Text('Edit profile'),
+              subtitle: Text('Update your display name and grade.'),
+              trailing: Icon(Icons.chevron_right),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
@@ -86,13 +93,13 @@ class AccountScreen extends ConsumerWidget {
               },
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Card(
             child: ListTile(
-              leading: const Icon(Icons.insights_outlined),
-              title: const Text('Study progress'),
-              subtitle: const Text('See your progress across topics.'),
-              trailing: const Icon(Icons.chevron_right),
+              leading: Icon(Icons.insights_outlined),
+              title: Text('Study progress'),
+              subtitle: Text('See your progress across topics.'),
+              trailing: Icon(Icons.chevron_right),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
@@ -102,13 +109,13 @@ class AccountScreen extends ConsumerWidget {
               },
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Card(
             child: ListTile(
-              leading: const Icon(Icons.bookmark),
-              title: const Text('Saved questions'),
-              subtitle: const Text('Review questions you bookmarked.'),
-              trailing: const Icon(Icons.chevron_right),
+              leading: Icon(Icons.bookmark),
+              title: Text('Saved questions'),
+              subtitle: Text('Review questions you bookmarked.'),
+              trailing: Icon(Icons.chevron_right),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
@@ -118,33 +125,29 @@ class AccountScreen extends ConsumerWidget {
               },
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Card(
             child: ListTile(
-              leading: const Icon(Icons.block),
-              title: const Text('Blocked learners'),
-              subtitle: const Text(
-                'Review learners whose comments you have hidden.',
-              ),
-              trailing: const Icon(Icons.chevron_right),
+              leading: Icon(Icons.block),
+              title: Text('Blocked learners'),
+              subtitle: Text('Review learners whose comments you have hidden.'),
+              trailing: Icon(Icons.chevron_right),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) => const BlockedLearnersScreen(),
+                    builder: (_) => BlockedLearnersScreen(),
                   ),
                 );
               },
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Card(
             child: ListTile(
-              leading: const Icon(Icons.policy_outlined),
-              title: const Text('Community Guidelines'),
-              subtitle: const Text(
-                'Review the rules for question discussions.',
-              ),
-              trailing: const Icon(Icons.chevron_right),
+              leading: Icon(Icons.policy_outlined),
+              title: Text('Community Guidelines'),
+              subtitle: Text('Review the rules for question discussions.'),
+              trailing: Icon(Icons.chevron_right),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
@@ -154,33 +157,31 @@ class AccountScreen extends ConsumerWidget {
               },
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Card(
             child: ListTile(
-              leading: const Icon(Icons.gavel_outlined),
-              title: const Text('Legal and privacy'),
-              subtitle: const Text(
+              leading: Icon(Icons.gavel_outlined),
+              title: Text('Legal and privacy'),
+              subtitle: Text(
                 'Privacy Policy, Terms of Use and account deletion.',
               ),
-              trailing: const Icon(Icons.chevron_right),
+              trailing: Icon(Icons.chevron_right),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) => const LegalDocumentsScreen(),
+                    builder: (_) => LegalDocumentsScreen(),
                   ),
                 );
               },
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Card(
             child: ListTile(
-              leading: const Icon(Icons.replay_outlined),
-              title: const Text('Needs review'),
-              subtitle: const Text(
-                'Practise questions you have not understood yet.',
-              ),
-              trailing: const Icon(Icons.chevron_right),
+              leading: Icon(Icons.replay_outlined),
+              title: Text('Needs review'),
+              subtitle: Text('Practise questions you have not understood yet.'),
+              trailing: Icon(Icons.chevron_right),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
@@ -190,17 +191,17 @@ class AccountScreen extends ConsumerWidget {
               },
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           OutlinedButton.icon(
             onPressed: action.isLoading ? null : () => _signOut(context, ref),
-            icon: const Icon(Icons.logout),
+            icon: Icon(Icons.logout),
             label: Text(action.isLoading ? 'Please wait...' : 'Sign out'),
           ),
-          const SizedBox(height: 40),
+          SizedBox(height: 40),
           Divider(
             color: Theme.of(context).colorScheme.error.withValues(alpha: 0.35),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Text(
             'Danger zone',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -208,14 +209,14 @@ class AccountScreen extends ConsumerWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             'Deleting your account permanently removes your profile, '
             'bookmarks, progress, comments and other account data. '
             'This action cannot be undone.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
@@ -224,7 +225,7 @@ class AccountScreen extends ConsumerWidget {
             onPressed: action.isLoading
                 ? null
                 : () => _confirmAccountDeletion(context, ref),
-            icon: const Icon(Icons.delete_forever_outlined),
+            icon: Icon(Icons.delete_forever_outlined),
             label: Text(action.isLoading ? 'Please wait...' : 'Delete account'),
           ),
         ],
@@ -253,7 +254,7 @@ class AccountScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const _DeleteAccountDialog(),
+      builder: (_) => _DeleteAccountDialog(),
     );
 
     if (confirmed != true || !context.mounted) {
@@ -270,7 +271,7 @@ class AccountScreen extends ConsumerWidget {
 
     if (!deleted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Unable to delete your account. Please try again.'),
         ),
       );
@@ -308,29 +309,29 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
         color: Theme.of(context).colorScheme.error,
         size: 40,
       ),
-      title: const Text('Delete your account?'),
+      title: Text('Delete your account?'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'This permanently removes your learner profile, '
             'saved questions, study progress, comments and '
             'other account data.',
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'Type DELETE to confirm:',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           TextField(
             controller: _confirmationController,
             autofocus: true,
             autocorrect: false,
             enableSuggestions: false,
             textCapitalization: TextCapitalization.characters,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Confirmation',
               hintText: 'DELETE',
               border: OutlineInputBorder(),
@@ -342,7 +343,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Cancel'),
+          child: Text('Cancel'),
         ),
         FilledButton(
           style: FilledButton.styleFrom(
@@ -350,7 +351,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
             foregroundColor: Theme.of(context).colorScheme.onError,
           ),
           onPressed: canDelete ? () => Navigator.of(context).pop(true) : null,
-          child: const Text('Delete permanently'),
+          child: Text('Delete permanently'),
         ),
       ],
     );

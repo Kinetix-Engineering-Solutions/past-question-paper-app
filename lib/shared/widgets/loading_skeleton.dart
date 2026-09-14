@@ -17,7 +17,7 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1500),
+    duration: Duration(milliseconds: 1500),
   );
 
   @override
@@ -56,12 +56,12 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
                   shaderCallback: (bounds) => LinearGradient(
                     begin: Alignment(offset - 1, -0.2),
                     end: Alignment(offset + 1, 0.2),
-                    colors: const [
-                      AppColors.border,
-                      AppColors.neutralCard,
-                      AppColors.border,
+                    colors: [
+                      AppPalette.of(context).border,
+                      AppPalette.of(context).neutralCard,
+                      AppPalette.of(context).border,
                     ],
-                    stops: const [0.25, 0.5, 0.75],
+                    stops: [0.25, 0.5, 0.75],
                   ).createShader(bounds),
                   child: child,
                 );
@@ -85,7 +85,7 @@ class SkeletonBlock extends StatelessWidget {
     width: width,
     height: height,
     decoration: BoxDecoration(
-      color: AppColors.border,
+      color: AppPalette.of(context).border,
       borderRadius: BorderRadius.circular(8),
     ),
   );
@@ -101,31 +101,40 @@ class LoadingSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ShimmerLoading(
     child: SingleChildScrollView(
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+      physics: NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: switch (layout) {
           SkeletonLayout.discovery => [
-            const AspectRatio(
-              aspectRatio: 380 / 430,
-              child: SkeletonBlock(height: double.infinity),
+            SkeletonBlock(width: 110, height: 20),
+            SizedBox(height: 20),
+            FractionallySizedBox(
+              widthFactor: 0.75,
+              child: SkeletonBlock(height: 28),
             ),
-            const SizedBox(height: 24),
-            const Row(
+            SizedBox(height: 10),
+            FractionallySizedBox(
+              widthFactor: 0.6,
+              child: SkeletonBlock(height: 14),
+            ),
+            SizedBox(height: 24),
+            SkeletonBlock(height: 180),
+            SizedBox(height: 24),
+            Row(
               children: [
                 SkeletonBlock(width: 100, height: 20),
                 SizedBox(width: 24),
                 Expanded(child: SkeletonBlock(height: 20)),
               ],
             ),
-            const SizedBox(height: 24),
-            const SkeletonBlock(width: 80, height: 18),
-            const SizedBox(height: 12),
+            SizedBox(height: 24),
+            SkeletonBlock(width: 80, height: 18),
+            SizedBox(height: 12),
             LayoutBuilder(
               builder: (context, constraints) => GridView.count(
                 shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
+                physics: NeverScrollableScrollPhysics(),
                 crossAxisCount: constraints.maxWidth < 300 ? 1 : 2,
                 mainAxisSpacing: 10,
                 crossAxisSpacing: 10,
@@ -134,20 +143,20 @@ class LoadingSkeleton extends StatelessWidget {
                         ? constraints.maxWidth
                         : (constraints.maxWidth - 10) / 2) /
                     172,
-                children: List.generate(4, (_) => const _TopicPlaceholder()),
+                children: List.generate(4, (_) => _TopicPlaceholder()),
               ),
             ),
           ],
           SkeletonLayout.question => [
-            const SkeletonBlock(width: 150, height: 18),
-            const SizedBox(height: 20),
-            const SkeletonBlock(height: 300),
-            const SizedBox(height: 20),
-            const SkeletonBlock(height: 48),
+            SkeletonBlock(width: 150, height: 18),
+            SizedBox(height: 20),
+            SkeletonBlock(height: 300),
+            SizedBox(height: 20),
+            SkeletonBlock(height: 48),
           ],
           SkeletonLayout.list => List.generate(
             5,
-            (_) => const Padding(
+            (_) => Padding(
               padding: EdgeInsets.only(bottom: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,7 +183,7 @@ class _TopicPlaceholder extends StatelessWidget {
   const _TopicPlaceholder();
 
   @override
-  Widget build(BuildContext context) => const Padding(
+  Widget build(BuildContext context) => Padding(
     padding: EdgeInsets.fromLTRB(14, 14, 14, 12),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
