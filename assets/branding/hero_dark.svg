@@ -1,0 +1,36 @@
+<svg width="424" height="474" viewBox="0 0 424 474" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Hero SVG Base &#226;&#128;&#148; Static">
+<rect x="22" y="15" width="380" height="430" rx="20" fill="#1E1E1E"/>
+<rect x="22.5" y="15.5" width="379" height="429" rx="19.5" stroke="#333333"/>
+<text id="Brand" fill="#E8E8E8" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="20" font-weight="bold" letter-spacing="0em"><tspan x="147" y="60.2727">PAST PAPERS</tspan></text>
+<text id="Subtitle" fill="#A3A3A3" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="10" font-weight="600" letter-spacing="0em"><tspan x="148" y="79.6364">GRADE 12 EXAM PRACTICE</tspan></text>
+<g id="Exam header bar">
+<rect x="55" y="107" width="314" height="38" rx="6" fill="#121212"/>
+</g>
+<text id="Exam header" fill="white" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="13" font-weight="600" letter-spacing="0em"><tspan x="112" y="131.727">NATIONAL SENIOR CERTIFICATE</tspan></text>
+<g id="Grade badge">
+<rect x="171.5" y="160.5" width="81" height="24" rx="6.5" fill="#292929"/>
+<rect x="171.5" y="160.5" width="81" height="24" rx="6.5" stroke="#333333"/>
+<text id="Grade 12" fill="#A3A3A3" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" font-weight="bold" letter-spacing="0em"><tspan x="185" y="176.5">GRADE 12</tspan></text>
+</g>
+<g id="Paper title">
+<text id="Paper title text" fill="#E8E8E8" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="14" font-weight="bold" letter-spacing="0em"><tspan x="117.5" y="233.091">PAST EXAMINATION PAPER</tspan></text>
+</g>
+<text id="Learner label" fill="#A3A3A3" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="10" font-weight="600" letter-spacing="0em"><tspan x="170" y="290.636">LEARNER NAME</tspan></text>
+<line id="Line" x1="112" y1="341.5" x2="312" y2="341.5" stroke="#333333"/>
+<line id="Line_2" x1="60" y1="364.5" x2="364" y2="364.5" stroke="#333333" stroke-dasharray="4 4"/>
+<text id="Motivation" fill="#A3A3A3" style="white-space: pre" xml:space="preserve" font-family="Inter" font-size="11" font-weight="600" letter-spacing="0em"><tspan x="155" y="390.5">Keep going! You&#39;re making progress.</tspan></text>
+<circle id="Progress ring" cx="125" cy="402" r="25.5" stroke="#333333" stroke-width="7"/>
+</g>
+<defs>
+<filter id="filter0_d_5_2" x="0" y="0" width="424" height="474" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="7"/>
+<feGaussianBlur stdDeviation="11"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.08 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_5_2"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_5_2" result="shape"/>
+</filter>
+</defs>
+</svg>

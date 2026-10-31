@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:past_question_paper_v1/shared/widgets/loading_skeleton.dart';
 
 import '../../data/models/question.dart';
 
@@ -42,43 +43,48 @@ class QuestionContentCard extends StatelessWidget {
               ),
             ),
             const Divider(height: 1),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                return InteractiveViewer(
-                  minScale: 1,
-                  maxScale: 4,
-                  child: Image.network(
-                    imageUri.toString(),
-                    width: constraints.maxWidth,
-                    fit: BoxFit.fitWidth,
-                    loadingBuilder: (context, child, progress) {
-                      if (progress == null) {
-                        return child;
-                      }
+            ColoredBox(
+              color: Colors.white,
+              child: Theme(
+                data: ThemeData.light(),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return InteractiveViewer(
+                      minScale: 1,
+                      maxScale: 4,
+                      child: Image.network(
+                        imageUri.toString(),
+                        width: constraints.maxWidth,
+                        fit: BoxFit.fitWidth,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) {
+                            return child;
+                          }
 
-                      return const SizedBox(
-                        height: 200,
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) {
-                      return const SizedBox(
-                        height: 200,
-                        child: Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.broken_image_outlined, size: 48),
-                              SizedBox(height: 12),
-                              Text('Unable to load this image.'),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
+                          return const ShimmerLoading(
+                            child: SkeletonBlock(height: 200),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return const SizedBox(
+                            height: 200,
+                            child: Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.broken_image_outlined, size: 48),
+                                  SizedBox(height: 12),
+                                  Text('Unable to load this image.'),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
           ],
         ),

@@ -107,11 +107,11 @@ class _AccountDeclarationScreenState
             FilledButton(
               onPressed: action.isLoading ? null : _submit,
               child: action.isLoading
-                  ? const SizedBox.square(
+                  ? SizedBox.square(
                       dimension: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onPrimary,
                       ),
                     )
                   : const Text('Continue'),

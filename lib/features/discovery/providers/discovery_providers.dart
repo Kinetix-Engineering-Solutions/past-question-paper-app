@@ -20,10 +20,10 @@ class DiscoveryController extends AsyncNotifier<DiscoveryData> {
   }
 
   Future<void> refresh() async {
-    state = const AsyncLoading();
-
-    state = await AsyncValue.guard(
+    final refreshed = await AsyncValue.guard(
       () => ref.read(discoveryRepositoryProvider).getGrade12Discovery(),
     );
+
+    state = refreshed;
   }
 }
